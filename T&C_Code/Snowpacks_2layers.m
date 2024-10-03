@@ -4,7 +4,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function[TsF,Tdpsnow,SWE,D,ros,In_SWE,SP_wc,WR_SP,U_SWE,NIn_SWE,dQ12,Qfm,t_sls,Sm,dQres,dTsnow]=Snowpacks_2layers(dt,...
     Ta,Ts,Tstm1,Tdpsnowtm1,Tdew,Ws,t_slstm1,SWEtm1,Dtm1,rostm1,SP_wctm1,In_SWEtm1,In_max_SWE,dw_SNO,...
-    Pr_liq,Pr_sno,ESN,ESN_In,Rn,H,QE,G,Qv,Csnow,Ccrown,Cwat,Cfol_H,fpr,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,lan_sno,min_SPD)
+    Pr_liq,Pr_sno,ESN,ESN_In,Rn,H,QE,G,Qv,Csnow,Ccrown,Cwat,Cfol_H,fpr,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,lan_sno,min_SPD,hSTL)
 %%%INPUTS
 %dt time step [s]
 dth = dt/3600; %% [h]
@@ -75,7 +75,7 @@ ms_sno=5; % length(Tdpsnowtm1);
 %%% Discretization of temperature profile - very important especially top layer
 %Zs_sno = [ 0 linspace(1000*min_SPD/2,1000*Dtm1,ms_sno)]; %%%   [mm] 
 %k=(Dtm1/min_SPD)^(1/(ms_sno)); Zs_sno= [0 1000*min_SPD*k.^(1:ms_sno)]; %% [mm]
-Zs_sno= [0 exp([linspace(log(1000*min_SPD/2),log(1000*Dtm1),ms_sno)])];  %% [mm]
+Zs_sno= [0 exp([linspace(log(1000*hSTL),log(1000*Dtm1),ms_sno)])];  %% [mm] *************************
 %Zs_sno = [ 0 linspace(3,1000*Dtm1,ms_sno)]; %%%   [mm] 
 
 lan_sno =lan_sno*ones(1,ms_sno); %%% [W/m K ] Thermal conductivity debris
@@ -294,6 +294,7 @@ switch ANS
             tau_1 = 86400; %% [s]
             %ros_n = 67.92 + 51.25*exp(Ta/2.59); %%  [Hedstrom and Pomeray 1998]
             ros_n = 1000*(0.05 + (((9/5)*Ta +32)> 0).*(((9/5)*Ta+32)./100).^2); %% [kg/m^3] new snow density [from Bras 1990]
+            ros_n(ros_n > 158.5) = 158.5; % Added MM 04/04/2024
             %ros_n = (1000/row)*(109+ (6*Ta) +26*sqrt(ua)); %% Brun et al 1989
             if rostm1 == 0
                 Dn = 0.001*SWE*(row/ros_n); %% New Snowpack [m]
