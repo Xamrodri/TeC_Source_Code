@@ -26,7 +26,7 @@ function[snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,
 %%% Cice = glacier or not
 %%% Pr_sno = snowfall
 Pr_sno_day= Pr_sno_day+Pr_sno*dt/3600; %% [mm] 
-Ta_day= [reshape(Ta_day(2:length(Ta_day)),1,length(Ta_day)-1), Ta]; %%[°C]
+if size(Ta_day,1)==1; Ta_day=Ta_day';end
 %%% OUTPUT
 % tau_sno [] %% Relative Age of snow
 %snow_alb.dir_vis
@@ -203,7 +203,7 @@ switch ANS
         Asnotm1= tau_snotm1;
         
         Amax = 0.85;
-        Amin = 0.5;
+        Amin = 0.4;
         if Cice == 1
             if Cdeb == 1
                 Amin =  Deb_Par.alb;
@@ -220,6 +220,7 @@ switch ANS
             row = 1000; % water density [kg/m^3]
             Ta_day=mean(Ta_day); 
             ros_n = 1000*(0.05 + (((9/5)*Ta_day +32)> 0).*(((9/5)*Ta_day+32)./100).^2); %% [kg/m^3] new snow density [from Bras 1990]
+            ros_n(ros_n > 158.5) = 158.5; % Added MM 04/04/2024
             dsn = 0.001*Pr_sno_day*row/ros_n ; %%%[m] the new cumulative snowfall depth since the beginning of the snowfall event
             
             ros_nd = ros_n; %% density of dry snow  --- [kg/m^3] assumed to be the density of the new snow 
