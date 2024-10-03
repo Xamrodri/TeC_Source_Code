@@ -1,7 +1,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Subfunction  AVALANCHE_MODULE           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[SND,SWE,ros,S_exit]= AVALANCHES(DTM,cellsize,Area,Asur,Slo_top,SND,SWE,ros)
+function[SND,SWE,ros,S_exit]= AVALANCHES(DTM,cellsize,Area,Asur,Slo_top,SND,SWE,ros,a,C)
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Reference: Bernhardt and Schulz (2010)
 %%%%%% OUTPUT
@@ -19,16 +19,16 @@ function[SND,SWE,ros,S_exit]= AVALANCHES(DTM,cellsize,Area,Asur,Slo_top,SND,SWE,
 %%% ros [kg/m^3]  
 %%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Parameter
-a=0.1012; %% [1/[°]]
-C=99.05; %%[m]
+% a=0.1012; %% [1/[°]]
+% C=99.05; %%[m]
 ros_ava = 400; %% [kg/m^3] %% Density of avalanche deposition   Sovilla et al., [2006]
 row=1000; %%[kg/m^3] 
 %%% COMPUTE
 S_exit=0;
 SWM=SWE ; 
 r=0; 
-while sum(sum(SWM))>0.1 
-    r=r+1; 
+while sum(sum(SWM,'omitnan'),'omitnan')>0.1 
+    r=r+1;
     %disp(sum(sum(SWM)));
     HSNO = DTM+SND.*cos(atan(Slo_top)); %%% Total Elevation Surface [m]
     [R_snow,SS] = dem_flow(HSNO,cellsize,cellsize);
