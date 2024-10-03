@@ -34,7 +34,7 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
     Psi_sto_50_L,Psi_sto_00_L,ZR95_L,...
     Axyl_H,PsiL50_H,PsiL00_H,Kleaf_max_H,Cl_H,Kx_max_H,PsiX50_H,Cx_H,...
     Axyl_L,PsiL50_L,PsiL00_L,Kleaf_max_L,Cl_L,Kx_max_L,PsiX50_L,Cx_L,...
-    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH, parameterize_phase, hSTL)
+    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH, parameterize_phase, hSTL, Albsno_method)
 %%% INPUTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUTS
@@ -946,7 +946,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Updated Snow Albedo
 if Csno > 0
-    [snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N);
+    [snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method);
 else
     snow_alb.dir_vis = ALB;
     snow_alb.dir_nir = ALB;
