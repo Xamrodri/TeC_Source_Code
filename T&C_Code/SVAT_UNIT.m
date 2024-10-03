@@ -34,7 +34,7 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
     Psi_sto_50_L,Psi_sto_00_L,ZR95_L,...
     Axyl_H,PsiL50_H,PsiL00_H,Kleaf_max_H,Cl_H,Kx_max_H,PsiX50_H,Cx_H,...
     Axyl_L,PsiL50_L,PsiL00_L,Kleaf_max_L,Cl_L,Kx_max_L,PsiX50_L,Cx_L,...
-    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH)
+    min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH, parameterize_phase, hSTL)
 %%% INPUTS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUTS
@@ -66,7 +66,7 @@ r_litter=zeros(1,length(Ccrown)); alp_litter=zeros(1,length(Ccrown));
 Ws_under=zeros(1,length(Ccrown));
 %%%%%%%%%%%%%
 %%% Partition Pr_sno Pr_liq
-[Pr_sno,Pr_liq]=Precipitation_partition(Pr,Ta,TminS,TmaxS,ea,Pre);
+[Pr_sno,Pr_liq]=Precipitation_partition(Pr,Ta,ea,Pre,parameterize_phase);
 %%% Throughfall
 [Cfol_H,Cfol_L,CLitter]=Throughfall(LAI_H,(SAI_H+LAIdead_H),LAI_L,(SAI_L+LAIdead_L),Sllit*BLit,Kct);
 %%% Warm/Cold Hydrology
@@ -323,7 +323,7 @@ if Csno == 1
         Pr_liq,Pr_sno,rs_sunH,rs_sunL,rs_shdH,rs_shdL,d_leaf_H,d_leaf_L,r_litter,r_soil,b_soil,alp_soil,...
         Tstm1,G,Tdpsnowtm1,lan_sno,...
         zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,...
-        Tdew,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,fpr,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_VegSnow,min_SPD,TsV);
+        Tdew,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,fpr,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_VegSnow,min_SPD,TsV,hSTL);
     %%%% %%%%%%%%%%%%%%%%%%%
     T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
 else
@@ -596,7 +596,7 @@ if Csno == 1
 
         [TsF,Tdpsnow,SWE,SND,ros,In_SWE,SP_wc,WR_SP,U_SWE,NIn_SWE,dQ,Qfm,t_sls,Smelt,Gres,dTres]=Snowpacks_2layers(dt,...
             Ta,Ts,Tstm1,Tdpsnowtm1,Tdew,Ws,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,In_max_SWE,dw_SNO,...
-            Pr_liq,Pr_sno,ESN,ESN_In,Rn,H,QE,G,Qv,Csnow,Ccrown,Cwat,Cfol_H,fpr,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,lan_sno,min_SPD); 
+            Pr_liq,Pr_sno,ESN,ESN_In,Rn,H,QE,G,Qv,Csnow,Ccrown,Cwat,Cfol_H,fpr,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,lan_sno,min_SPD,hSTL); 
 
     else
         %%%% Snow cover not deep enough to compute the temperature profile.
