@@ -79,15 +79,11 @@ out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat');%file path init
 res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
 
 %dependencies
-% addpath(genpath([path_tcsetup ,SITE,'/RUNS/Multipoint/'])); % Where are located initial conditions and model parameters
-addpath(genpath([folder_path,'/Case_study/' study_name '/Setups/',SITE,'/RUNS/INPUTS'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'/Case_study/' study_name '/Setups/',SITE,'/Preprocessing/OUTPUTS/Multipoints/' SITE '_' num2str(res) 'm/'])); % Where is the POI table
+addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
-%addpath(genpath(['C:\Users\jouberto\Desktop\T&C\TC'])); % Add path to main T&C
 addpath(genpath([folder_path, '/Inputs'])); % Add path to Ca_Data
-addpath(genpath([folder_path, '/T&C_Code'])); % Add path to Ca_Data
-addpath(genpath([folder_path,'/Case_study/' study_name '/Setups/Functions']))
+addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
 
 load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
