@@ -1,26 +1,30 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%% MAIN_FRAME OF HBM-VEG %%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% INITIZIALIZATION VARIABLES
-%%%%%--->>  INIZIALIZATION VARIABLES  <<--- %%%%%%%%%%%%%%%%%%%%%%%
-%%% j time dt = 1 day  %%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%% MAIN_FRAME OF HBM-VEG %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% INITIZIALIZATION VARIABLE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% j time dt = 1 day 
 %%% i time dt = 1h
 %%% ms soil layer
 %%% cc Crown Area number
 %%% NN time step
-dtd = 1; %% [day]
-dth = dt/3600; %% [hour]
+dtd = 1; %%Time step [day]
+dth = dt/3600; %% Time step [hour]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-V=zeros(NN,ms);
+V=zeros(NN,ms); 
 O=zeros(NN,ms);
-Qi_out=zeros(NN,ms);
-WTR=zeros(NN,ms);
-POT=zeros(NN,ms);
-Tdp=zeros(NN,ms);
+Qi_out=zeros(NN,ms); % Outgoing Lateral subsurface flow
+WTR=zeros(NN,ms); % Water flow due to water table rising
+POT=zeros(NN,ms); % Soil water potential
+Tdp=zeros(NN,ms); % Soil Temperature of the layer
 %Sdp=zeros(NN,ms);
 Vice=zeros(NN,ms);
 Oice=zeros(NN,ms);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 OF=zeros(NN,1); OS=zeros(NN,1);
 ZWT=zeros(NN,1);
@@ -101,13 +105,31 @@ Jsx_L=zeros(NN,cc);Jxl_L=zeros(NN,cc);
 Kleaf_L=zeros(NN,cc);Kx_L=zeros(NN,cc);
 fapar_H=zeros(NN,cc);fapar_L=zeros(NN,cc);
 SIF_H=zeros(NN,cc);SIF_L=zeros(NN,cc);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-NCP = 8; %% Number of Carbon Pool
-NNd = ceil(NN/24)+1;
-LAI_L=zeros(NNd,cc); B_L=zeros(NNd,cc,NCP); NPP_L=zeros(NNd,cc);Rg_L=zeros(NNd,cc);
-RA_L=zeros(NNd,cc);Rmc_L=zeros(NNd,cc);ANPP_L=zeros(NNd,cc);
-Rms_L=zeros(NNd,cc);Rmr_L=zeros(NNd,cc); PHE_S_L=zeros(NNd,cc); dflo_L=zeros(NNd,cc);
-AgeL_L=zeros(NNd,cc);e_rel_L=ones(NNd,cc);SAI_L=zeros(NNd,cc); hc_L=zeros(NNd,cc); e_relN_L=ones(NNd,cc); BA_L=zeros(NNd,cc);
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Variables for Carbon processing
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+NCP = 8;               % Number of Carbon Pool
+NNd = ceil(NN/24)+1;   % Daily time step number
+
+LAI_L=zeros(NNd,cc);   % Leaf area index - low vegetation
+B_L=zeros(NNd,cc,NCP); % Carbon pool biomass
+NPP_L=zeros(NNd,cc);   % Net Primary Production - low vegetation
+Rg_L=zeros(NNd,cc);    % Growth respiration - low vegetation
+RA_L=zeros(NNd,cc);    % Autotrophic respiration - low vegetation
+Rmc_L=zeros(NNd,cc);   % Maitenance respiration - low vegetation
+ANPP_L=zeros(NNd,cc);  % Above ground net primary production - low vegetation
+Rms_L=zeros(NNd,cc);   % Maitenance respiration sapwood - low vegetation
+Rmr_L=zeros(NNd,cc);   % Maitenance respiration roots - low vegetation
+PHE_S_L=zeros(NNd,cc); % Phenology state - low vegetation 
+dflo_L=zeros(NNd,cc);  % Days from leaf onset - low vegetation
+AgeL_L=zeros(NNd,cc);  % Leaf Age - low vegetation
+e_rel_L=ones(NNd,cc);  % Relative efficiency of the photosynthesis apparatus
+SAI_L=zeros(NNd,cc);   % Steam area index - low vegetation
+hc_L=zeros(NNd,cc);    % Vegetation height - low vegetation
+e_relN_L=ones(NNd,cc); % Relative Efficiency of the photosynthesis apparatus due to N limitations - low vegetation
+BA_L=zeros(NNd,cc);    %
+
 %%%
 LAI_H=zeros(NNd,cc); B_H=zeros(NNd,cc,NCP);NPP_H=zeros(NNd,cc);Rg_H=zeros(NNd,cc);
 RA_H=zeros(NNd,cc);Rms_H=zeros(NNd,cc);Rmr_H=zeros(NNd,cc); ANPP_H=zeros(NNd,cc);
@@ -202,6 +224,7 @@ else
         OPT_SoilBiogeochemistry = 1;
     end 
 end
+
 %%%%%%%%%%%%%
 if OPT_SoilBiogeochemistry == 1
     P=zeros(NNd,55);
@@ -237,12 +260,15 @@ if OPT_SoilBiogeochemistry == 1
     RexmyI=zeros(NNd,3);
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%% CALL PARAMETERS AND INITIAL CONDITION
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 run(PARAM_IC);
 Restating_parameters;
 if length(Oice)==1
     Oice=zeros(NN,ms);
 end
+
 %%%%%%%%%%
 Tdeb =zeros(NN,max(1,length(Zs_deb)-1));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -263,21 +289,26 @@ Tstm0= Ts(1);
 %%% i time dt = 1h
 %%% ms soil layer
 %%% cc Crown Area present
-%%%%%%%%%%%%%%%% NUMERICAL METHODS OPTIONS
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% NUMERICAL METHODS OPTIONS (Numerical tolerance)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %Opt_CR = optimset('TolX',3);
 %Opt_ST = optimset('TolX',0.1);
 %Opt_ST = optimset('TolX',0.1,'Display','iter');
-Opt_CR = optimset('TolFun',1);%,'UseParallel','always');
-Opt_ST = optimset('TolFun',0.1);%,'UseParallel','always');
+Opt_CR = optimset('TolFun',1);%,'UseParallel','always');   % for internal CO2 computation
+Opt_ST = optimset('TolFun',0.1);%,'UseParallel','always'); % for surface temperature
 Opt_ST2 = optimset('TolFun',0.1,'Display','off');
-OPT_SM=  odeset('AbsTol',0.05,'MaxStep',dth);
-OPT_VD=  odeset('AbsTol',0.05);
-OPT_PH= odeset('AbsTol',0.01);
-OPT_STh = odeset('AbsTol',0.02);
-OPT_VegSnow = 1;
-OPT_SoilTemp = 1;
-OPT_FR_SOIL = 1; % whether you want soil freezing on or off. Mike found that it was causing problems for Maipo streamflow, so I turned it off
-OPT_min_SPD = 0.006; %% [m] minimum snow pack depth to have a multilayer snow 
+OPT_SM=  odeset('AbsTol',0.05,'MaxStep',dth);              % for soil moisture
+OPT_VD=  odeset('AbsTol',0.05);                            % for carbon budget
+OPT_PH= odeset('AbsTol',0.01);                             % for internal plant hydraulic
+OPT_STh = odeset('AbsTol',0.02);                           % for heat transfer
+OPT_VegSnow = 1;                                           % Option for computing energy budget of vegetation when there is snow at the ground   
+OPT_SoilTemp = 1;                                          % Option for computing soil temperature or not. 
+OPT_FR_SOIL = 1;      % whether you want soil freezing on or off. Mike found that it was causing problems for Maipo streamflow, so I turned it off
+OPT_min_SPD = 0.006;  % [m] minimum snow pack depth to have a multilayer snow 
+
 %%%%
 if  not(exist('OPT_VCA','var'))
     OPT_VCA = 0;
@@ -300,31 +331,42 @@ else
     end
     Wlevm1 = Rd(1)+Rh(1);
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-for i=2:NN
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%% Iterations for each time step
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+for i=2:NN    
+    %%%%Displaying iteration in the command window    
     if  (mod(i,1000) == 0) || (i == 2)
         disp('Iter:'); disp(i);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     pdind = [max(1,i-24):i-1]; %% previous day indexes
-    %%%
-    if (Datam(i,4)==1)
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%% Model calculations
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    if (Datam(i,4)==1) % Condition on date
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j=j+1; [jDay(j)]= JULIAN_DAY(Datam(i,:));
         [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)]= SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
         clear h_S delta_S zeta_S T_sunrise T_sunset
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%% Biogeochemistry submodule
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%% Biogeochemistry
-        [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment(Tdp(pdind,:),O(pdind,:),V(pdind,:),Soil_Param,Phy,SPAR,Bio_Zs);% sum(V(i,:))
+        [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment(Tdp(pdind,:),O(pdind,:),V(pdind,:),Soil_Param,Phy,SPAR,Bio_Zs); % sum(V(i,:))
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         if OPT_SoilBiogeochemistry == 1
             IS= Ccrown*squeeze(ISOIL_L(j-1,:,:)) + Ccrown*squeeze(ISOIL_H(j-1,:,:));
             REXMY= Ccrown*squeeze(Rexmy_L(j-1,:,:)) + Ccrown*squeeze(Rexmy_H(j-1,:,:));
             FireA = 1*((sum(ManIH==-5) + sum(ManIL==-5)) > 0);
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%% BIOGEO_UNIT
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             [P(j,:),LEAK_NH4(j),LEAK_NO3(j),LEAK_P(j),LEAK_K(j),LEAK_DOC(j),LEAK_DON(j),LEAK_DOP(j),...
                 R_NH4(j),R_NO3(j),R_P(j),R_K(j),R_DOC(j),R_DON(j),R_DOP(j),...
                 Nuptake_H(j,:),Puptake_H(j,:),Kuptake_H(j,:),Nuptake_L(j,:),Puptake_L(j,:),Kuptake_L(j,:),RexmyI(j,:),...
@@ -334,22 +376,21 @@ for i=2:NN
                 SupN_H(j-1,:),SupP_H(j-1,:),SupK_H(j-1,:),SupN_L(j-1,:),SupP_L(j-1,:),SupK_L(j-1,:),...
                 REXMY,RexmyI(j-1,:),ExEM,NavlI(j-1,:),Pcla,Psan,...
                 B_IO,jDay(j),FireA,0);
+            %%%%%%%%%%%%% End BIOGEO_UNIT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%
-            %%%%%
-            BLit(j,:)= 0.002*sum(P(j,1:5))*Ccrown; %% %%[kg DM / m2]
+            BLit(j,:)= 0.002*sum(P(j,1:5))*Ccrown; % Total litter content [kg DM / m2]
             Bam =  P(j,20); %%[gC/m2]
             Bem =  P(j,21); %%[gC/m2]
-        else
-            %%%%%
-            BLit(j,:)= 0.0 ; %  0.100 ; %% %%[kg DM / m2]
-            %%%
-            Nuptake_H(j,:)= 0.0;
-            Puptake_H(j,:)= 0.0;
-            Kuptake_H(j,:)= 0.0; %% [gK/m^2 day]
-            %%%%
-            Nuptake_L(j,:)= 0.0;  %% [gN/m^2 day]
-            Puptake_L(j,:)= 0.0;
-            Kuptake_L(j,:)= 0.0;
+        else % if Biogeochemical module off, then paramters are set zero            
+            BLit(j,:)= 0.0 ; % Total litter content  (0.100) [kg DM / m2]
+            %%% Plant uptake
+            Nuptake_H(j,:)= 0.0; % of nitrogen - high vegetation
+            Puptake_H(j,:)= 0.0; % of phosphorus - high vegetation
+            Kuptake_H(j,:)= 0.0; % of potassium - high vegetation [gK/m^2 day]
+            %%% Pland uptake
+            Nuptake_L(j,:)= 0.0;  % of nitrogen [gN/m^2 day]
+            Puptake_L(j,:)= 0.0;  % of phosphorus [gN/m^2 day]
+            Kuptake_L(j,:)= 0.0;  % of potassium [gN/m^2 day]
             %%%%
             NavlI(j,:)=[0 0 0];
             %P(j,:)=0.0;
@@ -358,14 +399,22 @@ for i=2:NN
             %LEAK_DOP(j)= 0.0; LEAK_DON(j)= 0.0; Min_N(j)=0; Min_P(j) =0; R_bacteria(j)=0; RmycAM(j)=0; RmycEM(j)=0;
             %RexmyI(j,:)=0.0;
             Bam=NaN; Bem=NaN;
-        end
-
+        end %%% End Biogeochemical module 
+        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%% Calculations per Crown areas 
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
         %%% projected area n-coordinate
         for cc=1:length(Ccrown)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%% High vegetation for Crown areas
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             if (ZR95_H(cc) > 0) || (ZRmax_H(cc) > 0)
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%% VEGGIE UNIT
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [LAI_H(j,cc),B_H(j,cc,:),NPP_H(j,cc),ANPP_H(j,cc),Rg_H(j,cc),RA_H(j,cc),Rms_H(j,cc),Rmr_H(j,cc),Rmc_H(j,cc),PHE_S_H(j,cc),...
                     dflo_H(j,cc),AgeL_H(j,cc),e_rel_H(j,cc),e_relN_H(j,cc),LAIdead_H(j,cc),NBLeaf_H(j,cc),Sr_H(j,cc),Slf_H(j,cc),Sfr_H(j,cc),Swm_H(j,cc),Sll_H(j,cc),Rexmy_H(j,cc,:),Rrootl_H(j,cc),...
                     AgeDL_H(j,cc),Bfac_dayH(j,cc),Bfac_weekH(j,cc),NPPI_H(j,cc),TdpI_H(j,cc),NupI_H(j,cc,:),PARI_H(j,cc,:),NBLI_H(j,cc),RB_H(j,cc,:),FNC_H(j,cc),Nreserve_H(j,cc),Preserve_H(j,cc),Kreserve_H(j,cc),...
@@ -375,12 +424,16 @@ for i=2:NN
                     L_day(j),Lmax_day,VegH_Param_Dyn,cc,...
                     Nreserve_H(j-1,cc),Preserve_H(j-1,cc),Kreserve_H(j-1,cc),Nuptake_H(j,cc),Puptake_H(j,cc),Kuptake_H(j,cc),FNC_H(j-1,cc),Se_bio,Tdp_bio,...
                     ParEx_H(cc),ExEM,Bam,Bem,Mpar_H(cc),TBio_Ht(j-1,cc),OPT_EnvLimitGrowth,OPT_VCA,OPT_VD,OPT_SoilBiogeochemistry);
-                %%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%% End VEGGIE_UNIT %%%%%%%%%%%%%%%%%%%%%%%%
+
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%% Plant_Export
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [TexC_H(j,cc),TexN_H(j,cc),TexP_H(j,cc),TexK_H(j,cc),TNIT_H(j,cc),TPHO_H(j,cc),TPOT_H(j,cc),NuLit_H(j,cc,:),Nreserve_H(j,cc),Preserve_H(j,cc),Kreserve_H(j,cc),...
                     SupN_H(j,cc),SupP_H(j,cc),SupK_H(j,cc),ISOIL_H(j,cc,:)]= Plant_Exports(B_H(j,cc,:),B_H(j-1,cc,:),NuLit_H(j-1,cc,:),...
                     Slf_H(j,cc),Sfr_H(j,cc),Swm_H(j,cc),Sll_H(j,cc),Sr_H(j,cc),Rexmy_H(j,cc,:),Stoich_H(cc),Mpar_H(cc),fab_H(cc),fbe_H(cc),RB_H(j,cc,:),...
                     Nreserve_H(j,cc),Preserve_H(j,cc),Kreserve_H(j,cc),rNc_H(j,cc),rPc_H(j,cc),rKc_H(j,cc),ManIH(cc),OPT_SoilBiogeochemistry);
-                %%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%% End Plant_Export %%%%%%%%%%%%%%%%%%%%%%%%%
                 
                 %%%%%%%%%%%%%%%%%%%%%% Change in height SAI and Ccrown
                 SAI_H(j,cc) =SAI_H(j-1,cc);
@@ -393,10 +446,13 @@ for i=2:NN
                 else
                     hc_H(j,cc)= hc_H(j-1,cc); %%%[m]
                     if OPT_VCA == 1
-                        %%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%%%%%% Vegetation_Structural_Attributes
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         [Ccrown_t(j,cc),hc_H(j,cc),SAI_H(j,cc),BA_H(j,cc),Tden_H(j,cc),AgePl_H(j,cc),TBio_Ht(j,cc)]=Vegetation_Structural_Attributes(dtd,...
                             Ccrown_t(j-1,cc),B_H(j,cc,:),fab_H(cc),Tden_H(j-1,cc),AgePl_H(j-1,cc),OPT_ALLOME);
-                        %%%%
+                        %%%% End of Vegetation_Structural_Attributes
+
                         Ccrown(cc) = CcrownFIX(cc)*Ccrown_t(j,cc);
                         B_H(j,cc,:)= B_H(j,cc,:)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                         Nreserve_H(j,cc)=Nreserve_H(j,cc)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
@@ -405,13 +461,17 @@ for i=2:NN
                     end
                 end
                 if OPT_DROOT == 1 
-                    %%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%% Root_Depth_Dynamics %%%%%%%%%%%%%%%%%%%%%%%%%
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     [ZR95_H(cc),RfH_Zs(cc,:)]=Root_Depth_Dynamics(CASE_ROOT,B_H(j,cc,:),B_H(j-1,cc,:),Rrootl_H(j,cc),Zs,ZR95_H(cc),ZR50_H(cc),ZRmax_H(cc),...
                         Bfac_dayH(j,cc),Psan,Tdp_H(pdind,cc),O(pdind,:),Soil_Param,a_root_H(cc));
+                    %%%%%%%%%%%% End Root_Depth_Dynamics
                 end
                 ZR95_Ht(j,cc)=ZR95_H(cc); 
                 
             else
+                %%% variables are set zero
                 LAI_H(j,cc)=0;B_H(j,cc,:)=0;NPP_H(j,cc)=0;ANPP_H(j,cc)=0;Rg_H(j,cc)=0;RA_H(j,cc)=0;Rms_H(j,cc)=0;
                 Rmr_H(j,cc)=0;PHE_S_H(j,cc)=1;dflo_H(j,cc)=0;AgeL_H(j,cc)=0;e_rel_H(j,cc)=0; e_relN_H(j,cc)=0;
                 SAI_H(j,cc)=0; hc_H(j,cc)=0;
@@ -424,8 +484,17 @@ for i=2:NN
                 ISOIL_H(j,cc,:)=0; NuLit_H(j,cc,:)=0;
             
             end
-            %%%%%%%%%%%%%%%%%
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%% Low vegetation for Crown areas
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+            %%% ZR95_L: Root depth 95 percentile - low vegetation
+            %%% ZR_max_L: Maximum root depth - low vegetation
             if (ZR95_L(cc) > 0) || (ZRmax_L(cc) > 0)
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%% Veggie Unit
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [LAI_L(j,cc),B_L(j,cc,:),NPP_L(j,cc),ANPP_L(j,cc),Rg_L(j,cc),RA_L(j,cc),Rms_L(j,cc),Rmr_L(j,cc),Rmc_L(j,cc),PHE_S_L(j,cc),...
                     dflo_L(j,cc),AgeL_L(j,cc),e_rel_L(j,cc),e_relN_L(j,cc),LAIdead_L(j,cc),NBLeaf_L(j,cc),Sr_L(j,cc),Slf_L(j,cc),Sfr_L(j,cc),Swm_L(j,cc),Sll_L(j,cc),Rexmy_L(j,cc,:),Rrootl_L(j,cc),...
                     AgeDL_L(j,cc),Bfac_dayL(j,cc),Bfac_weekL(j,cc),NPPI_L(j,cc),TdpI_L(j,cc),NupI_L(j,cc,:),PARI_L(j,cc,:),NBLI_L(j,cc),RB_L(j,cc,:),FNC_L(j,cc),Nreserve_L(j,cc),Preserve_L(j,cc),Kreserve_L(j,cc),...
@@ -435,12 +504,17 @@ for i=2:NN
                     L_day(j),Lmax_day,VegL_Param_Dyn,cc,...
                     Nreserve_L(j-1,cc),Preserve_L(j-1,cc),Kreserve_L(j-1,cc),Nuptake_L(j,cc),Puptake_L(j,cc),Kuptake_L(j,cc),FNC_L(j-1,cc),Se_bio,Tdp_bio,...
                     ParEx_L(cc),ExEM,Bam,Bem,Mpar_L(cc),TBio_Lt(j-1,cc),OPT_EnvLimitGrowth,OPT_VCA,OPT_VD,OPT_SoilBiogeochemistry);
-                %%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%% End of veggie unit
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%% Plant export
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 [TexC_L(j,cc),TexN_L(j,cc),TexP_L(j,cc),TexK_L(j,cc),TNIT_L(j,cc),TPHO_L(j,cc),TPOT_L(j,cc),NuLit_L(j,cc,:),Nreserve_L(j,cc),Preserve_L(j,cc),Kreserve_L(j,cc),...
                     SupN_L(j,cc),SupP_L(j,cc),SupK_L(j,cc),ISOIL_L(j,cc,:)]= Plant_Exports(B_L(j,cc,:),B_L(j-1,cc,:),NuLit_L(j-1,cc,:),...
                     Slf_L(j,cc),Sfr_L(j,cc),Swm_L(j,cc),Sll_L(j,cc),Sr_L(j,cc),Rexmy_L(j,cc,:),Stoich_L(cc),Mpar_L(cc),fab_L(cc),fbe_L(cc),RB_L(j,cc,:),...
                     Nreserve_L(j,cc),Preserve_L(j,cc),Kreserve_L(j,cc),rNc_L(j,cc),rPc_L(j,cc),rKc_L(j,cc),ManIL(cc),OPT_SoilBiogeochemistry);
-                
+                %%%%%%%%%%% End of Plant exports
+
                 %%%%%%%%%%%%%%%%%%%%%% Change in height SAI and Ccrown
                 SAI_L(j,cc) =SAI_L(j-1,cc);
                 if aSE_L(cc) == 2
@@ -451,10 +525,13 @@ for i=2:NN
                 else
                     hc_L(j,cc)= hc_L(j-1,cc); %%%[m]
                     if OPT_VCA == 1
-                        %%%%%%
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %%%%%% Vegetation_Structural_Attributes
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         [Ccrown_t(j,cc),hc_L(j,cc),SAI_L(j,cc),BA_L(j,cc),Tden_L(j,cc),AgePl_L(j,cc),TBio_Lt(j,cc)]=Vegetation_Structural_Attributes(dtd,...
                             Ccrown_t(j-1,cc),B_L(j,cc,:),fab_L(cc),Tden_L(j-1,cc),AgePl_L(j-1,cc),OPT_ALLOME);
-                        %%%%
+                        %%%%%%%%%% End of Vegetation_Structural_Attributes
+
                         Ccrown(cc) = CcrownFIX(cc)*Ccrown_t(j,cc);
                         B_L(j,cc,:)= B_L(j,cc,:)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                         Nreserve_L(j,cc)=Nreserve_L(j,cc)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
@@ -464,9 +541,10 @@ for i=2:NN
                 end
 
                 if OPT_DROOT == 1 
-                    %%%%%%%%%
+                    %%%%%%%%% Root_Depth_Dynamics %%%%%%%%%%%%%%%%%%%%%%%%%
                     [ZR95_L(cc),RfL_Zs(cc,:)]=Root_Depth_Dynamics(CASE_ROOT,B_L(j,cc,:),B_L(j-1,cc,:),Rrootl_L(j,cc),Zs,ZR95_L(cc),ZR50_L(cc),ZRmax_L(cc),...
                         Bfac_dayL(j,cc),Psan,Tdp_L(pdind,cc),O(pdind,:),Soil_Param,a_root_L(cc));
+                    %%%%%%%%%%%%%% End Root_Depth_Dynamics
                 end
                 ZR95_Lt(j,cc)=ZR95_L(cc); 
 
@@ -481,20 +559,23 @@ for i=2:NN
                 Bfac_dayL(j,cc)=0; Bfac_weekL(j,cc)=0; NPPI_L(j,cc)=0; TdpI_L(j,cc)=0;  NupI_L(j,cc,:)=0; RB_L(j,cc,:)=0;
                 TexC_L(j,cc)=0;TexN_L(j,cc)=0;TexP_L(j,cc)=0;TexK_L(j,cc)=0;TNIT_L(j,cc)=0;TPHO_L(j,cc)=0;TPOT_L(j,cc)=0;
                 ISOIL_L(j,cc,:)=0; NuLit_L(j,cc,:)=0;
-            end
+            end %%% End of conditions for root depth - low vegetation
             %%%%%%%%%%%%%%%%%
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        end %%% End of calculations for Crowns
+
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%% Check on land cover fractions
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if OPT_VCA == 0  %%% Solutions for Crops aSE==5 
             Ccrown_t(j,:) = Ccrown;
             Cbare = 1 - sum(Ccrown) - Cwat - Curb - Crock;
             Check_Land_Cover_Fractions(Crock,Curb,Cwat,Cbare,Ccrown);
         end
-    end
-    %%%%%%% %%%%%%%
+    end %End of iteration  
 
-    %%%%%%% %%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%% Oil Palm option
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if OPT_VCA == 1
         if((OPT_ALLOME == 1)&& (ZR95_L(2))>0) %%% Ad hoc solution for oil palm
             Ccrown_t(j,2) = 1-Ccrown_t(j,1);  % understory of Oil Palm
@@ -512,8 +593,11 @@ for i=2:NN
         end
     end
     
-    Qi_in(i,:)=Qi_out(i-1,:);
-    q_runon(i)=0; %Rd(i-1)+Rh(i-1);
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%% Wetland option
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    Qi_in(i,:)=Qi_out(i-1,:); % Incoming and outcomming lateral subsurface flow
+    q_runon(i)=0; %Rd(i-1)+Rh(i-1); Runon
     if OPT_WET == 1 %%% Wetland option with water standing in the surface
         q_runon(i)=Wlev(i);
         if isnan(Wlev(i))
@@ -521,9 +605,10 @@ for i=2:NN
         end
         NetWatWet(i) = q_runon(i) - Wlevm1 ;
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%% HYDROLOGIC UNIT
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     [V(i,:),Vice(i,:),O(i,:),Oice(i,:),ZWT(i),OF(i),OS(i),OH(i,:),OL(i,:),Psi_s_H(i,:),Psi_s_L(i,:),Rd(i),Qi_out(i,:),WTR(i,:),...
         Rh(i),Lk(i),f(i),WIS(i),Ts(i),Pr_sno(i),Pr_liq(i),Csno(i),Cice(i),NDVI(i),rb_H(i,:),rb_L(i,:),rs_sunH(i,:),...
         rs_sunL(i,:),rs_shdH(i,:),rs_shdL(i,:),r_litter(i,:),...
@@ -560,22 +645,34 @@ for i=2:NN
         Urb_Par,In_max_urb,In_max_rock,K_usle,tau_sno(i-1),Ta(pdind),Slo_top,Slo_pot,Asur,Ared,aTop,EK(i-1),q_runon(i),Qi_in(i,:),...
         pow_dis,a_dis,Salt(i),...
         SPAR,SN,OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_SM,OPT_STh,OPT_FR_SOIL,OPT_PH, ...
-        parameterize_phase, hSTL, Albsno_method);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%
+        parameterize_phase, hSTL, Albsno_method);    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%% End of HYDROLOGIC UNIT %%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%% Prognostic temperature
+    %Ts: Soil/Snow prognostic temperature for the energy balance
     Tstm0 =2*Ts(i)-Ts(i-1);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %%%%%%%%% Radiation and albedo
     STOT= SAB1(i)+SAB2(i)+SAD1(i)+SAD2(i);
-    ALB(i)= SAB1(i)/STOT*snow_alb.dir_vis + SAD1(i)/STOT*snow_alb.dif_vis + ...
+    ALB(i)= SAB1(i)/STOT*snow_alb.dir_vis + SAD1(i)/STOT*snow_alb.dif_vis + ... % Albedo
         SAB2(i)/STOT*snow_alb.dir_nir + SAD2(i)/STOT*snow_alb.dif_nir;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %%%%%%%%% Numerical optimization
     if OPT_WET == 1 
         Wlevm1 = Rd(i)+Rh(i); 
     end 
-    %%% v-coordinate
+    
+    %%%%%%%%% Mass balance
+    % v-coordinate
+    % CK1: Check on mass balance
     CK1(i) = f(i)*dth*Asur*Ared + sum(V(i-1,:) - V(i,:))*Asur*Ared + sum(Vice(i-1,:) - Vice(i,:))*Asur*Ared - EG(i)*dth - Lk(i)*dth ...
         - sum(Qi_out(i,:))*dth -Rd(i) -sum(Jsx_L(i,:)).*dth -sum(Jsx_H(i,:)).*dth  + sum(Qi_in(i,:))*dth  ;
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-end
+    
+end  %End of iteration 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%% CHECKS %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %close(bau)
 Computational_Time =toc;
 %profile off
@@ -591,8 +688,9 @@ disp(1000*Computational_Time/NN)
 if OPT_SoilBiogeochemistry == 1
     NEE = -(NPP_H+NPP_L)*Ccrown' + R_litter + R_microbe + R_ew; %% [gC/m2 day]
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% MASS BALANCE CHECK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dV= (V(1,:)-V(end,:))*Asur*Ared +(Vice(1,:)-Vice(end,:))*Asur*Ared;
 Ck = sum((Pr_liq(2:end)+Pr_sno(2:end))*dth)+ sum(IrD*dth) + sum(dV)...
     -sum(EG*dth)  -sum(ELitter*dth) -sum(sum(T_L)*dth)  -sum(sum(T_H)*dth) -sum(sum(EIn_L)*dth)  -sum(sum(EIn_H)*dth) -sum(Rh)...
@@ -606,14 +704,17 @@ Ck = sum((Pr_liq(2:end)+Pr_sno(2:end))*dth)+ sum(IrD*dth) + sum(dV)...
 disp(Ck);
 disp(mean(DQ));
 % T_H, T_L  EG, EIn_urb, EIn_rock, [mm/h]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% ENERGY TRANSFORMATION CHECK
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% ENERGY TRANSFORMATION CHECK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Laten= 1000*(2501.3 - 2.361*(Ta)); %%%
 ETen = (QE)*1000*3600./(reshape(Laten,size(QE))*1000);  %% [mm/h]
 ET =  sum(T_H+EIn_H,2) + sum(T_L+EIn_L,2) +  EG +  ELitter + ESN + ESN_In + EWAT +  EICE+ EIn_urb + EIn_rock ;  %% [mm/h]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%% CARBON BALANCE CHECK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%% CARBON BALANCE CHECK
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for kj=1:cc
     if RA_H(end,kj) == 0
         dB_H= squeeze((B_H(1,kj,:)-B_H(end-1,kj,:)));
@@ -641,7 +742,10 @@ end
 CkC_ALL = sum(CkC_H)+sum(CkC_L);
 
 for kj=1:cc
-    %%%%%%%% NUTRIENT BALANCE CHECK
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%% NUTRIENT BALANCE CHECK    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if RA_H(end,kj) == 0
         ed=length(Nreserve_H)-1;
     else
