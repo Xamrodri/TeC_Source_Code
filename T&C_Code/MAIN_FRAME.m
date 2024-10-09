@@ -62,6 +62,8 @@ In_Litter=zeros(NN,1); ELitter=zeros(NN,1);
 Ws_under=zeros(NN,1);
 Ts_under=NaN*ones(NN,1);
 Tdpsnow = zeros(NN,5);
+
+
 if  not(exist('IrD','var'))
     IrD=zeros(NN,1);
 end
@@ -162,8 +164,25 @@ ISOIL_L=zeros(NNd,cc,18);
 ManIH = zeros(cc,1);
 ManIL = zeros(cc,1);
 
+
+
 AgrHarNut =  zeros(NNd,3);
 %%%%%%%%%%%%%%%%%
+
+%Snow parameters (MAX)
+parameterize_phase.OPT_Pr_Part = 2; % Upper air temperature for dual temperature threshold
+parameterize_phase.Tmax = 2; % Choice of the precipitation phase scheme
+parameterize_phase.Tmin = 0; % Lower air temperature for dual temperature threshold
+parameterize_phase.Tconst = 2; % Air temperature for constant thresholds
+
+% Skin layer thickness:
+hSTL = 0.003; %m This is the thickness of the skin layer for the 2-layer snowpack
+
+% Albedo scheme choice
+Albsno_method = 5; % This is to select which surface snow albedo scheme to use
+
+%%%%%%%%%%%%%%%%%
+
 jDay=zeros(NNd,1);L_day=zeros(NNd,1);
 %%%%
 Ccrown_t =ones(NNd,cc);
@@ -517,7 +536,9 @@ for i=2:NN
         gsr_H(i,:),Psi_x_H(i,:),Psi_l_H(i,:),Jsx_H(i,:),Jxl_H(i,:),Kleaf_H(i,:),Kx_H(i,:),Vx_H(i,:),Vl_H(i,:),...
         gsr_L(i,:),Psi_x_L(i,:),Psi_l_L(i,:),Jsx_L(i,:),Jxl_L(i,:),Kleaf_L(i,:),Kx_L(i,:),Vx_L(i,:),Vl_L(i,:),...
         fapar_H(i,:),fapar_L(i,:),SIF_H(i,:),SIF_L(i,:),...
-        snow_alb,tau_sno(i),e_sno(i),Ws_under(i),dQVEG(i),HV(i),QEV(i),TsV(i),Ts_under(i),EK(i),POT(i,:)]=HYDROLOGIC_UNIT(V(i-1,:),Oice(i-1,:),aR,Zs,...
+        snow_alb,tau_sno(i),e_sno(i),Ws_under(i),dQVEG(i),HV(i),QEV(i),TsV(i),Ts_under(i),EK(i),...
+        POT(i,:)]=HYDROLOGIC_UNIT(V(i-1,:), ...
+        Oice(i-1,:),aR,Zs,...
         EvL_Zs,Inf_Zs,Zinf,RfH_Zs,RfL_Zs,dz,Dz,ms,Kbot,Pr(i),Ta(i),Ds(i),Ws(i),zatm,Ts(i-1),Ts_under(i-1),IrD(i),dt,dth,ea(i),N(i),Pre(i),Tstm0,...
         LAI_H(j,:),SAI_H(j,:),LAI_L(j,:),SAI_L(j,:),LAIdead_H(j,:),LAIdead_L(j,:),Rrootl_H(j,:),Rrootl_L(j,:),BLit(j,:),Sllit,Kct,...
         Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft,...
