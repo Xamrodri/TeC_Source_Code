@@ -8,13 +8,13 @@ clc
 %%%%%%%%%%%%%%% Case study parameters %%%%%%%%%%%%%%%%%%%%
 
 folder_path = 'C:\Users\jouberto\Desktop\T&C\TeC_Source_Code'; % Put here the path of where you downloaded the repository
-folder_path_HPC = '/home/jouberto\TeC_Source_Code'; % Put here the path of where you downloaded the repository
+folder_path_HPC = '/nfs/scistore18/pelligrp/ajoubert/TeC_Source_Code'; % Put here the path of where you downloaded the repository
 study_name = 'Kyzylsu_distributed';
 local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
 % It is better to store the model output outside of the git T%C repository.
 path_output = 'C:\Users\jouberto\Desktop\T&C\TC_outputs\Kyzylsu\Distributed';
-path_output_HPC = '/home/jouberto/TC_outputs/Kyzylsu/Distributed/';
+path_output_HPC = '/nfs/scistore18/pelligrp/ajoubert/TC_outputs/Kyzylsu/Distributed';
 
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
 
@@ -27,6 +27,8 @@ fn_restart = '250924_1999_2023_PG00_Tmod0_2000mmSWEcap_a14c145';
 % on the HPC, 's' comes from SLURM script
 machine=getenv('computername');
 if strcmp(machine,local_machine) %%% << Achille's laptop >>
+    s=sitenumber; 
+elseif ~exist('s','var') && ~strcmp(machine,local_machine)
     s=sitenumber; 
 end
 
@@ -166,6 +168,7 @@ elseif isempty(machine) && (ISTA == 1) %%% << ISTA CLUSTER >>
     addpath(genpath([folder_path_HPC, '/Inputs'])); % Add path to Ca_Data
     addpath(genpath([folder_path_HPC, '/T&C_Code'])); % Add path to T&C codes
     outlocation = [path_output_HPC '/' char(simnm) '/'];
+    folder_path = folder_path_HPC;
 end
 
 
