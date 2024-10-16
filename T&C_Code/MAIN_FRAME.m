@@ -189,19 +189,6 @@ ManIL = zeros(cc,1);
 
 
 AgrHarNut =  zeros(NNd,3);
-%%%%%%%%%%%%%%%%%
-
-%Snow parameters (MAX)
-parameterize_phase.OPT_Pr_Part = 2; % Upper air temperature for dual temperature threshold
-parameterize_phase.Tmax = 2; % Choice of the precipitation phase scheme
-parameterize_phase.Tmin = 0; % Lower air temperature for dual temperature threshold
-parameterize_phase.Tconst = 2; % Air temperature for constant thresholds
-
-% Skin layer thickness:
-hSTL = 0.003; %m This is the thickness of the skin layer for the 2-layer snowpack
-
-% Albedo scheme choice
-Albsno_method = 5; % This is to select which surface snow albedo scheme to use
 
 %%%%%%%%%%%%%%%%%
 
@@ -350,7 +337,7 @@ for i=2:NN
     if (Datam(i,4)==1) % Condition on date
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j=j+1; [jDay(j)]= JULIAN_DAY(Datam(i,:));
-        [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)]= SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
+        [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)] = SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
         clear h_S delta_S zeta_S T_sunrise T_sunset
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

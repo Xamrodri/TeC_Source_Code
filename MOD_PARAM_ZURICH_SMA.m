@@ -1,6 +1,22 @@
 %%%%%%%%%%%%%%%%%%% PARAMETERS AND INITIAL CONDITION %%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%% SNOW-RAIN PARAMETERS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Snow parameters (MAX)
+parameterize_phase.OPT_Pr_Part = 2; % Upper air temperature for dual temperature threshold
+parameterize_phase.Tmax = 2; % Choice of the precipitation phase scheme
+parameterize_phase.Tmin = 0; % Lower air temperature for dual temperature threshold
+parameterize_phase.Tconst = 2; % Air temperature for constant thresholds
+
+% Skin layer thickness:
+hSTL = 0.003; %m This is the thickness of the skin layer for the 2-layer snowpack
+
+% Albedo scheme choice
+Albsno_method = 5; % This is to select which surface snow albedo scheme to use
+
 %%% SOIL AND HYDROLOGICAL PARAMETER
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cur_dir=cd;
