@@ -2,12 +2,11 @@
 
 close all
 clc
-%  clear all   % Don't clear all such that it can be run on the HPC cluster
-%  without any issues 
+%  clear all   % Don't clear all such that it can be run on the HPC cluster without any issues 
 %delete(gcp('nocreate'))
 
-
 %%%%%%%%%%%%%%% Case study parameters %%%%%%%%%%%%%%%%%%%%
+
 folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 folder_path_HPC = '/home/jouberto\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 study_name = 'Kyzylsu_distributed';
@@ -17,20 +16,17 @@ local_machine = 'WSL28243'; % put your computer name here (to differentiate it w
 path_output = 'C:\Users\mxtvc\Desktop\TC\1_Output';
 path_output_HPC = 'C:\Users\mxtvc\Desktop\TC\1_Output'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 
-
-
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
 
 sitenumber = 2;  % This launcher can be used for different catchment. Here in this case study, only sitenumber = 2 works (Kyzylsu catchment)
 ISTA = 1; % Run on the cluster of ISTA (Hyperion at WSL otherwise)
 
-restart = 0; % Continue a un-completed T&C run 
+restart = 0; % Set to 1 to continue a un-completed T&C run (only works if you used OUTPUT_MANAGER_DIST_LABEL)
 fn_restart = '250924_1999_2023_PG00_Tmod0_2000mmSWEcap_a14c145';
 
 % on the HPC, 's' comes from SLURM script
 machine='WSL28243'; %getenv('WSL28243');
 if strcmp(machine,local_machine) %%% << Achille's laptop >>
-
     s=sitenumber; 
 end
 
@@ -42,7 +38,7 @@ DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
 
 % Starting point of the simulation
-x1s = ["01-Oct-2018 00:00:00", "01-Jan-1970 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
+x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
 
 % Ending point of the simulation
 x2s = ["30-Sep-2020 23:00:00", "03-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
@@ -91,11 +87,16 @@ parameterize_phase.Tconst = 2; % Air temperature for constant thresholds
 parameterize_phase_labels = {'2-Ta','Ding','1-Ta','Pomeroy','Wang','Jennings'};
 parameterize_phase_label = parameterize_phase_labels(parameterize_phase.OPT_Pr_Part);
 
+% Skin layer thickness for the 2-layer snowpack module
+hSTL = 0.003; %m
+
+% Choice of the snow albedo scheme 
+Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 % Simulation comment
 
 if ~exist('sim_comment','var')
- sim_comment = "2015_one_month_test";
+ sim_comment = "Distributed_casestudy_test";
 end 
 
 % Simulation period
@@ -151,47 +152,29 @@ if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 %%%%%%%%%% attach folders, launch parallel pool, generate paths %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if strcmp(machine,'WSL28243')
-    root='C:\Users\jouberto\Desktop\T&C\TeC_Source_Code';
-    addpath(genpath('C:\Users\jouberto\Desktop\T&C\TeC_Source_Code\T&C_Code'));
-    addpath(['C:\Users\jouberto\Desktop\T&C\TC_forcing\' upper(char(SITE)) '\Distributed\BC'])
-    addpath(['C:\Users\jouberto\Desktop\T&C\TC_forcing\' upper(char(SITE)) '\Distributed\DOWNSCALED_NON_BC'])
-    outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',char(simnm),'/'];
-    Ta_trakarding = 0; % Use the air temperature bias-corrected against Trambau AWS
-    if multipoints ==1
-      addpath(genpath([root '\TC_HMA\' SITE '\RUNS\INPUTS']));
-      path_poi = [root '\TC_HMAdata\InputData\MultiPoints\' SITE '\' char(FORCING)];
-    end
-    path_igmEnv = 'C:\Users\jouberto\.conda\envs\igm\python.exe';
-    path_igm = 'C:\Users\jouberto\Desktop\others\IGM\igm';
+if strcmp(machine,local_machine)
+    addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    addpath(genpath([folder_path,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
+    addpath(genpath([folder_path, '/Inputs'])); % Add path to Ca_Data
+    addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
+    outlocation = [path_output '/' char(simnm) '/'];
 elseif isempty(machine) && (ISTA == 1) %%% << ISTA CLUSTER >>
-    root='/nfs/scistore18/pelligrp/ajoubert';
-    root_forcing = '/nfs/scistore18/pelligrp/ajoubert';
-    ncor = feature('numcores');
-    parpool('local',ncor);
-    if strcmp(SITE,'Rolwaling')
-        addpath(genpath([root_forcing '/TC_forcing/',upper(SITE),'/Distributed/NHM/Processed_data']));
-        addpath(genpath([root_forcing '/TC_forcing/',upper(SITE),'/Distributed/ERA5Land_25052023/BC']));
-        addpath(genpath([root_forcing '/TC_forcing/',upper(SITE),'/Distributed/ERA5Land_25052023/DOWNSCALED_NON_BC']));
-        path_forcing = [root_forcing '/TC_forcing/',upper(SITE),'/Distributed/ERA5Land_25052023/'];
-        Ta_trakarding = 1; % Use the air temperature bias-corrected against Trambau AWS
-    elseif strcmp(SITE,'Parlung4') || strcmp(SITE,'Mugagangqiong') || strcmp(SITE,'Kyzylsu')
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/BC']));
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/DOWNSCALED_NON_BC']));
-    end 
-    outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',char(simnm),'/'];
-    path_igmEnv = '/nfs/scistore18/pelligrp/ajoubert/.conda/envs/igm/bin/python';
-    path_igm = '/nfs/scistore18/pelligrp/ajoubert/Toolboxes/igm';
+    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
+    addpath(genpath([folder_path_HPC, '/Inputs'])); % Add path to Ca_Data
+    addpath(genpath([folder_path_HPC, '/T&C_Code'])); % Add path to T&C codes
+    outlocation = [path_output_HPC '/' char(simnm) '/'];
 end
+
+
+% Create output directory if it doesn't exist already
+if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 
 %Deactivate hyperthreading
 N=1;
 LASTN=maxNumCompThreads(N);
-%%%
-addpath(genpath([root, '/TC']));
-% addpath(genpath([root, '/TC_setups/',SITE,'/RUNS/Distributed'])); NOT NEEDED ANYMORE
-addpath(genpath([root, '/TC_setups/',SITE,'/RUNS/INPUTS']));
-addpath(genpath([root, '/TC_setups/Functions']));
 %%%
 
 if restart ~=1
@@ -204,32 +187,14 @@ addpath(genpath(outlocation));
 % copy launcher, output manager and parameter files to the output folder, 
 % to keep the right version for post-processing
 
-
 %copyfile('Launcher_Kyzylsu_Distributed.m', outlocation)
 %copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
 %copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
 %copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
 
-
 end 
 
-% Load POI for multi-points version [TO DELETE AT SOME POINT]
 
-if multipoints == 1
-    POI = readtable([path_poi '\' SITE '_MultiPoints.txt']); %define filename with points info
- for loc = 1:size(POI,1)   %Opt.3 if run locally in sequence, use for loop
-    id_location{loc} = char(string(POI.Name(loc)));
-    ij_poi(loc) = POI.idx(loc);
-    if strcmp(id_location,outlet_name)
-      Zbas = DTM(Youtlet, Xoutlet);
-      ij_poi(loc) = sub2ind(size(DTM),Youtlet,Xoutlet);
-    end 
- end 
-    loc = 12;
-    ij_poi = ij_poi(loc); % Only run ovr C3 stake
-end 
-
-%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%% load geodata, time handling, carbon data %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -240,8 +205,8 @@ if Idyn == 0
 end
 
 % Load different initial snow depth and snow albedo from the one in the dtm_file
-path_fn_IniSND = [root, '/TC_setups/',SITE, '/Preprocessing','/OUTPUTS','/Ini_SnowDepth/', fn_IniSnowDepth];
-path_fn_IniSNOWALB = [root, '/TC_setups/',SITE, '/Preprocessing','/OUTPUTS','/Ini_SnowDepth/', fn_IniSnowAlbedo];
+path_fn_IniSND = ['Inputs/Ini_SnowDepth/' fn_IniSnowDepth];
+path_fn_IniSNOWALB = ['Inputs/Ini_SnowDepth/' fn_IniSnowAlbedo];
 
 if (diff_IniSND == 1) && exist(path_fn_IniSND,'file')>0
     load(path_fn_IniSND)
@@ -258,7 +223,7 @@ GLA_ID(GLH==0)=NaN;
 % Compute bedrock DEM for ice flow
 DTM_Bedrock = DTM_orig-GLH; 
 
-load([root '/TC/Ca_Data.mat']);
+load([folder_path, '/Inputs/Ca_Data.mat']);
 clear Xvs Yvs
 %%%
 
@@ -313,16 +278,6 @@ zatm_surface = 2.0; %% Reference Height single value
 %     zatm_surface = 2.0; %% Reference Height single value
 % end
 
-%Set if using measured albedo
-% Ameas=rand(N_time_step,1); %Making dummy variable here, but add measured if you have it, it will only be used if one of the switches is on. Any missing data leave as NaN and modelled Albedo will be used.
-% Aice_meas_on_hourly=NaN(N_time_step,1);
-% Asno_meas_on_hourly=NaN(N_time_step,1);
-% idxa=isnan(Ameas)==1;
-% Aice_meas_on_hourly(idxa)=0;  %Use modelled ice albedo if not measured
-% Aice_meas_on_hourly(~idxa)=0; %When = 1 use measured ice albedo when available (Change to 0 if you don't want to use measured albedo at all)
-% Asno_meas_on_hourly(idxa)=0;  %Use modelled snow albedo if not measured
-% Asno_meas_on_hourly(~idxa)=0; %When = 1 use measured snow albedo when available (Change to 0 if you don't want to use measured albedo at all)
-
 %%%%%%%%%% Load mean glacier albedo eleavtion profile, development stage %%%%%%%%%%%
 
 fn_alb_elev = [SITE '_Albedo_vs_elev.mat'];
@@ -361,6 +316,7 @@ Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%   Matrix [m_cell x n_cell]
 %DTM ;T_flow ; cellsize; xllcorner ; yllcorner ; SN ; outlet ; Aacc
+
 GLH=GLH.*(GLA_MAP2>0);
 clear m n %MASK
 [m_cell,n_cell]=size(DTM);
@@ -563,120 +519,55 @@ for t=fts:N_time_step
     
     %waitbar(t/N_time_step,bau)
    disp('Iter:'); disp(t);
-%     if  (mod(t,100) == 0) || (t == 2)
-%         disp('Iter:'); disp(t);
-%     end
+
     %pdind = [max(1,tinp-24):tinp-1]; % previous day indexes MAYBE NEEDS TO BE REPLACED WITH SOMETHING ELSE BECAUSE OF MONTHLY INPUTS
     Datam_S=Datam(t-1,:);
     if (Datam_S(4)==1)
         tday = tday+1;
     end
     
-    if (Datam_S(3)==1 && Datam_S(4)==0 && forcingnumber == 1)
+    if (Datam_S(3)==1 && Datam_S(4)==0)
         tinp=1;
     end
    
     [jDay]= JULIAN_DAY(Datam_S);
     [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day]= SetSunVariables(Datam_S,DeltaGMT,Lon,Lat,t_bef,t_aft);
     [ShF] = Shadow_Effect(DTM,h_S,zeta_S,HZ,Zasp);
-    %Set zatm
-    %     if zatm_hourly_on==1
-    %     zatm_surface=zatm_hourly(t); %Set zatm for timestep
-    %     end
-    
-    %Measured ice/snow albedo
-%     Aice_meas_on=Aice_meas_on_hourly(t);
-%     Asno_meas_on=Asno_meas_on_hourly(t);
-%     Ameas_t=Ameas(t); %Need to create Ameas_t to be brought into Parameters_Soil_Gletsch. Only used if Aice_meas_on=1.
-%     Asno_meas=Ameas(t); %Need to create Asno_meas. Will only be used if Asno_meas_on=1.
-%     
+
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%DISTRIBUTED FORCING%%%%%%%%%%%%%%%%%%%%%%%%
     %load spatial input data on first day and hour of month 
     %(no distribution needed! currently monthly .mat-files holding 3D arrays)
 
-if strcmp(FORCING,"ERA5Land")
-    
-    if strcmp(SITE,"Rolwaling"); SITE = "Trambau"; end 
+    Elev = [3371, 3900]; % Elevation of the two meteorological stations
 
-    if (Datam_S(3)==1 && Datam_S(4)==0) || ~exist('TA_BC','var')
-        YR = Datam_S(1);
-        MO = Datam_S(2);
-        for v = 1:length(vars)
-            if vars_load(v)==1 && v == 6 
-                fn = char(strcat('Downscaled_', vars(v), '_',upper(SITE),'_ERA5Land_', string(YR), '_MM_', string(MO), '.mat'));
-        	elseif vars_load(v)==1 && v ~= 6
-                fn = char(strcat('Downscaled_', vars(v), '_',upper(SITE),'_ERA5Land_YY_', string(YR), '_MM_', string(MO), '.mat'));
-           elseif v == 5  && strcmp(SITE,"Trambau")
-                if Ta_trakarding == 1
-                   fn = char(strcat(path_forcing,'BC/TRAKARDING_TA/BiasCorrected_', vars(v), '_',upper(SITE),'_ERA5Land_', string(YR), '_', string(MO), '.mat'));
-                else
-	        fn = char(strcat('BiasCorrected_', vars(v), '_',upper(SITE),'_ERA5Land_', string(YR), '_', string(MO), '.mat'));     
-	            end  
-           else
-                   fn = char(strcat('BiasCorrected_', vars(v), '_',upper(SITE),'_ERA5Land_', string(YR), '_', string(MO), '.mat'));
-            end
-            load(fn)   
-        end
+    Station_1 = load('Forcing/Pluvio.mat'); Station_1 = Station_1.forcing_all;
+    Station_2 = load('Forcing/AWS_3900m.mat'); Station_2 = Station_2.forcing_all;
 
-        clear fn YR MO v
+    t_bef=t_befs(s); t_aft=t_afts(s); % otherwise problems when loading SWPART
 
-        if Pmod >0
-        PP_BC = PP_BC.*flipud(Pmod_S);
-        end
-
-    end
-   
-    if exist('FFds',"var");FF_BC = FFds; clear FFds; end
-    if exist('LWINds',"var");LWIN_BC = LWINds; clear LWINds; end
-    if exist('PPds',"var");PP_BC = PPds; clear PPds; end
-    if exist('RHds',"var");RH_BC = RHds; clear RHds; end
-    if exist('TAds',"var");TA_BC = TAds; clear TAds;end
-    if exist('SWPARTds',"var");SWPART_BC = SWPARTds; clear SWPARTds; end
-    if exist('PRESSds',"var")
-        if strcmp(SITE,"Rolwaling")
-            PRESS_BC = PRESSds.*0.01; clear PRESSds; % To remove once the pressure unit problem is solved from Trambau
-        else 
-            PRESS_BC = PRESSds; clear PRESSds; 
-        end
-    end 
-
-elseif strcmp(FORCING,"NHM-200m")  && tinp == 1
-    
-    for v = 1:length(vars)-1
-         load(strcat("NHM_", vars(v), "_200m_2018_2019"),vars_nhm(v))
-    end 
-        load('NHM_SWPART_200m_2018_2019')
-
-    TA_BC = Ta; LWIN_BC = LWin; clear Ta LWin
-    RH_BC = RH; PRESS_BC = Pres.*0.01; clear RH Pres
-    PP_BC = Ptot; FF_BC = WS; clear Ptot wsEntry
-    PR_sno_orig = Psno; PR_liq_orig = Pliq; clear Pliq Psno
-   % if parameterize_phase == 1; clear PR_sno_orig PR_liq_orig; end 
-    fprintf('NHM forcing loaded')
-
-end 
-t_bef=t_befs(s); t_aft=t_afts(s); % otherwise problems when loading SWPART
-if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
-
-
-        %%%%%%%%%%load input grid for each variable and time step%%%%%%%%
+%%%%%%%%%%load input grid for each variable and time step%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%Ta
-    %%%ERA5 downscaled/bias-corrected air temperature
-    Ta_S = flipud(TA_BC(:,:,tinp));
-    Ta_S(GLH>0 & DEB_MAP == 0) = Ta_S(GLH > 0 & DEB_MAP == 0)+Tmod;
+
+    % Find the indices in the meteorological time-series correpsonding to the timestamp of the simulation timestep.
+    ind_meteo = find(datetime(Datam_S(1), Datam_S(2), Datam_S(3), Datam_S(4),0,0) == Station_1.Time);
+
+    % Air temperature
+
+    Ta_1 = Station_1.TA(ind_meteo);
+    Ta_2 = Station_2.TA(ind_meteo);
+
+    AUX = polyfit(Elev,[Ta_1 Ta_2],1);
+    LR = AUX(1); clear AUX; % air tempetature lapse-rate
+
+    Ta_S = DTM; Ta_S = Ta_1 + LR.*(DTM-Elev(1)); % Distributed air temperature, extrapolated from pluviometer station
+    Ta_S(GLH>0 & DEB_MAP == 0) = Ta_S(GLH > 0 & DEB_MAP == 0)+Tmod; % Temperature modification above clean-ice via Tmod
     Ta_S = reshape(Ta_S,num_cell,1);
     Ta_S(MASKn==0) = NaN;
 
-    %Bias-correct NHM air temperature
-    if strcmp(FORCING,"NHM-200m") && Ta_biascorrect == 1
-        load('Ta_NHM_offset_MH.mat')
-        Ta_S = Ta_S - Ta_nhm_bias_mh(Datam_S(2),Datam_S(4)+1);
-    end 
-
-    %%% define Ta_day array (Ta-maps of last 24 hours), needed for albedo
+    %%% define Ta_day array (Ta-maps of last 24 hours), needed for albedo scheme
     %%% parameterization
+
     if t == fts
         Ta_day = Ta_S;
     elseif t > fts && t <= fts+24
@@ -685,46 +576,37 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
         Ta_day = [Ta_day(:,2:24),Ta_S];
     end
     
-    %%%LW
-    %%ERA5 downscaled/bias-corrected longwave radiation
-    N_S = flipud(LWIN_BC(:,:,tinp));
+    %%% longwave radiation (for this case study, it's constant in space)
+    N_1 = Station_1.LWIN(ind_meteo);
+    N_S = DTM.*0 + N_1;
     N_S = reshape(N_S,num_cell,1);
     N_S(MASKn==0) = NaN;
-    %%%RH
-    %%ERA5 downscaled/bias-corrected relative humidity
-    U_S = flipud(RH_BC(:,:,tinp))./100;
+
+    %%ERA5 Relative humidity
+    U_1 = Station_1.RH(ind_meteo)./100;
+    U_S = DTM.*0 + U_1;
     U_S = reshape(U_S,num_cell,1);
     U_S(U_S<0)=0; U_S(U_S>1)=1;
     U_S(MASKn==0) = NaN;
-    %%%Ws
-    %%%ERA5 downscaled/bias-corrected wind speed
-    Ws_S = flipud(FF_BC(:,:,tinp));
+
+    %%% Wind speed
+    Ws_1 = Station_1.FF(ind_meteo);
+    Ws_S = DTM.*0 + Ws_1;
     Ws_S = reshape(Ws_S,num_cell,1);
     Ws_S(isnan(Ws_S)) = 0.01;
     Ws_S(Ws_S < 0.01) = 0.01;
     Ws_S = Ws_S.*MASKn;
-    %%%Pr
-    %%%ERA5 downscaled/bias-corrected precipitation
-    Pr_S = flipud(PP_BC(:,:,tinp));
+
+    %%% Precipitation
+    Pr_1 = Station_1.PP(ind_meteo);
+    Pr_S = DTM.*0 + Pr_1;
     Pr_S = reshape(Pr_S,num_cell,1);
     Pr_S(isnan(Pr_S)) = 0;
     Pr_S(Pr_S<0.001)=0;
 
-%if strcmp(FORCING,"NHM-200m") && parameterize_phase == 0
-%   Pr_liq_orig = flipud(PR_liq_orig(:,:,tinp));
-%   Pr_liq_orig = reshape(Pr_liq_orig,num_cell,1);
-%   Pr_liq_orig(isnan(Pr_liq_orig)) = 0;
-%   Pr_liq_orig(Pr_liq_orig<0.1)=0;
-
-%    Pr_sno_orig = flipud(PR_sno_orig(:,:,tinp));
-%    Pr_sno_orig = reshape(Pr_sno_orig,num_cell,1);
-%   Pr_sno_orig(isnan(Pr_sno_orig)) = 0;
-%   Pr_sno_orig(Pr_sno_orig<0.1)=0;
-%end 
-
-    %%%Pre
-    %%ERA5 downscaled/bias-corrected pressure
-    Pre_S = flipud(double(PRESS_BC(:,:,tinp)));
+    %%% Air pressure
+    Pre_1 = Station_1.PRESS(ind_meteo);
+    Pre_S = DTM.*0 + Pre_1;
     Pre_S = reshape(Pre_S,num_cell,1);
 
     cos_fst = cos(atan(Slo_top))*sin(h_S) + sin(atan(Slo_top)).*cos(h_S).*cos(zeta_S-Aspect*pi/180);
@@ -739,23 +621,23 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
         PARB_S  =  0*MASKn;
         PARD_S  =  0*MASKn;
     else
-        %SAD1_S = SAD1(:,:,tinp);
-        %SAD2_S = SAD2(:,:,tinp);
-        %PARD_S = PARD(:,:,tinp);
+
+        SAD1_1 = Station_1.SAD1(ind_meteo); SAD1_S = DTM.*0 + SAD1_1;
+        SAD2_1 = Station_1.SAD2(ind_meteo); SAD2_S = DTM.*0 + SAD2_1;
+        SAB1_1 = Station_1.SAB1(ind_meteo); SAB1_S = DTM.*0 + SAB1_1;
+        SAB2_1 = Station_1.SAB2(ind_meteo); SAB2_S = DTM.*0 + SAB2_1;
+        PARD_1 = Station_1.PARD(ind_meteo); PARD_S = DTM.*0 + PARD_1;
+        PARB_1 = Station_1.PARB(ind_meteo); PARB_S = DTM.*0 + PARB_1;
+
+        %needed, if terrain effects have not been considered during pre-processing
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %SAB1_S = SAB1(:,:,tinp);
-        %SAB2_S = SAB2(:,:,tinp);
-        %PARB_S = PARB(:,:,tinp);
-        %needed, if terrain effects have not been considered during
-        %pre-processing
+        SAD1_S = SAD1_S.*SvF + Ct.*rho_g.*(SAD1_S./sin(h_S).*cos_fst + (1-SvF).*SAD1_S);
+        SAD2_S = SAD2_S.*SvF + Ct.*rho_g.*(SAD2_S./sin(h_S).*cos_fst + (1-SvF).*SAD2_S);
+        PARD_S = PARD_S.*SvF + Ct.*rho_g.*(PARD_S./sin(h_S).*cos_fst + (1-SvF).*PARD_S);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        SAD1_S = flipud(SAD1(:,:,tinp)).*SvF + Ct.*rho_g.*(flipud((SAB1(:,:,tinp))./sin(h_S)).*cos_fst + (1-SvF).*flipud(SAD1(:,:,tinp)));
-        SAD2_S = flipud(SAD2(:,:,tinp)).*SvF + Ct.*rho_g.*(flipud((SAB2(:,:,tinp))./sin(h_S)).*cos_fst + (1-SvF).*flipud(SAD2(:,:,tinp)));
-        PARD_S = flipud(PARD(:,:,tinp)).*SvF + Ct.*rho_g.*(flipud((PARB(:,:,tinp))./sin(h_S)).*cos_fst + (1-SvF).*flipud(PARD(:,:,tinp)));
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        SAB1_S =(flipud(SAB1(:,:,tinp))./sin(h_S)).*cos_fst.*ShF;
-        SAB2_S =(flipud(SAB2(:,:,tinp))./sin(h_S)).*cos_fst.*ShF;
-        PARB_S = (flipud(PARB(:,:,tinp))./sin(h_S)).*cos_fst.*ShF;        
+        SAB1_S =(SAB1_S./sin(h_S)).*cos_fst.*ShF;
+        SAB2_S =(SAB2_S./sin(h_S)).*cos_fst.*ShF;
+        PARB_S = (PARB_S./sin(h_S)).*cos_fst.*ShF;        
 	    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %grad1= 0.0049; % gradient [[W/m^2]/m]
         %SAB1_S= (SAB1_S + grad1*(DTM-qta_Sta));
@@ -1105,12 +987,8 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
     %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-    if multipoints == 1; num_cell_loop = ij_poi; else num_cell_loop = 1:num_cell; end 
-
-%     for ijl=1:length(num_cell_loop)%
-%          ij = num_cell_loop(ijl);
-    parfor ij=1:num_cell
+    parfor ij=1:num_cell    % Good practice to use a simple for loop for debugging/testing
+        %disp(strcat('in the loop', ij))
         if MASKn(ij)== 1
             Elev=DTM(ij);
             %[i,j] = ind2sub([m_cell,n_cell],ij);
@@ -1182,7 +1060,7 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
                     NavlI(ij,:),Bam(ij),Bem(ij),Ccrown_t_tm1(ij,:),...
                     Nreserve_Ltm1(ij,:),Preserve_Ltm1(ij,:),Kreserve_Ltm1(ij,:),Nuptake_L(ij,:),Puptake_L(ij,:),Kuptake_L(ij,:),FNC_Ltm1(ij,:),Tden_Ltm1(ij,:),AgePl_Ltm1(ij,:),...
                     fab_L,fbe_L,ParEx_L,Mpar_L,TBio_L(ij,:),SAI_Ltm1(ij,:),hc_Ltm1(ij,:),...
-                    ExEM,Lmax_day,L_day,Se_bio,Tdp_bio,OPT_EnvLimitGrowth,OPT_VD,OPT_VCA,OPT_ALLOME,OPT_SoilBiogeochemistry);
+                    ExEM,Lat,Se_bio,Tdp_bio,OPT_EnvLimitGrowth,OPT_VD,OPT_VCA,OPT_ALLOME,OPT_SoilBiogeochemistry);
                 
                 BLit(ij,:)= 0.0 ; % %% %%[kg DM / m2]
             end
@@ -1232,7 +1110,7 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
                 Slo_top(ij),Slo_head(ij,:),Asur(ij),Ared(ij),aTop(ij),EKtm1(ij),q_runon(ij),Qi_in(ij,:),...
                 Ws_undertm1(ij),Pr_sno_t(ij,:),...
                 pow_dis,a_dis,Salt_S(ij),...
-                SPAR,SNn(ij),OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_SM,OPT_STh,OPT_FR_SOIL,OPT_PH,parameterize_phase);
+                SPAR,SNn(ij),OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_SM,OPT_STh,OPT_FR_SOIL,OPT_PH,parameterize_phase, hSTL, Albsno_method);
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
@@ -1359,14 +1237,6 @@ if (Datam_S(2)==1) && (Datam_S(3)==1) && (Datam_S(4)==1) && (Idyn > 0)
         SND = SWE./ros; SND(isnan(SND))=0;
 end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%% Snow 2 ice conversion cap %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    if (Datam_S(4)==1) && (Datam_S(3)==30) && (Datam_S(2)==9)
-       [ICE,ICE_D,SWE,SND]=Snow2Ice_cap(Asur, 2000, SWE, ICE,ros);
-    end 
-
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%% AVALANCHES COMPONENT %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1390,7 +1260,6 @@ end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%% Catchment average snowline %%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    [SLE,SLnoise] = Snowline(DTM,SND,In_SWE,LAI_H,Aspect,1);
     
     SND=	reshape(SND,num_cell,1); SND(isnan(SND)) = 0;
     SWE=    reshape(SWE,num_cell,1); SWE(isnan(SWE)) = 0;
@@ -1592,19 +1461,15 @@ end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%% OUTPUT WRITING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    if multipoints == 1
-         run('OUTPUT_MANAGER_MULTIPOINTS');
-    else 
-         run('OUTPUT_MANAGER_DIST_LABEL');
-    end 
      
+    run([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m']);
 
-    if  mod(t,25)==0 && multipoints ~= 1
+    % Save the workspace at frequent interval. VEry useful in case it crashed 
+    if  mod(t,25)==0    
         save([outlocation, Fstep], '-regexp', '^(?!(FF_BC|LWIN_BC|PARB|PARD|PP_BC|PRESS_BC|RH_BC|SAB1|SAB2|SAD1|SAD2|TA_BC|WS)$).');
-    end 
+    end   
 
-    if  mod(t,8760)==0  ||  t==N_time_step && multipoints ~= 1
+    if  mod(t,8760)==0  ||  t==N_time_step
         Fstep2= strcat(Fstep,'_',num2str(t));
         save([outlocation, Fstep2], '-regexp', '^(?!(FF_BC|LWIN_BC|PARB|PARD|PP_BC|PRESS_BC|RH_BC|SAB1|SAB2|SAD1|SAD2|TA_BC|WS)$).');
     end
@@ -1622,11 +1487,3 @@ disp('COMPUTATIONAL TIME [h] ')
 disp(Computational_Time/3600)
 disp(' COMPUTATIONAL TIME [s/cycle] ')
 disp(Computational_Time/N_time_step)
-
-%%%%%%% Remove .core*** files on cluster %%%%%%
-
-dir_core = dir([root, '/TC_setups/core.*']);
-
-if ~isempty(dir_core)
-    for ii = 1:length(dir_core); delete(dir_core(ii).name); end
-end 
