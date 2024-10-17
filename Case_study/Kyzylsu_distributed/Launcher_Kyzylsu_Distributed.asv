@@ -8,16 +8,9 @@ clc
 
 
 %%%%%%%%%%%%%%% Case study parameters %%%%%%%%%%%%%%%%%%%%
-folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code'; % Put here the path of where you downloaded the repository
-folder_path_HPC = '/home/jouberto\TeC_Source_Code'; % Put here the path of where you downloaded the repository
+
+folder_path = 'C:\Users\jouberto\Desktop\T&C\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 study_name = 'Kyzylsu_distributed';
-local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
-
-% It is better to store the model output outside of the git T%C repository.
-path_output = 'C:\Users\mxtvc\Desktop\TC\1_Output';
-path_output_HPC = 'C:\Users\mxtvc\Desktop\TC\1_Output'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
-
-
 
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
 
@@ -27,10 +20,9 @@ ISTA = 1; % Run on the cluster of ISTA (Hyperion at WSL otherwise)
 restart = 0; % Continue a un-completed T&C run 
 fn_restart = '250924_1999_2023_PG00_Tmod0_2000mmSWEcap_a14c145';
 
-% on the HPC, 's' comes from SLURM script
-machine='WSL28243'; %getenv('WSL28243');
-if strcmp(machine,local_machine) %%% << Achille's laptop >>
-
+% on HYPERION, 's' comes from SLURM script
+machine=getenv('computername');
+if strcmp(machine,'WSL28243') %%% << Achille's laptop >>
     s=sitenumber; 
 end
 
@@ -45,7 +37,7 @@ Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the referenc
 x1s = ["01-Oct-2018 00:00:00", "01-Jan-1970 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
 
 % Ending point of the simulation
-x2s = ["30-Sep-2020 23:00:00", "03-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
+x2s = ["30-Sep-2020 23:00:00", "01-Jan-1970 12:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
 
 % dtm file name
 dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Kyzylsu_100m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_200m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
@@ -204,12 +196,10 @@ addpath(genpath(outlocation));
 % copy launcher, output manager and parameter files to the output folder, 
 % to keep the right version for post-processing
 
-
-%copyfile('Launcher_Kyzylsu_Distributed.m', outlocation)
-%copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
-%copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
-%copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
-
+copyfile('TC_distributed_launcher.m', outlocation)
+copyfile('OUTPUT_MANAGER_DIST_LABEL.m', outlocation)
+copyfile([root, '/TC_setups/PARAMETERS_SOIL.m'], outlocation)
+copyfile([root, '/TC_setups/',SITE,'/RUNS/INPUTS/' dtm_file], outlocation) % dtm_file
 
 end 
 
@@ -233,7 +223,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%% load geodata, time handling, carbon data %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load(strcat('M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code\Case_study\Kyzylsu_pointscale\Inputs\',dtm_files(s)))
+load(dtm_files(s))
 
 if Idyn == 0
     GLH(GLH>0) = GLH(GLH>0) +400;  % Only use when ice dynamics are off, to avoid glacier disappearance
@@ -547,7 +537,7 @@ tic ;
 %%
 fts = 2; 
 tinp = 0;
-root = 'M:';
+
 if restart == 1  % Restart simulation from a previously saved step
     outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',fn_restart,'/'];
     load([outlocation 'Final_reached_step_' SITE '.mat'])
@@ -805,8 +795,7 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
     ea_S=reshape(ea_S,num_cell,1);
     Ds_S=reshape(Ds_S,num_cell,1);
     Tdew_S=reshape(Tdew_S,num_cell,1);
-    
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%% SPATIAL INITIALIZATION VECTOR PREDEFINING %%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1099,12 +1088,9 @@ if strcmp(SITE,"Trambau"); SITE = "Rolwaling"; end  %Reverse to real site name
         Vx_H=       Vx_Htm1;
         Vx_L=       Vx_Ltm1;
     end
-
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
     if multipoints == 1; num_cell_loop = ij_poi; else num_cell_loop = 1:num_cell; end 
 
