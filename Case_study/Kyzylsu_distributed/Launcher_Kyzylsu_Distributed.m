@@ -7,14 +7,14 @@ clc
 
 %%%%%%%%%%%%%%% Case study parameters %%%%%%%%%%%%%%%%%%%%
 
-folder_path = 'C:\Users\jouberto\Desktop\T&C\TeC_Source_Code'; % Put here the path of where you downloaded the repository
+folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 folder_path_HPC = '/home/jouberto\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 study_name = 'Kyzylsu_distributed';
 local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
 % It is better to store the model output outside of the git T%C repository.
-path_output = 'C:\Users\jouberto\Desktop\T&C\TC_outputs\Kyzylsu\Distributed';
-path_output_HPC = '/home/jouberto/TC_outputs/Kyzylsu/Distributed/';
+path_output = 'C:\Users\mxtvc\Desktop\TC\1_Output';
+path_output_HPC = 'C:\Users\mxtvc\Desktop\TC\1_Output'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
 
@@ -25,7 +25,7 @@ restart = 0; % Set to 1 to continue a un-completed T&C run (only works if you us
 fn_restart = '250924_1999_2023_PG00_Tmod0_2000mmSWEcap_a14c145';
 
 % on the HPC, 's' comes from SLURM script
-machine=getenv('computername');
+machine='WSL28243'; %getenv('WSL28243');
 if strcmp(machine,local_machine) %%% << Achille's laptop >>
     s=sitenumber; 
 end
@@ -41,7 +41,7 @@ Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the referenc
 x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
 
 % Ending point of the simulation
-x2s = ["30-Sep-2020 23:00:00", "01-Oct-2021 00:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
+x2s = ["30-Sep-2020 23:00:00", "03-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
 
 % dtm file name
 dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Kyzylsu_100m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_200m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
@@ -187,10 +187,10 @@ addpath(genpath(outlocation));
 % copy launcher, output manager and parameter files to the output folder, 
 % to keep the right version for post-processing
 
-copyfile('Launcher_Kyzylsu_Distributed.m', outlocation)
-copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
-copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
-copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
+%copyfile('Launcher_Kyzylsu_Distributed.m', outlocation)
+%copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
+%copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
+%copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
 
 end 
 
@@ -198,7 +198,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%% load geodata, time handling, carbon data %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load(dtm_files(s))
+load(strcat('M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code\Case_study\Kyzylsu_pointscale\Inputs\',dtm_files(s)))
 
 if Idyn == 0
     GLH(GLH>0) = GLH(GLH>0) +400;  % Only use when ice dynamics are off, to avoid glacier disappearance
@@ -503,7 +503,7 @@ tic ;
 %%
 fts = 2; 
 tinp = 0;
-
+root = 'M:';
 if restart == 1  % Restart simulation from a previously saved step
     outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',fn_restart,'/'];
     load([outlocation 'Final_reached_step_' SITE '.mat'])
@@ -687,7 +687,8 @@ for t=fts:N_time_step
     ea_S=reshape(ea_S,num_cell,1);
     Ds_S=reshape(Ds_S,num_cell,1);
     Tdew_S=reshape(Tdew_S,num_cell,1);
-
+    
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%% SPATIAL INITIALIZATION VECTOR PREDEFINING %%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -980,11 +981,14 @@ for t=fts:N_time_step
         Vx_H=       Vx_Htm1;
         Vx_L=       Vx_Ltm1;
     end
+
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    parfor ij=1:num_cell    % GOod practice to use a simple for loop for debugging/testing
+    parfor ij=1:num_cell    % Good practice to use a simple for loop for debugging/testing
+        %disp(strcat('in the loop', ij))
         if MASKn(ij)== 1
             Elev=DTM(ij);
             %[i,j] = ind2sub([m_cell,n_cell],ij);

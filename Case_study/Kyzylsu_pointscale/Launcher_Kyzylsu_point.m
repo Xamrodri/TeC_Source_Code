@@ -2,9 +2,9 @@ clc; clear all;
 
 %%%%%%%% LINES TO BE CHANGED %%%%%%%%
 
-folder_path = 'C:\Users\jouberto\Desktop\T&C\TeC_Source_Code\'; % Put here the path of where you downloaded the repository
+folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code\'; % Put here the path of where you downloaded the repository
 
-point_id = 2; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run the point-scale version of T&C
+point_id = 1; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run the point-scale version of T&C
 
 %AWS_OnGlacier (1) : at the location of an AWS located on the debris-covered
 %portion of Kyzylsu Glacier in Tajikistan
@@ -74,7 +74,7 @@ end
 % Create the directy where model outputs will be stored
 outlocation = [folder_path,'/Case_study/' study_name '/Outputs'];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
-out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat');%file path initial conditions
+out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
 
 res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
 
@@ -137,6 +137,8 @@ if exist('loc','var') %Option 1: if run on a cluster as an array task, use clust
 else
     LOC = 2; %1:size(POI,1); %loc = 11;       %Option 2: Manually select the indices
 end 
+
+
 
 for loc = LOC  
  
@@ -434,6 +436,9 @@ Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET,ros,'Vari
 'Ta','Ws','U','N','Rsw',...
 'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ros'});
 
+%Max (Try)
+out_my =table(Date, ZWT, 'VariableNames',{'Date', 'WaterTable'})
+
 if output_daily == 1 % If I want to only save daily aggregated output 
 
 Outputs_tt = table2timetable(Outputs_t);
@@ -487,6 +492,7 @@ Pluvio = Pluvio.Pluvio_all;
 SND_meas = 3.90 - Pluvio.DIST_corr(hour(Pluvio.Date) == 12);
 SND_meas(SND_meas>1.5) = NaN;
 
+
 fi2 = figure('Renderer', 'painters', 'Position',[245.6667 411.6667 595.3333 286.3333]);
 plot(Pluvio.Date(hour(Pluvio.Date) == 12), SND_meas,'k','LineWidth',1.1); hold on; grid on;
 plot(Outputs_tt.Date, Outputs_tt.SND,'Color',[1 0 0 0.7],'LineWidth',1.1)
@@ -498,3 +504,11 @@ title('Pluviometer')
 % exportgraphics(fi2,[outlocation '\T&C_SnowDepth_validation_AlbBrock.png'],'Resolution',300,'BackgroundColor','none')
 
 end
+
+%Max plot
+%{
+fi3 = figure('Renderer', 'painters', 'Position',[141.6667 244.3333 460.0000 370.6667]);
+plot(out_my.Date, out_my.WaterTable); hold on; grid on;
+ylim([0 2000])
+%}
+

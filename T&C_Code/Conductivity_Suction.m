@@ -2,7 +2,32 @@
 %   Subfunction  Conductivity_Suction_O  %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function[Ko,Po]=Conductivity_Suction(SPAR,Ks,Osat,Ohy,L,Pe,O33,alpVG,nVG,lVG,Ks_mac,Omac,alpVGM,nVGM,lVGM,Phy1,s_SVG,bVG,O)
+%%Loading 
+%disp('Im in Conductivity suction')
+ 
+try %if load fails, it just continue as normal
+    load('M:/19_ISTA/1_TC/3_Model_Source/TeC_Source_Code/Case_study/Kyzylsu_distributed/Store_par/Param_saved.mat')
+    %Here we are checking if the values in the store struct were run
+    %before. If so, then the values Ko and Po are returned.
+    for z = 1:length(stored)
+        if stored(z).SPAR==SPAR && stored(z).Ks == Ks && stored(z).Osat==Osat && stored(z).Ohy==Ohy && ...
+            stored(z).L==L && stored(z).Pe == Pe && stored(z).O33==O33 && stored(z).alpVG==alpVG && ...
+            stored(z).nVG==nVG && stored(z).lVG == lVG && stored(z).Ks_mac==Ks_mac && stored(z).Omac==Omac && ...
+            stored(z).alpVGM==alpVGM && stored(z).nVGM == nVGM && stored(z).lVGM==lVGM && stored(z).Phy1c==Phy1 && ...
+            stored(z).s_SVG==s_SVG && stored(z).bVG == bVG && stored(z).O==O
+    
+            Ko=stored(z).Ko;
+            Po=stored(z).Po;
+            disp('shortened')
+            return
+        end
+    end
+end
+
+%%Old code
+
 %%REFERENCES %%   Saxton and Rawls 2006
 mVG= 1-1./nVG;
 mVGM= 1-1./nVGM;
@@ -87,4 +112,38 @@ switch SPAR
         Po = -(1./alpVG).*((Se).^(-1./mVG)-1).^(1./nVG); %%% [mm]
         Ko= Ks.*((Se).^(lVG)).*(1-(1-(Se).^(1./mVG)).^mVG).^2; %%% [mm/h]
 end
+
+%%Saving
+if exist('stored', 'var')
+    nrow = length(stored); %I calculate the next row available
+    stored(nrow).SPAR = SPAR;
+    stored(nrow).Ks = Ks;
+    stored(nrow).Osat = Osat;
+    stored(nrow).Ohy = Ohy;
+    stored(nrow).L = L;
+    stored(nrow).Pe = Pe;
+    stored(nrow).O33 = O33;
+    stored(nrow).alpVG = alpVG;
+    stored(nrow).nVG = nVG;
+    stored(nrow).lVG = lVG;
+    stored(nrow).Ks_mac = Ks_mac;
+    stored(nrow).Omac = Omac;
+    stored(nrow).alpVGM = alpVGM;
+    stored(nrow).nVGM = nVGM;
+    stored(nrow).lVGM = lVGM;
+    stored(nrow).Phy1 = Phy1;
+    stored(nrow).s_SVG = s_SVG;
+    stored(nrow).bVG = bVG;
+    stored(nrow).O = O;
+    stored(nrow).Ko = Ko;
+    stored(nrow).Po = Po;
+else %if the struc stored does not exist before, then I create it. 
+    
+    stored = struct('SPAR', {SPAR},'Ks',{Ks},'Osat',{Osat},'Ohy',{Ohy},'L', {L}, ...
+                'Pe', {Pe},'O33', {O33},'alpVG', {alpVG},'nVG', {nVG},'lVG', {lVG}, ...
+                'Ks_mac',{Ks_mac},'Omac', {Omac},'alpVGM', {alpVGM},'nVGM', {nVGM}, ...
+                'lVGM', {lVGM},'Phy1', {Phy1},'s_SVG',{s_SVG},'bVG',{bVG},'O',{O}, ...
+                'Ko',{Ko}, 'Po',{Po})
+end
+save('M:/19_ISTA/1_TC/3_Model_Source/TeC_Source_Code/Case_study/Kyzylsu_distributed/Store_par/Param_saved.mat','stored')
 return
