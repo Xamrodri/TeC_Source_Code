@@ -987,7 +987,7 @@ for t=fts:N_time_step
     %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-    parfor ij=1:num_cell    % Good practice to use a simple for loop for debugging/testing
+    parfor ij=4550:4600    % Good practice to use a simple for loop for debugging/testing
         %disp(strcat('in the loop', ij))
         if MASKn(ij)== 1
             Elev=DTM(ij);
