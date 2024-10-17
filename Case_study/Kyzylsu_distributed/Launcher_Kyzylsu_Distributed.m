@@ -39,11 +39,14 @@ Lons = [85.5695,71.4176,95.699, 86.531051, 96.923511,87.486];
 DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
 
+sim_start = "01-Sep-2021 00:00:00"; % First timestep of the simulation
+sim_end = "01-Oct-2021 00:00:00"; % Last timestep of the simulation
+
 % Starting point of the simulation
-x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
+x1s = ["01-Oct-2018 00:00:00", sim_start, "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
 
 % Ending point of the simulation
-x2s = ["30-Sep-2020 23:00:00", "01-Oct-2021 00:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
+x2s = ["30-Sep-2020 23:00:00", sim_end, "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
 
 % dtm file name
 dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Kyzylsu_100m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_200m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
