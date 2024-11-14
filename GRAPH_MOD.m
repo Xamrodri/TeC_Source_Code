@@ -110,10 +110,10 @@ NN=1:NN; NNd=1:NNd;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 switch_met = 0;
 switch_basic = 0;
-switch_snow = 0;
+switch_snow = 1;
 switch_ice = 0;
 switch_soil = 0;
-switch_veg = 1;
+switch_veg = 0;
 switch_summary = 1;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

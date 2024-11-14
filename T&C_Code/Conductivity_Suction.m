@@ -6,7 +6,8 @@
 function[Ko,Po]=Conductivity_Suction(SPAR,Ks,Osat,Ohy,L,Pe,O33,alpVG,nVG,lVG,Ks_mac,Omac,alpVGM,nVGM,lVGM,Phy1,s_SVG,bVG,O)
 %%Loading 
 %disp('Im in Conductivity suction')
- 
+
+%{
 try %if load fails, it just continue as normal
     load('M:/19_ISTA/1_TC/3_Model_Source/TeC_Source_Code/Case_study/Kyzylsu_distributed/Store_par/Param_saved.mat')
     %Here we are checking if the values in the store struct were run
@@ -26,6 +27,7 @@ try %if load fails, it just continue as normal
     end
 end
 
+%}
 %%Old code
 
 %%REFERENCES %%   Saxton and Rawls 2006
@@ -114,6 +116,7 @@ switch SPAR
 end
 
 %%Saving
+%{
 if exist('stored', 'var')
     nrow = length(stored); %I calculate the next row available
     stored(nrow).SPAR = SPAR;
@@ -146,4 +149,5 @@ else %if the struc stored does not exist before, then I create it.
                 'Ko',{Ko}, 'Po',{Po})
 end
 save('M:/19_ISTA/1_TC/3_Model_Source/TeC_Source_Code/Case_study/Kyzylsu_distributed/Store_par/Param_saved.mat','stored')
+%}
 return
