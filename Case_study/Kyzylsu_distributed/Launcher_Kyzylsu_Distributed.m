@@ -12,12 +12,15 @@ clc
 
 folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code'; % Put here the path of where you downloaded the repository
 folder_path_HPC = '/home/jouberto\TeC_Source_Code'; % Put here the path of where you downloaded the repository
+
 study_name = 'Kyzylsu_distributed';
 local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
 % It is better to store the model output outside of the git T%C repository.
+
 path_output = 'C:\Users\mxtvc\Desktop\TC\1_Output';
 path_output_HPC = 'C:\Users\mxtvc\Desktop\TC\1_Output'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
+
 
 
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
@@ -34,6 +37,8 @@ machine='WSL28243'; %getenv('WSL28243');
 if strcmp(machine,local_machine) %%% << Achille's laptop >>
 
     s=sitenumber; 
+elseif ~exist('s','var') && ~strcmp(machine,local_machine)
+    s=sitenumber; 
 end
 
 SITEs = ["Langtang", "Kyzylsu", "Parlung24K","Rolwaling","Parlung4","Mugagangqiong"]; % All of my study catchments
@@ -43,7 +48,11 @@ Lons = [85.5695,71.4176,95.699, 86.531051, 96.923511,87.486];
 DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
 
+sim_start = "01-Sep-2021 00:00:00"; % First timestep of the simulation
+sim_end = "01-Oct-2021 00:00:00"; % Last timestep of the simulation
+
 % Starting point of the simulation
+
 x1s = ["01-Oct-2018 00:00:00", "01-Jan-1970 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
 
 % Ending point of the simulation
@@ -169,6 +178,7 @@ if strcmp(machine,'WSL28243')
     path_igmEnv = 'C:\Users\jouberto\.conda\envs\igm\python.exe';
     path_igm = 'C:\Users\jouberto\Desktop\others\IGM\igm';
 elseif isempty(machine) && (ISTA == 1) %%% << ISTA CLUSTER >>
+
     root='/nfs/scistore18/pelligrp/ajoubert';
     root_forcing = '/nfs/scistore18/pelligrp/ajoubert';
     ncor = feature('numcores');
@@ -186,6 +196,7 @@ elseif isempty(machine) && (ISTA == 1) %%% << ISTA CLUSTER >>
     outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',char(simnm),'/'];
     path_igmEnv = '/nfs/scistore18/pelligrp/ajoubert/.conda/envs/igm/bin/python';
     path_igm = '/nfs/scistore18/pelligrp/ajoubert/Toolboxes/igm';
+
 end
 
 %Deactivate hyperthreading
