@@ -165,8 +165,8 @@ if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if strcmp(machine,'WSL28243')
-    root='C:\Users\jouberto\Desktop\T&C\TeC_Source_Code';
-    addpath(genpath('C:\Users\jouberto\Desktop\T&C\TeC_Source_Code\T&C_Code'));
+    root='M:\19_ISTA\1_TC\TeC_Source_Code';
+    addpath(genpath('M:\19_ISTA\1_TC\TeC_Source_Code\T&C_Code'));
     addpath(['C:\Users\jouberto\Desktop\T&C\TC_forcing\' upper(char(SITE)) '\Distributed\BC'])
     addpath(['C:\Users\jouberto\Desktop\T&C\TC_forcing\' upper(char(SITE)) '\Distributed\DOWNSCALED_NON_BC'])
     outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',char(simnm),'/'];

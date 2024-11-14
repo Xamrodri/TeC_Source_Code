@@ -112,9 +112,6 @@ function[LAI_H,B_H,NPP_H,ANPP_H,Rg_H,RA_H,Rms_H,Rmr_H,Rmc_H,PHE_S_H,...
     OPT_ALLOME, ...
     OPT_SoilBiogeochemistry)
     
-    disp('inside Veg_module. The value of SoilBiogeochemistry is:')
-    disp(OPT_SoilBiogeochemistry)
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% %% To be adjusted
 dtd=1; %% day
