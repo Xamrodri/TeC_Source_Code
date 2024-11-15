@@ -10,7 +10,7 @@ clear all; close all; clc
 Bdrive = 1;
 machine=getenv('computername');
 
-if strcmp(machine,'WSL28243') %%% << Laptop >>
+if strcmp(machine,'LAPTOP-P75HBCRE') %%% << Laptop >>
     root='C:\Users\jouberto\Desktop';
 elseif isempty(machine) %%% << HYPERION >>
     root='\home\jouberto';

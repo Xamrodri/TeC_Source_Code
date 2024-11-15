@@ -13,7 +13,7 @@ study_name = '1_Pyrenees_distributed';
 local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
 % It is better to store the model output outside of the git T%C repository.
-path_output = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files';
+path_output = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files/1_Model_outputs';
 path_output_HPC = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 
 %%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
@@ -988,7 +988,7 @@ for t=fts:N_time_step
     %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    parfor ij=4500:4600    % Good practice to use a simple for loop for debugging/testing
+    parfor ij=1:4000    % Good practice to use a simple for loop for debugging/testing
         %disp(strcat('in the loop', ij))
         if MASKn(ij)== 1
             Elev=DTM(ij);
