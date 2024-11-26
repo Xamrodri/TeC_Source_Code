@@ -1,2 +1,0 @@
-Zone,EPSG
-WGS 84 / UTM zone 31N,32631
