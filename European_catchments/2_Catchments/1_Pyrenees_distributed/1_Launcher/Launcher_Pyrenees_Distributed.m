@@ -1,25 +1,43 @@
-%%%%%%%%%%%%%% TETHYS-CHLORIS(T&C)ADVANCED HYDROLOGICAL MODEL%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% TETHYS-CHLORIS(T&C) - ADVANCED HYDROLOGICAL MODEL%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% AUTHOR INFO AND STUDY SITE
+%==========================================================================
+% Created on Nov 25, 2024
+% Author: MAXIMILIANO RODRIGUEZ
+% Code originally from: ACHILLE JOUBERTON
+% Area of Study: Pyrenees
+% Region: Cinca Subcatchment
+% Code explanation: This code launches TC model.
+% Output variables are managed by the file OUTPUT_MANAGER_DIST_LABEL.
+% Some code and names still referes to previous versions of the code.
+%==========================================================================
+
+%% INITIALIZING
 close all
 clc
 % clear all   % Don't clear all such that it can be run on the HPC cluster without any issues 
 % delete(gcp('nocreate'))
 
-%%%%%%%%%%%%%%% Case study parameters %%%%%%%%%%%%%%%%%%%%
-
-folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_TeC_Source_Code'; % Put here the path of where you downloaded the repository
-folder_path_HPC = '/home/jouberto/TeC_Source_Code'; % Put here the path of where you downloaded the repository
+%% DIRECTORIES
 study_name = '1_Pyrenees_distributed';
 local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
-% It is better to store the model output outside of the git T%C repository.
+%Cluster or personal computer
+ISTA = 0; % Run on the cluster of ISTA (Hyperion at WSL otherwise). Options: 1 yes, 0 No
+if ISTA == 0 % << Local computer of MR >>
 path_output = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files/1_Model_outputs';
-path_output_HPC = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files'  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
+folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_TeC_Source_Code'; % Put here the path of where you downloaded the repository
+else
+path_output = '/home/mrodrigu/1_TC/2_Outputs/2_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
+folder_path = '/home/mrodrigu/1_TC/1_Model'; % Put here the path of where you downloaded the repository. '/home/jouberto/TeC_Source_Code'
+end
+%path_output_HPC = '/home/mrodrigu/1_TC/2_Outputs/2_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 
-%%%%%%%%%%%%%% site specifications %%%%%%%%%%%%%%
+%% Site specifications
 
 sitenumber = 2;  % This launcher can be used for different catchment. Here in this case study, only sitenumber = 2 works (Kyzylsu catchment)
-ISTA = 1; % Run on the cluster of ISTA (Hyperion at WSL otherwise)
 
 restart = 0; % Set to 1 to continue a un-completed T&C run (only works if you used OUTPUT_MANAGER_DIST_LABEL)
 fn_restart = '250924_1999_2023_PG00_Tmod0_2000mmSWEcap_a14c145';
@@ -31,17 +49,11 @@ if strcmp(machine,local_machine) %%% << Achille's laptop >>
 end
 
 SITEs = ["Langtang", "Cinca_Mid", "Parlung24K","Rolwaling","Parlung4","Mugagangqiong"]; % All of my study catchments
-FORCING = 'ERA5Land';
+FORCING = 'Forcing_(Chelsa)';
 Lats = [28.2108, 42.4269, 29.773,27.836191,29.233504,32.235];
 Lons = [85.5695,0.1776,95.699, 86.531051, 96.923511,87.486];
 DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
-
-% Starting point of the simulation
-x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
-
-% Ending point of the simulation
-x2s = ["30-Sep-2020 23:00:00", "02-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
 
 % dtm file name
 dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Cinca_Mid_250m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_200m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
@@ -57,10 +69,29 @@ Z_maxs = [6000,5000,6000,6000,6000,6000]; % highest elevation for linear precipi
 Tmaxs = [2, 2, 1.8, 2, 1.8, 1.8]; % Maximum air temperature for precipitation phase scheme (2-dual thresholds)
 Tmins = [0, 0, -0.5, 0, -0.5, -0.5]; % Minimum air temperature for precipitation phase scheme (2-dual thresholds)
  
-% Output manager : decide which aggregated results to output
-           % Catch_av  Catch_std   Veg_avg  Veg_std  LC_avg   LC_std  Maps  POI
-output_manag = [1,         0,         0,        0,      0,       0,     1    1];
 
+%% Simulation period
+% Starting point of the simulation
+x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
+% Ending point of the simulation
+x2s = ["30-Sep-2020 23:00:00", "02-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
+
+if exist('date_start','var')
+    x1 = datetime(date_start);
+    x2 = datetime(date_end);
+  else 
+    x1=datetime(x1s(s));
+    x2=datetime(x2s(s));
+end 
+
+%% OUTPUT MANAGER : decide which aggregated results to output
+% Veg: Vegetation
+% LC: Land Cover class
+
+           % Catch_av  Catch_std   Veg_avg  Veg_std  LC_avg   LC_std  Maps  POI
+output_manag = [1,         0,         1,        0,      0,       0,     1    1];
+
+%% GLACIER AND AVALANCHE PARAMETERS
 % Switch for glacier dynamics (keep to 0 for this case study)
 Idyns = [0,0,0,0,0,0];
 
@@ -69,12 +100,14 @@ Avals = [1,1,1,1,1,1];  % 1 to turn on avalanching, 0 to turn off avalanching
 a_avals = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; % avalanche parameters a (Bernhart & Schulz 2010)
 C_avals = [145, 145, 145, 145, 145, 145]; % avalanche parameters C 
 
+%% SNOW INITIAL CONDITION
 % Initial snow depth
+% Set at 2000 masl initially.
 diff_IniSND = 1;
 fn_IniSnowDepth = 'Cinca_Init_Snow_Depth_virtual.mat';
 fn_IniSnowAlbedo = 'Cinca_Init_Snow_Albedo_virtual.mat';
 
-% Precipitation phase partitionning
+%% Precipitation phase partitionning
 
 %1 = 2-threshold, 2 = Ding 2017, 3 = single-threshold, 4 = Pomeroy 2013, 5
 %= Wang 2019, 6 = Jennings 2018
@@ -93,26 +126,18 @@ hSTL = 0.003; %m
 % Choice of the snow albedo scheme 
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
-% Simulation comment
-
+%% Simulation comment
+sim_comment = "Distributed_Ebro";
 if ~exist('sim_comment','var')
- sim_comment = "Distributed_casestudy_test";
+ sim_comment = "Distributed_Pyrenees";
 end 
 
-% Simulation period
+%% Simulation name
+simnm = strcat('Region_(',sim_comment,')_SubBasin_(',outlet_names(s),')_', ...
+    FORCING, "_RunningDate_(", datestr(datetime("now"),'ddmmyy_HHMM'),")_RunningPeriod_(",num2str(year(x1)),"_", ...
+    num2str(year(x2)) ,")");
 
-if exist('date_start','var')
-    x1 = datetime(date_start);
-    x2 = datetime(date_end);
-  else 
-    x1=datetime(x1s(s));
-    x2=datetime(x2s(s));
-end 
-
-% Simulation name
-simnm = strcat(FORCING, "_", datestr(datetime("now"),'ddmmyy'),"_",num2str(year(x1)),"_", num2str(year(x2)) ,"_",sim_comment);
-
-% Select which forcing variable is bias-corrected or not
+%% Select which forcing variable is bias-corrected or not
 
     % vars: define which reanalysis variables to load as monthly spatial input 
     % vars_DS: 0 downscaled and bias-corrected, 1 only downscaled     
@@ -127,7 +152,7 @@ vars_DS = [
 t_befs = [1,0.5,0.75,0.75,1,1];
 t_afts = [0,0.5,0.25,0.25,0,0];
 
-% Prepare launcher variable based on chosen study site:
+%% Prepare launcher variable based on chosen study site:
 SITE = char(SITEs(s)); Lat = Lats(s); Lon = Lons(s);
 DeltaGMT=DeltaGMTs(s); t_bef=t_befs(s); t_aft=t_afts(s); 
 dtm_file = char(dtm_files(s)); Tmod = Tmods(s); 
@@ -139,7 +164,7 @@ Aval = Avals(s); a_aval = a_avals(s); C_aval = C_avals(s);
 TITLE_SAVE = SITE;
 resol = str2num(string(extractBetween(dtm_file,[SITE '_'],'m.mat'))); % Spatial resolution
 
-% Diplay setting of the incoming T&C model runs:
+%% Diplay setting of the incoming T&C model runs:
 disp(['Site selected: ' TITLE_SAVE])
 disp(['Simulation period: ' datestr(x1,'dd-mmm-yyyy HH:MM') ' to ' datestr(x2,'dd-mmm-yyyy HH:MM')])
 disp(['Precipitation phase scheme: ' parameterize_phase_label{:}])
@@ -147,25 +172,26 @@ disp(['Precipitation phase scheme: ' parameterize_phase_label{:}])
 if Idyn == 0; disp('Ice dynamics: off'); else; disp('Ice dynamics: on'); end
 if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% attach folders, launch parallel pool, generate paths %%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PATHS
+%==========================================================================
+% Attach folders, launch parallel pool, generate paths
+%==========================================================================
 
-if strcmp(machine,local_machine)
+%if ISTA == 0 % << Local computer of MR >>
     addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
     addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/3_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
     addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/2_Inputs/1_Input_Carbon'])); % Add path to Ca_Data
     addpath(genpath([folder_path, '/European_catchments/1_Functions/1_TC_Code'])); % Add path to T&C codes
     addpath(genpath([folder_path, '/European_catchments/1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
     outlocation = [path_output '/' char(simnm)];
-elseif isempty(machine) && (ISTA == 1) %%% << ISTA CLUSTER >>
-    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    addpath(genpath([folder_path_HPC,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
-    addpath(genpath([folder_path_HPC, '/Inputs'])); % Add path to Ca_Data
-    addpath(genpath([folder_path_HPC, '/T&C_Code'])); % Add path to T&C codes
-    outlocation = [path_output_HPC '/' char(simnm) '/'];
-end
+%else % << ISTA CLUSTER >>
+    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/3_Forcing'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/2_Inputs/1_Input_Carbon'])); % Where is located the meteorological forcing and Shading matrix 
+    %addpath(genpath([folder_path_HPC, '/European_catchments/1_Functions/1_TC_Code'])); % Add path to Ca_Data
+    %addpath(genpath([folder_path_HPC, '/European_catchments/1_Functions'])); % Add path to T&C codes
+    %outlocation = [path_output_HPC '/' char(simnm) '/'];
+%end
 
 
 % Create output directory if it doesn't exist already
@@ -176,11 +202,16 @@ N=1;
 LASTN=maxNumCompThreads(N);
 %%%
 
+%% If we are NOT restarting. Normal case.
 if restart ~=1
 
 checks = [outlocation, '/checks'];
-mkdir(outlocation);
-mkdir(checks);
+mkdir(outlocation); %Create main folder
+mkdir(strcat(outlocation,'/Spatial_data')); %Create main subfolder where to store spatial results
+mkdir(strcat(outlocation,'/Cell_data_final')); %Create main subfolder where to store results at a cell.
+mkdir(strcat(outlocation,'/Spatial_data_intermediate')); %Create main subfolder where to store results at a cell.
+
+%mkdir(checks);
 addpath(genpath(outlocation));
 
 % copy launcher, output manager and parameter files to the output folder, 
@@ -190,14 +221,14 @@ addpath(genpath(outlocation));
 %copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
 %copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
 %copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
-
 end 
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% load geodata, time handling, carbon data %%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% INPUTS
+%==========================================================================
+% Load geodata, time handling, carbon data
+%==========================================================================
 load(strcat(folder_path,'/European_catchments/2_Catchments/1_Pyrenees_distributed/2_Inputs/',dtm_files(s)))
+
 
 if Idyn == 0
     GLH(GLH>0) = GLH(GLH>0) +400;  % Only use when ice dynamics are off, to avoid glacier disappearance
@@ -223,6 +254,7 @@ GLA_ID(GLH==0)=NaN;
 DTM_Bedrock = DTM_orig-GLH; 
 
 load([folder_path, '/European_catchments/2_Catchments/1_Pyrenees_distributed/2_Inputs/1_Input_Carbon/Ca_Data.mat']);
+
 clear Xvs Yvs
 %%%
 
@@ -244,12 +276,15 @@ tstore_snow = find(hour(Date)==12); %daily snow map output
 t1_reinit=0; %%only placeholder for re-initialisation runs
 plot_soil = 0; %plot soil property maps?
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% GENERAL PARAMETER %%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dt=3600; %%[s] %%%
-dth=1; %%[h]
+%% GENERAL PARAMETER
+%==========================================================================
+%
+%==========================================================================
+
+%% Time 
+dt=3600; %% [s]
+dth=1; %% [h]
 [YE,MO,DA,HO,MI,SE] = datevec(Date);
 Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
 clear YE MO DA HO MI SE
@@ -263,7 +298,8 @@ clear('h_S','delta_S','zeta_S','T_sunrise','T_sunset','L_day')
 %%%
 a_dis=NaN; pow_dis=NaN;
 clear a0 gam1 pow0 k2 DTii
-%%%
+
+%% Other parameters
 rho_g = 0.35; %%% Spatial Albedo
 cc_max = 1; %% Number of vegetation ??
 ms_max = 10; %% Number of soil layers
@@ -278,7 +314,8 @@ zatm_surface = 2.0; %% Reference Height single value
 %     zatm_surface = 2.0; %% Reference Height single value
 % end
 
-%%%%%%%%%% Load mean glacier albedo eleavtion profile, development stage %%%%%%%%%%%
+%% Albedo vs Elevation
+% Load mean glacier albedo eleavtion profile, development stage
 
 fn_alb_elev = [SITE '_Albedo_vs_elev.mat'];
 
@@ -305,15 +342,17 @@ else
     disp('Constant bare-ice albedo of 0.28 is used')
 end
 
-%%%%%%%%%%%%%%%%%
-
+%%
 Pmod_S = MASK;
 rate = Pmod/(Z_max-Z_min);
 Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% TOPOGRAPHIC PARAMETER %%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% TOPOGRAPHIC PARAMETER 
+%==========================================================================
+%
+%==========================================================================
+
 %%%   Matrix [m_cell x n_cell]
 %DTM ;T_flow ; cellsize; xllcorner ; yllcorner ; SN ; outlet ; Aacc
 
@@ -365,9 +404,11 @@ MRough=MRough.*MASK;
 Kres_Rock =8760; %%[h] Bedrock aquifer constant
 SPRINGn =SNn; %% Spring Location
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%% VEGETATION PARAMETERS LOOK-UP TABLE %%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% VEGETATION PARAMETERS LOOK-UP TABLE 
+%==========================================================================
+%
+%==========================================================================
 %ksv=1*ones(num_cell,1);
 ksv=reshape(VEG_CODE,num_cell,1);
 %%% 1 Fir (evergr.)
@@ -381,9 +422,9 @@ ksv(ksv==8)=7; %%% 8 Ice = 7 Rock
 Ccrown_OUT =[ 1 ; 1; 1 ; 0.9 ; 1; 1; 0];  %% Ccrown fraction for PFT
 EVcode = [ 1 2 3 4 5 6 7 ];             %% code of each PFTs
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% SPATIAL INDICES PER LAND COVER CLASS %%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% SPATIAL INDICES PER LAND COVER CLASS
+
 Kinde = find(MASK==1);  %%% basin index
 idx_Veg1 = find(VEG_CODE == 1 & MASK == 1); %%% veg 1 index (Fir)
 idx_Veg2 = find(VEG_CODE == 2 & MASK == 1); %%% veg 2 index (Larch)
@@ -399,9 +440,11 @@ LCinde = {idx_Veg1,idx_Veg2,idx_Veg3,idx_Veg4,idx_Veg5,idx_Veg6,...SOIL_PARAMETE
     idx_Rock,idx_Ice,idx_Cleanice,idx_Debice};
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%% SOIL PARAMETER %%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SOIL PARAMETER 
+%==========================================================================
+%
+%==========================================================================
+
 Pss = [800]; Pwp = [3500]; %% [kPa]
 Kfc = 0.2; %% [mm/h]
 Phy = 10000; %% [kPa]
@@ -409,9 +452,10 @@ Phy = 10000; %% [kPa]
 [Ofc,Oss,Owp,Ohy]=Soil_parametersII_spatial(Osat,L,Pe,Ks,O33,Kfc,Pss,Pwp,Phy);
 %plot soil properties
 
+%% Storing in the normal case.
 if restart ~=1
-    save([outlocation, 'Ohy_1.mat'], 'Ohy')
-    save([outlocation, 'Osat_1.mat'], 'Osat')
+    save(strcat(outlocation,"/Spatial_data/", "Ohy_1.mat"), 'Ohy')
+    save(strcat(outlocation,"/Spatial_data/", "Osat_1.mat"), 'Osat')
 end 
 
 if plot_soil==1
@@ -439,10 +483,13 @@ PORG=reshape(PORG/1000,num_cell,1);
 %Zs_OUT=reshape(SOIL_TH*(2/3)*10,num_cell,1); %%[mm]  %%orig: 
 Zs_OUT=800*ones(num_cell,1);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%% SOLAR PARAMETER     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%% Computation Horizon Angle
+
+%% SOLAR PARAMETER 
+%==========================================================================
+%
+%==========================================================================
+
+% Computation Horizon Angle
 %[HZ,Zasp] = Horizon_angle_polar(DTM,cellsize);
 [HZ,Zasp] = Horizon_Angle(DTM_orig,cellsize);
 %%% HZ Horizon angle array [angular degree]
@@ -450,31 +497,33 @@ Zs_OUT=800*ones(num_cell,1);
 %%% Sky View Factor and Terrain Configuration Factor
 [SvF,Ct] = Sky_View_Factor(DTM_orig,atan(Slo_top)*180/pi,Aspect,HZ,Zasp);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%% TOTAL INITIAL CONDITION %%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% TOTAL INITIAL CONDITION 
+
+%SNOW ALBEDO
 % Check if initial snow albedo is given
-
 if ~exist('SNOWALB','var')
     SNOWALB = SNOWD;
     SNOWALB(SNOWD>0) = 0.6;
 end 
 
+%% If I am NOT restarting. So, in the normal case.
 if restart ~=1
-out = [outlocation, 'INITIAL_CONDITIONS_', SITE, '.mat'];
+out = [outlocation,'/Spatial_data/', 'INITIAL_CONDITIONS_', SITE, '.mat'];
 INIT_COND_v2(num_cell,m_cell,n_cell,...
     cc_max,ms_max,md_max,...
     MASKn,GLH,Slo_top,ksv,Ca,SNOWD,SNOWALB,out);
 load(out);
 end
 
-Fstep=strcat('Final_reached_step_',SITE);
+Fstep=strcat('/Spatial_data/Final_reached_step_',SITE);
 ij=0;
 tday=0;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%% NUMERICAL METHODS OPTIONS %%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% NUMERICAL METHODS OPTIONS
+%==========================================================================
+%
+%==========================================================================
 OPT_ALLOME=                 0;
 Opt_CR=                     optimset('TolFun',1);%,'UseParallel','always');
 OPT_EnvLimitGrowth=         0;
@@ -497,24 +546,23 @@ OPT_min_SPD =               0.006;            %% [m] minimum snow pack depth to 
 tic ;
 %profile on
 %bau = waitbar(0,'Waiting...');
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
 
+%% Restart condition
 fts = 2; 
 tinp = 0;
 root = 'M:';
+
 if restart == 1  % Restart simulation from a previously saved step
     outlocation = [root,'/TC_outputs/',SITE,'/Distributed/',fn_restart,'/'];
-    load([outlocation 'Final_reached_step_' SITE '.mat'])
+    load([outlocation '/Spatial_data/Final_reached_step_' SITE '.mat'])
     fts = t; 
     t1_reinit = t;
     %Find the right value of tinp
     Datam_reinit = Datam(t1_reinit-1,:);
     tinp = (Datam_reinit(3)-1)*24 + Datam_reinit(4);
 end
-disp(OPT_SoilBiogeochemistry)
+
+%% Iterating on time
 for t=fts:N_time_step
     tinp = tinp+1;
     
@@ -536,7 +584,7 @@ for t=fts:N_time_step
     [ShF] = Shadow_Effect(DTM,h_S,zeta_S,HZ,Zasp);
 
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%DISTRIBUTED FORCING%%%%%%%%%%%%%%%%%%%%%%%%
+    %% DISTRIBUTED FORCING
     %load spatial input data on first day and hour of month 
     %(no distribution needed! currently monthly .mat-files holding 3D arrays)
 
@@ -688,11 +736,13 @@ for t=fts:N_time_step
     ea_S=reshape(ea_S,num_cell,1);
     Ds_S=reshape(Ds_S,num_cell,1);
     Tdew_S=reshape(Tdew_S,num_cell,1);
+      
     
+    %% SPATIAL INITIALIZATION VECTOR PREDEFINING
+    %======================================================================
+    %
+    %======================================================================
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%% SPATIAL INITIALIZATION VECTOR PREDEFINING %%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if t == 2
         %%%%%%%%%%%%%%%%% GENERAL VEGETATION / HYDROLOGY
         alp_soil=	alp_soiltm1;
@@ -983,20 +1033,22 @@ for t=fts:N_time_step
         Vx_L=       Vx_Ltm1;
     end
 
+    %% LOOP
+    %======================================================================
+    % LOOP OVER CELLS
+    %======================================================================
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%% LOOP OVER CELLS %%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
-    parfor ij=1:4000    % Good practice to use a simple for loop for debugging/testing
-        %disp(strcat('in the loop', ij))
+    parfor ij=3550:4000   
+        % Good practice to use a simple for loop for debugging/testing
+        % ij is the index to go pixel by pixel through the mask
+        % disp(strcat('in the loop', ij))
+
         if MASKn(ij)== 1
             Elev=DTM(ij);
             %[i,j] = ind2sub([m_cell,n_cell],ij);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-            %%% BOUNDARY CONDITION  %%% INTRODUCED SOIL AND VEG. for ij
+            % BOUNDARY CONDITION  
+            % INTRODUCED SOIL AND VEG. for ij
             [aR,Zs,EvL_Zs,Inf_Zs,Bio_Zs,Zinf,RfH_Zs,RfL_Zs,dz,Ks_Zs,Dz,...
                 ms,Kbot,Krock,zatm,Ccrown,Cbare,Crock,Curb,Cwat,...
                 Color_Class,OM_H,OM_L,PFT_opt_H,PFT_opt_L,d_leaf_H,...
@@ -1008,28 +1060,30 @@ for t=fts:N_time_step
                 Mpar_L,]=PARAMETERS_SOIL(ksv(ij),...
                 PSAN(ij),PCLA(ij),PORG(ij),DEB_MAP(ij),md_max,...
                 zatm_surface,Afirn(ij),SOIL_TH(ij),s);
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            if (Datam_S(4)==1)
-                %%%%%%%%%%%%%
-                %%%%% SOIL BIOGEOCHEMISTRY MODULE
+            %%%
+            
+            % If hour (Datam_S(4)) is equal to 1
+            if (Datam_S(4)==1)                                
+                %% SOIL BIOGEOCHEMISTRY MODULE
                 [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment([squeeze(Tdp_t(ij,:,:))]',[squeeze(O_t(ij,:,:))]',[squeeze(V_t(ij,:,:))]',...
                     Soil_Param,Phy,SPAR,Bio_Zs);%
-                %%% Biogeochemistry Unit
+                
+                % Biogeochemistry Unit
                 Nuptake_H(ij,:)= 0.0;
                 Puptake_H(ij,:)= 0.0;
                 Kuptake_H(ij,:)= 0.0; %% [gK/m^2 day]
-                %%%%
-                Nuptake_L(ij,:)= 0.0;  %% [gN/m^2 day]
+                %%%
+                Nuptake_L(ij,:)= 0.0; %% [gN/m^2 day]
                 Puptake_L(ij,:)= 0.0;
                 Kuptake_L(ij,:)= 0.0;
-                %%%% %%%%
+                %%%
                 NavlI(ij,:)=[1 1 1];
                 Bam(ij)=0; Bem(ij)=0;
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
+                %%% 
                 
-                % Create a structure and assign field names and values
+                %% DEBUGGING: Create a structure and assign field names and values
+                % For vegetation unit
+
                 %{
                 disp('here')
                 if t == 3
@@ -1131,8 +1185,11 @@ for t=fts:N_time_step
                 end
                 %}
                
+                %% VEGETATION MODULE
+                %==========================================================
+                % FUNCTION: VEGETATION_MODULE_PAR
+                %==========================================================
 
-                %VEGETATION MODULE
                 [LAI_H(ij,:),B_H(ij,:,:),NPP_H(ij,:),ANPP_H(ij,:),Rg_H(ij,:),RA_H(ij,:),...
                     Rms_H(ij,:),Rmr_H(ij,:),Rmc_H(ij,:),PHE_S_H(ij,:),...
                     dflo_H(ij,:),AgeL_H(ij,:),e_rel_H(ij,:),e_relN_H(ij,:),...
@@ -1251,13 +1308,13 @@ for t=fts:N_time_step
                     OPT_SoilBiogeochemistry);
                 
                 BLit(ij,:)= 0.0 ; % %% %%[kg DM / m2]
-            end
-            %%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%% HYDROLOGY MODULE
-            %%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            end        
+
+            %% HYDROLOGY MODULE
+            %==============================================================
+            % FUNTION: HYDROLOGY_MODULE_PAR
+            %==============================================================
+
             [V(ij,:),O(ij,:),Vice(ij,:),Oice(ij,:),ZWT(ij),OF(ij),OS(ij),OH(ij,:),OL(ij,:),Psi_s_H(ij,:),Psi_s_L(ij,:),Rd(ij),Qi_out(ij,:),...
                 Rh(ij),Lk(ij),f(ij),WIS(ij),Ts(ij),Csno(ij),Cice(ij),NDVI(ij),...
                 Pr_sno(ij),Pr_liq(ij),rb_H(ij,:),rb_L(ij,:),rs_sunH(ij,:),rs_sunL(ij,:),rs_shdH(ij,:),rs_shdL(ij,:),...
@@ -1300,9 +1357,9 @@ for t=fts:N_time_step
                 pow_dis,a_dis,Salt_S(ij),...
                 SPAR,SNn(ij),OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_SM,OPT_STh,OPT_FR_SOIL,OPT_PH,parameterize_phase, hSTL, Albsno_method);
 
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
     end
+    
 
     %%post-compute sublimation from ESN, do this inside hydrology module
     %%once it turns out to be useful
@@ -1318,9 +1375,10 @@ for t=fts:N_time_step
     Rd= reshape(Rd,m_cell,n_cell); %%[mm]
     Rh= reshape(Rh,m_cell,n_cell); %%[mm]
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%% ROUTING MODULE %%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% ROUTING MODULE
+    %======================================================================
+    % Funtion: ROUTING_MODULE
+    %======================================================================
     
     [q_runon,Q_channel,Qi_in_Rout,Slo_pot,Q_exit,Qsub_exit,T_pot,...
         QpointH,QpointC,UpointH,UpointC]= ROUTING_MODULE(dt,dth,Rd,Rh,...
@@ -1343,9 +1401,8 @@ for t=fts:N_time_step
         break
     end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Glacier volume redistribution %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% Glacier volume redistribution 
 
 if (Datam_S(2)==1) && (Datam_S(3)==1) && (Datam_S(4)==1) && (Idyn > 0)
         
@@ -1425,9 +1482,8 @@ if (Datam_S(2)==1) && (Datam_S(3)==1) && (Datam_S(4)==1) && (Idyn > 0)
         SND = SWE./ros; SND(isnan(SND))=0;
 end
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%% AVALANCHES COMPONENT %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %% AVALANCHES COMPONENT
 
     SND=    reshape(SND,m_cell,n_cell); SND(isnan(SND)) = 0;
     SWE=    reshape(SWE,m_cell,n_cell); SWE(isnan(SWE)) = 0;
@@ -1445,18 +1501,13 @@ end
         Swe_exit = SWE.*0;
     end 
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%% Catchment average snowline %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+    %% Catchment average snowline    
     SND=	reshape(SND,num_cell,1); SND(isnan(SND)) = 0;
     SWE=    reshape(SWE,num_cell,1); SWE(isnan(SWE)) = 0;
     ros=    reshape(ros,num_cell,1); ros(isnan(ros)) = 0;
     SWE_avalanched = reshape(SWE_avalanched,num_cell,1);
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%% FRACTURED ROCK COMPONENT %%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% FRACTURED ROCK COMPONENT   
     [Q_channel,FROCK,Qflow_rock]= FRACTURED_ROCK(Q_channel,FROCK,...
         SPRINGn,dth,m_cell,n_cell,num_cell,Kres_Rock);
 
@@ -1472,11 +1523,9 @@ end
         WAT_tgtm1=  sum(WATtm1)*(cellsize^2)/Area; %%
         FROCK_tgtm1=sum(FROCKtm1)*(cellsize^2)/Area; %%
     end
-    
+       
+    %% ALBEDO MAP
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%% ALBEDO MAP %%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if t==2 
         snow_albedo_out = snow_albedotm1;
         surface_albedo_out = surface_albedotm1;
@@ -1488,8 +1537,9 @@ end
     surface_albedo_out(SND>0)=snow_albedo(SND>0);
     end
 
+    %% INITIAL CONDITION FOR THE NEXT STEP
     %======================================================================
-    %%%%%%%%%%%%% INITIAL CONDITION FOR THE NEXT STEP %%%%%%%%%%%%%%%%%%%%%
+    %
     %======================================================================
     Cicewtm1=   Cicew;
     Citm1_shdH= Ci_shdH;
@@ -1589,9 +1639,8 @@ end
         TdpI_Ltm1=      TdpI_L;
     end
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%% MEMORY CONDITION FOR VEGETATION  MODEL %%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% MEMORY CONDITION FOR VEGETATION  MODEL     
     %%% 1 day
     if t > 24
         An_H_t(:,:,1:23)=       An_H_t(:,:,2:24);
@@ -1646,10 +1695,12 @@ end
     end
     
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%% OUTPUT WRITING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-     
+    
+    %% OUTPUT WRITING
+    %======================================================================
+    %
+    %======================================================================
+       
     run([folder_path '/European_catchments/1_Functions/1_TC_Code/OUTPUT_MANAGER_DIST_LABEL.m']);
 
     % Save the workspace at frequent interval. Very useful in case it crashes 
@@ -1665,12 +1716,9 @@ end
 
 end
 %close(bau)
-Computational_Time =toc;
-%profile off
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MASS CHECK? %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Display
+Computational_Time =toc;
 disp('COMPUTATIONAL TIME [h] ')
 disp(Computational_Time/3600)
 disp(' COMPUTATIONAL TIME [s/cycle] ')

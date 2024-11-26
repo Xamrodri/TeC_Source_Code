@@ -354,10 +354,10 @@ Sllit = 2 ; %%% Litter Specific Leaf area [m2 Litter / kg DM]
 %%% HIGH VEGETATION
 %%%%%%%%%%%%%%%%%%%%%%%%%
 aSE_H=  [0    1  NaN  NaN 0 1 ]; %% Allocation to reserve carbohydrate -- 1 Seasonal Plant --  0 Evergreen
-Sl_H = [0.010         0.025           NaN           NaN 0.016 0.020] ; %  [m^2 gC] specific leaf area of  biomass [m^2 /gC] 0.05 -0.005
-Nl_H = [42   26  NaN  NaN 40 28]; %[kgC/kgN ] Leaf Nitrogen Concentration
-r_H =  [0.058         0.055           NaN           NaN 0.045         0.035 ];  %% respiration rate at 10° [gC/gN d ]  [0.066 -0.011]
-gR_H=  [0.25          0.25           NaN           NaN 0.25          0.25  ];%  growth respiration  [] -- [Rg/(GPP-Rm)] [0.22 - 0.28]
+Sl_H =  [0.010         0.025           NaN           NaN 0.016 0.020] ; %  [m^2 gC] specific leaf area of  biomass [m^2 /gC] 0.05 -0.005
+Nl_H =  [42   26  NaN  NaN 40 28]; %[kgC/kgN ] Leaf Nitrogen Concentration
+r_H =   [0.058         0.055           NaN           NaN 0.045         0.035 ];  %% respiration rate at 10° [gC/gN d ]  [0.066 -0.011]
+gR_H=   [0.25          0.25           NaN           NaN 0.25          0.25  ];%  growth respiration  [] -- [Rg/(GPP-Rm)] [0.22 - 0.28]
 dd_max_H= 1./[150  200  NaN  NaN 200 100];%%%  [1/d]  death maximum for drought
 dc_C_H =  1./[5      10          NaN           NaN 365 10]; %%[Factor of increasing mortality for cold]
 Tcold_H = [-40   -3  NaN  NaN  3 3.5]; %% [°C] Cold Leaf Shed
@@ -408,9 +408,9 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% LOW VEGETATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-aSE_L=  [NaN  NaN    2    1 NaN  NaN  ]; %% Allocation to reserve carbohydrate -- 1 Seasonal Plant --  0 Evergreen
-Sl_L = [NaN           NaN         0.016         0.018 NaN  NaN  ]; %  [m^2 gC] specific leaf area of  biomass [m^2 /gC] 0.05 -0.005
-Nl_L = [NaN  NaN   23   35 NaN  NaN  ]; %[kgC/kgN ] Leaf Nitrogen Concentration
+aSE_L=  [NaN  NaN    2    1     NaN  NaN  ]; % Allocation to reserve carbohydrate -- 1 Seasonal Plant --  0 Evergreen
+Sl_L =  [NaN  NaN   0.016 0.018 NaN  NaN  ]; % [m^2 gC] specific leaf area of  biomass [m^2 /gC] 0.05 -0.005
+Nl_L =  [NaN  NaN   23     35   NaN  NaN  ]; % [kgC/kgN ] Leaf Nitrogen Concentration
 r_L =  [NaN           NaN         0.025         0.025 NaN  NaN  ];  %% respiration rate at 10° [gC/gN d ]  [0.066 -0.011]
 gR_L=  [NaN           NaN          0.25          0.25 NaN  NaN  ];%  growth respiration  [] -- [Rg/(GPP-Rm)] [0.22 - 0.28]
 dd_max_L= 1./[NaN  NaN   45  100 NaN  NaN  ];%%%  [1/d]  death maximum for drought
