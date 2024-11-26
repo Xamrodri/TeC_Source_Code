@@ -1,0 +1,130 @@
+var	variable	unit	acc_operator	acc_unit	group	subgroup
+An.H	Net Assimilation High Veg.	[µmol CO2 / m2 PFT s]	mean	[µmol CO2 / m2 PFT]	An	high vegetation
+An.L	Net Assimilation Low Veg.	[µmol CO2 / m2 PFT s]	mean	[µmol CO2 / m2 PFT]	An	low vegetation
+ANPP.H	Above Ground Net Prim. Product. High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	ANPP	high vegetation
+ANPP.L	Above Ground Net Prim. Product. Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	ANPP	low vegetation
+Ca	Ca	[ppm]	mean	[ppm]	Ca	
+Ci.shdH	CO2 shaded leaf int. conc. High Veg.	[ppm]	mean	[ppm]	Ci shaded	high vegetation
+Ci.shdL	CO2 shaded leaf int. conc. Low Veg.	[ppm]	mean	[ppm]	Ci shaded	low vegetation
+Ci.sunH	CO2 sunlit leaf int. conc. High Veg.	[ppm]	mean	[ppm]	Ci sunlit	high vegetation
+Ci.sunL	CO2 sunlit leaf int. conc. Low Veg.	[ppm]	mean	[ppm]	Ci sunlit	low vegetation
+Cice	Pres. [1] or abs. of ice [0]	[-]	sum	[-]	Cice	
+Cicew	Pres. [1] or abs. of frozen water [0]	[-]	sum	[-]	Cicew	
+CK1	Check on Mass Balance	[mm]	mean	[mm]	CK1	
+Csno	Pres. [1] or abs. of snow [0]	[-]	sum	[-]	Csno	
+Csnow	Pres. [1] or abs. of snow above frozen water [0]	[-]	sum	[-]	Csnow	
+DQ.S	Resid. of the energy budget	[W/m2]]	mean	[W/m2]]	DQ	
+dQ.S	Resid. from energy budget	[W/m2]	mean	[W/m2]	d	
+Dr.H	Total Drainage from interc. water High Veg.	[mm]	mean	[mm]	Dr	high vegetation
+Dr.L	Total Drainage from interc. water Low Veg.	[mm]	mean	[mm]	Dr	low vegetation
+Ds	Ds	[°C]	mean	[°C]	Ds	
+DT.S	Resid. T difference in the energy budget	[°C]	mean	[°C]	DT	
+dw.SNO	Fraction of leaf covered by snow	[-]	mean	[-]	dw	
+ea	ea	[Pa]	mean	[Pa]	ea	
+EG	Evapor. from Bare soil	[mm/h]	mean	[mm]	E	bare soil
+EICE	Evapor./sublimation from Ice	[mm/h]	mean	[mm]	E	ice
+EIn	Evapor. from interc. water Veg.	[mm/h]	mean	[mm]	E	intercepted, vegetation
+EIn.H	Evapor. from interc. water High Veg.	[mm/h]	mean	[mm]	E_H	intercepted, high vegetation
+EIn.L	Evapor. from interc. water Low Veg.	[mm/h]	mean	[mm]	E_L	intercepted, low vegetation
+EIn.rock	Evapor. from rocks	[mm/h]	mean	[mm]	E	rock
+er	Splash erosion	[kg/h m2]	mean	[kg/m2]	er	
+ESN	Evapor. from the snowpack at the ground	[mm/h]	mean	[mm]	E	ground snowpack
+EWAT	Evapor. from water and ponds	[mm/h]	mean	[mm]	E	ponds
+f	Infiltration	[mm]	mean	[mm]	f	
+FROCK	Storage in fractured rocks	[mm]	mean	[mm]	FROCK	
+G	Ground Heat Flux	[W/m2]	mean	[W/m2]	G	
+Gfin	Ground Heat Flux heat diffusion	[W/m2]	mean	[W/m2]	G	heat diffusion
+GPP.H	GPP High Veg.	[ ]	mean	[ ]	GPP	high vegetation
+GPP.L	GPP Low Veg.	[ ]	mean	[ ]	GPP	low vegetation
+H	Sensible Heat Flux	[W/m2]	mean	[W/m2]	H	
+hc.H	Veg. Height High Veg.	[m]	mean	[m]	h	high vegetation
+hc.L	Veg. Height Low Veg.	[m]	mean	[m]	h	low vegetation
+ICE	Ice water eq.	[mm]	mean	[mm]	Ice	w.e.
+ICE.D	Ice thickness	[m]	mean	[m]	Ice	depth
+Imelt	Ice melt	[mm/h]	mean	[mm]	Ice	melt
+In	Intercept. water (storage)	[mm]	mean	[mm]	In	total
+In.rock	Intercept. water (storage) Rocks	[mm]	mean	[mm]	In	rock
+In.SWE	Intercept. snow water eq. (storage) High Veg	[mm]	mean	[mm]	In	SWE, high vegetation
+Inveg	Intercept. water (storage) Veg.	[mm]	mean	[mm]	In	vegetation
+IP.wc	Ice pack water content	[mm]	mean	[mm]	Ice	water content
+LAI.H	Leaf Area Index High Veg.	[m2 LAI / m2 PFT]	mean	[m2 LAI / m2 PFT]	LAI	high vegetation
+LAI.L	Leaf Area Index Low Veg.	[m2 LAI / m2 PFT]	mean	[m2 LAI / m2 PFT]	LAI	low vegetation
+LAIdead.H	Dead Leaf Area Index High Vegetation	[m2 LAI / m2 PFT]	mean	[m2 LAI / m2 PFT]	LAIdead	high vegetation
+LAIdead.L	Dead Leaf Area Index Low Vegetation	[m2 LAI / m2 PFT]	mean	[m2 LAI / m2 PFT]	LAIdead	low vegetation
+Lk	Bottom Leakage soil to bedrock (recharge)	[mm]	mean	[mm]	Lk	soil to bedrock
+Lk.rock	Leakage rock surface to bedrock (recharge)	[mm]	mean	[mm]	Lk	rock to bedrock
+Lk.wat	Leakage water pond to bedrock (recharge)	[mm]	mean	[mm]	Lk	pond to bedrock
+LWin	Incoming longwave radiation	[W/m2]	mean	[W/m2]	LWin	
+N	N	[-]	mean	[-]	N	
+NICe	New formed Ice	[mm]	mean	[mm]	Ice	new formed
+NPP.H	Net Prim. Product. High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	NPP	high vegetation
+NPP.L	Net Prim. Product. Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	NPP	low vegetation
+O	Soil Water Content	[-]	mean	[-]	O	total
+OF	Soil Moisture First Soil Layer	[-]	mean	[-]	O	1st soil layer
+OH	Soil Moisture avail. to roots High Veg.	[-]	mean	[-]	O	avail. to roots high vegetation
+OL	Soil Moisture avail. to roots Low Veg.	[-]	mean	[-]	O	avail. to roots low vegetation
+OS	Soil Moisture for Bare Evapor. Layers	[-]	mean	[-]	O	bare E layers
+PAR	PAR radiation	[W/m2]	mean	[W/m2]	PAR	
+LiqPS	Liquid precipitation share	[-]	mean	[-]	PPS	Liquid
+SnoPS	Snow precipitation share	[-]	mean	[-]	PPS	Solid
+Pr	Precipitation	[mm]	sum	[mm]	Pr	total
+Pr.liq	Liquid Precip.	[mm]	sum	[mm]	Pr	liquid
+Pr.sno	Solid (snow) Precip.	[mm]	sum	[mm]	Pr	snow
+Pre	Atmospheric Pressure	[mbar]	mean	[mbar]	Pre	
+Q.channel	Q channel	[mm]	mean	[mm]	Q	channel
+Q.exit	Q exit	[mm]	mean	[mm]	Q	exit
+q.runon	Runon	[mm]	mean	[mm]	q	runon
+Qsub.exit	Q subsurface exit	[mm]	mean	[mm]	Q	subsurface exit
+QE	Latent heat	[W/m2]	mean	[W/m2]	QE	
+Qfm	Heat for freezing or melting	[W/m2]	mean	[W/m2]	Qfm	
+Qlat.in	Incoming Lateral subsurface flow	[mm]	mean	[mm]	Qlat	incoming
+Qlat.out	Outgoing Lateral subsurface flow	[mm]	mean	[mm]	Qlat	outgoing
+Qv	Heat advected by Precip.	[W/m2]	mean	[W/m2]	Qv	
+RA.H	Autotrophic Respirat. High Veg.	[gC/m2 PFT day]	mean	[gC/m2 PFT]	RA	high vegetation
+RA.L	Autotrophic Respirat. Low Veg.	[gC/m2 PFT day]	mean	[gC/m2 PFT]	RA	low vegetation
+Rd	Saturation excess runoff	[mm]	mean	[mm]	Run	saturation excess
+Rdark.H	Leaf Dark Respirat. High Veg.	[µmol CO2 / m2 PFT s]	mean	[µmol CO2 / m2 PFT]	Rdark.H	high vegetation
+Rdark.L	Leaf Dark Respirat. Low Veg.	[µmol CO2 / m2 PFT s]	mean	[µmol CO2 / m2 PFT]	Rdark.L	low vegetation
+Rg.H	Growth Respirat. High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	Rg.H	high vegetation
+Rg.L	Growth Respirat. Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	Rg.L	low vegetation
+Rh	Infiltration excess runoff	[mm]	mean	[mm]	Run	infiltration excess
+Rmc.H	Maint. Respirat. Carbohydrate reserve High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	CH reserve, high vegetation
+Rmc.L	Maint. Respirat. Carbohydrate reserve Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	CH reserve, low vegetation
+Rmr.H	Maint. Respirat. roots High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	roots, high vegetation
+Rmr.L	Maint. Respirat. roots Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	roots, low vegetation
+Rms.H	Maint. Respirat. sapwood High Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	sapwood, high vegetation
+Rms.L	Maint. Respirat. sapwood Low Veg.	[gC / m2 PFT day]	mean	[gC / m2 PFT]	R	sapwood, low vegetation
+Rn	Net radiation	[W/m2]	mean	[W/m2]	Rad	net
+ros	Snow density	[kg/m3]	mean	[kg/m3]	ros	
+Rsw	Net shortwave radiation	[W/m2]	mean	[W/m2]	Rad	SW
+SAI.H	Stem Area Index High Veg.	[m2 SAI/ m2 PFT]	mean	[m2 SAI / m2 PFT]	SAI	high vegetation
+SAI.L	Stem Area Index Low Veg.	[m2 SAI / m2 PFT]	mean	[m2 SAI / m2 PFT]	SAI	low vegetation
+SAT	SAT	[ ]	mean	[ ]	SAT	
+Smelt	Snow melt	[mm/h]	mean	[mm]	Snow	melt
+SND	Snow Depth	[m]	mean	[m]	Snow	depth
+snow.albedo	Snow albedo	[-]	mean	[-]	Albedo	snow
+soil.albedo	Soil albedo	[-]	mean	[-]	Albedo	soil
+SP.wc	Snowpack water content	[mm]	mean	[mm]	Snow	water content
+surface.albedo	Surface albedo	[-]	mean	[-]	Albedo	surface
+SWE	Ground snowpack Snow Water Equivalent	[mm]	mean	[mm]	Snow	w.e.
+SWE.avalanched	Snow avalanched	[mm/h]	mean	[mm]	Snow	avalanched
+SWE.exit	Snow exit	[mm/h]	mean	[mm]	Snow	exit
+T	Transpir. Veg.	[mm/h]	mean	[mm]	Transp	vegetation
+T.H	Transpir. High Veg.	[mm/h]	mean	[mm]	Transp_H	high vegetation
+T.L	Transpir. Low Veg.	[mm/h]	mean	[mm]	Transp_L	low vegetation
+Ta	Air T	[°C]	mean	[°C]	T	air
+Tdamp	Soil/snow Temp. at Dampening depth	[°C]	mean	[°C]	Tdamp	dampening depth
+Tdew	Dew point Temp.	[°C]	mean	[°C]	T	dew point
+Tdp	Soil Temp. of the layer	[°C]	mean	[°C]	T	soil layer
+Tice	Ice Temp.	[°C]	mean	[°C]	T	ice
+Ts	Soil/snow Progn. Temp. for the EB	[°C]	mean	[°C]	T	surface
+TsVEG	Veg. Temp. for the EB	[°C]	mean	[°C]	T	vegetation
+U.SWE	Unloaded snow water eq. from interc. snow	[mm]	mean	[mm]	Snow	unloaded w.e. from In
+V.clnd	Vol. of water stored in the soil	[mm]	mean	[mm]	V	water in soil layer
+Vice.clnd	Vol. of frozen water stored in the soil	[mm]	mean	[mm]	V	frozen water in soil layer
+WAT	Vol. of water in the lakes/ponds	[mm]	mean	[mm]	W	water vol. in ponds
+WIS	Water flux incoming to the soil	[mm]	mean	[mm]	W	influx to soil
+WR.IP	Water released from the ice pack	[mm/h]	mean	[mm]	W	released from ice
+WR.SP	Water released from the snow pack	[mm/h]	mean	[mm]	W	released from snow
+Ws	Wind speed	[m/s]	mean	[m/s]	Ws	
+ZWT	Water table depth	[mm]	mean	[mm]	ZWT
