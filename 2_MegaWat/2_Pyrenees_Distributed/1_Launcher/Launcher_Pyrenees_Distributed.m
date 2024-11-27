@@ -21,24 +21,23 @@ clc
 % delete(gcp('nocreate'))
 
 %% DIRECTORIES
-study_name = '1_Pyrenees_distributed';
+study_name = '2_Pyrenees_distributed';
 %local_machine = 'WSL28243'; % put your computer name here (to differentiate it with the HPC cluster)
 
 %% Initial inputs by the user
 % Select cluster or personal computer
-ISTA = 0; % Options: 1: yes for cluster, 0: No for cluster
+ISTA = 1; % Options: 1: yes for local computer, 2: Yes for cluster
 % Select catchment
 s = 2;  % This launcher can be used for different catchment. Here in this case study, only sitenumber = 2 works.
 
 %% 
-if ISTA == 0 % << Local computer of MR >>
-path_output = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files/1_Model_outputs';
-folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_TeC_Source_Code'; % Put here the path of where you downloaded the repository
+if ISTA == 1 % << Local computer of MR >>
+path_output = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/2_Pyrenees_Distributed/5_Output_files/1_Model_outputs';
+folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat'; % Put here the path of where you downloaded the repository
 else % << Or Cluster - MR login >>
 path_output = '/home/mrodrigu/1_TC/2_Outputs/2_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 folder_path = '/home/mrodrigu/1_TC/1_Model'; % Put here the path of where you downloaded the repository. '/home/jouberto/TeC_Source_Code'
 end
-%path_output_HPC = '/home/mrodrigu/1_TC/2_Outputs/2_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 
 %% Site specifications
 
@@ -185,21 +184,12 @@ if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 % Attach folders, launch parallel pool, generate paths
 %==========================================================================
 
-%if ISTA == 0 % << Local computer of MR >>
-    addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/3_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
-    addpath(genpath([folder_path, '/European_catchments/2_Catchments/' study_name '/2_Inputs/1_Input_Carbon'])); % Add path to Ca_Data
-    addpath(genpath([folder_path, '/European_catchments/1_Functions/1_TC_Code'])); % Add path to T&C codes
-    addpath(genpath([folder_path, '/European_catchments/1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    outlocation = [path_output '/' char(simnm)];
-%else % << ISTA CLUSTER >>
-    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/3_Forcing'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-    %addpath(genpath([folder_path_HPC,'/European_catchments/2_Catchments/' study_name '/2_Inputs/1_Input_Carbon'])); % Where is located the meteorological forcing and Shading matrix 
-    %addpath(genpath([folder_path_HPC, '/European_catchments/1_Functions/1_TC_Code'])); % Add path to Ca_Data
-    %addpath(genpath([folder_path_HPC, '/European_catchments/1_Functions'])); % Add path to T&C codes
-    %outlocation = [path_output_HPC '/' char(simnm) '/'];
-%end
+addpath(genpath([folder_path, '/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path, '/' study_name '/3_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
+addpath(genpath([folder_path, '/5_Common_inputs'])); % Where is located common inputs of the distributed and point scale models 
+addpath(genpath([folder_path, '/' study_name '/2_Inputs/1_Input_Carbon'])); % Add path to Ca_Data    
+addpath(genpath([folder_path, '/1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+outlocation = [path_output '/' char(simnm)];
 
 
 % Create output directory if it doesn't exist already
@@ -221,29 +211,22 @@ mkdir(strcat(outlocation,'/Spatial_data_intermediate')); %Create main subfolder 
 
 %mkdir(checks);
 addpath(genpath(outlocation));
-
-% copy launcher, output manager and parameter files to the output folder, 
-% to keep the right version for post-processing
-
-%copyfile('Launcher_Kyzylsu_Distributed.m', outlocation)
-%copyfile([folder_path '/T&C_Code/OUTPUT_MANAGER_DIST_LABEL.m'], outlocation)
-%copyfile('Inputs/PARAMETERS_SOIL.m', outlocation)
-%copyfile(['Inputs/' dtm_file], outlocation) % dtm_file
 end 
+
 
 %% INPUTS
 %==========================================================================
 % Load geodata, time handling, carbon data
 %==========================================================================
-load(strcat(folder_path,'/European_catchments/2_Catchments/1_Pyrenees_distributed/2_Inputs/',dtm_files(s)))
+load(dtm_files(s)) %This file is in 2_nputs
 
 if Idyn == 0
     GLH(GLH>0) = GLH(GLH>0) +400;  % Only use when ice dynamics are off, to avoid glacier disappearance
 end
 
 % Load different initial snow depth and snow albedo from the one in the dtm_file
-path_fn_IniSND = ['2_Ini_SnowDepth/' fn_IniSnowDepth];
-path_fn_IniSNOWALB = ['2_Ini_SnowDepth/' fn_IniSnowAlbedo];
+path_fn_IniSND = [folder_path '/2_Pyrenees_distributed/2_Inputs/2_Ini_SnowDepth/' fn_IniSnowDepth];
+path_fn_IniSNOWALB = [folder_path '/2_Pyrenees_distributed/2_Inputs/2_Ini_SnowDepth/' fn_IniSnowAlbedo];
 
 if (diff_IniSND == 1) && exist(path_fn_IniSND,'file')>0
     load(path_fn_IniSND)
@@ -260,7 +243,7 @@ GLA_ID(GLH==0)=NaN;
 % Compute bedrock DEM for ice flow
 DTM_Bedrock = DTM_orig-GLH; 
 
-load([folder_path, '/European_catchments/2_Catchments/1_Pyrenees_distributed/2_Inputs/1_Input_Carbon/Ca_Data.mat']);
+load([folder_path, '/2_Pyrenees_distributed/2_Inputs/1_Input_Carbon/Ca_Data.mat']);
 
 clear Xvs Yvs
 %%%
@@ -359,7 +342,6 @@ Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 %==========================================================================
 %
 %==========================================================================
-
 %%%   Matrix [m_cell x n_cell]
 %DTM ;T_flow ; cellsize; xllcorner ; yllcorner ; SN ; outlet ; Aacc
 
@@ -503,7 +485,6 @@ Zs_OUT=800*ones(num_cell,1);
 %==========================================================================
 %
 %==========================================================================
-
 % Computation Horizon Angle
 %[HZ,Zasp] = Horizon_angle_polar(DTM,cellsize);
 [HZ,Zasp] = Horizon_Angle(DTM_orig,cellsize);
@@ -678,6 +659,10 @@ for t=fts:N_time_step
     Pre_S = DTM.*0 + Pre_1;
     Pre_S = reshape(Pre_S,num_cell,1);
     
+    %needed, if terrain effects have not been considered during pre-processing
+    cos_fst = cos(atan(Slo_top))*sin(h_S) + sin(atan(Slo_top)).*cos(h_S).*cos(zeta_S-Aspect*pi/180);
+    cos_fst(cos_fst<0)=0;
+
     %% Radiation (SW)
     % ERA5 downscaled/bias-corrected shortwave radiation (6 components)
     if sin(h_S) <= 0.10 %%[5.73�] Numerical problems
@@ -696,9 +681,7 @@ for t=fts:N_time_step
         PARD_1 = Station_1.PARD(ind_meteo); PARD_S = DTM.*0 + PARD_1;
         PARB_1 = Station_1.PARB(ind_meteo); PARB_S = DTM.*0 + PARB_1;
 
-        %needed, if terrain effects have not been considered during pre-processing
-        cos_fst = cos(atan(Slo_top))*sin(h_S) + sin(atan(Slo_top)).*cos(h_S).*cos(zeta_S-Aspect*pi/180);
-        cos_fst(cos_fst<0)=0;
+
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         SAD1_S = SAD1_S.*SvF + Ct.*rho_g.*(SAD1_S./sin(h_S).*cos_fst + (1-SvF).*SAD1_S);
         SAD2_S = SAD2_S.*SvF + Ct.*rho_g.*(SAD2_S./sin(h_S).*cos_fst + (1-SvF).*SAD2_S);
@@ -1722,7 +1705,7 @@ end
     %
     %======================================================================
        
-    run([folder_path '/European_catchments/1_Functions/1_TC_Code/OUTPUT_MANAGER_DIST_LABEL.m']);
+    run(['OUTPUT_MANAGER_DIST_LABEL.m']);
 
     % Save the workspace at frequent interval. Very useful in case it crashes 
     if  mod(t,25)==0    
