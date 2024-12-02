@@ -39,6 +39,13 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUTS
 %
+
+%% Debugging (Dec, 2024)
+%{
+disp('in1')
+%}
+%==========================================================================
+%%
 %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -205,7 +212,15 @@ Vavail_plant_H= Vavail_plant_H';
 Vavail_plant_L= Vavail_plant_L';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%% ENERGY SOLUTION
+%% Debugging (Dec, 2024)
+%{
+disp('in2')
+disp(['Csno ',num2str(Csno)])
+%}
+%==========================================================================
+
+
+%% ENERGY SOLUTION
 if Csno == 1
     %lan_sno = lan_air + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(lan_ice-lan_air); %%  [W/m K ] Thermal conductivity snow
     lan_sno =  0.023 + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(2.29-0.023); %%  [W/m K ] Thermal conductivity snow
@@ -294,6 +309,9 @@ if Csno == 1
         end
     end
     Gfin=G;
+
+
+    
     %%%% underneath surface cannot cool the snow
     %if G>0
     %    G=0;
@@ -313,6 +331,9 @@ if Csno == 1
         TsV = 0;
     end
     %%%%%
+
+
+
     [Ts]=fzero(@Surface_Temperature_Snow,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
         Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,Cfol_H,...
         hc_H,hc_L,SNDtm1,ydepth,ICE_Dtm1,Cdeb,LAI_H,LAI_L,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
@@ -329,7 +350,8 @@ if Csno == 1
     %%%% %%%%%%%%%%%%%%%%%%%
     T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
 else
-    %%%% Ice without the snow
+
+    %% Ice without the snow
     if Cice > 0
         if Cdeb == 1
             %%% debris covered glacier
@@ -400,6 +422,17 @@ else
         %%%% %%%%%%%%%%%%%%%%%%%
         T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
     else
+    %% Debugging (Dec, 2024)
+    %{
+    disp('in3')
+    disp(['Cbare ', num2str(Cbare)])
+    disp(['Cwat ', num2str(Cwat)])
+    disp(['Crock ', num2str(Crock)])
+    disp(['Curb ', num2str(Curb)])
+    disp(['Tstm1_under ', num2str(Tstm1_under)])
+    %}
+    %==========================================================================
+
         if  (Cbare == 1) || (Cwat == 1) || (Crock==1) || (Curb == 1) || isnan(Tstm1_under)
             [Ts]=fzero(@Surface_Temperature,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
                 Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...
@@ -417,7 +450,13 @@ else
                 zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,...
                 Lpho,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_SoilTemp);
             %%%% %%%%%%%%%%%%%%%%%%%
-            T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
+            %% Debugging (Dec, 2024)
+            %{
+          disp(['Ts ', num2str(Ts)])
+            %}
+
+            %% Case without 2 temperatures
+            T2_flag=0; Ts_under=Tstm1_under;
         else
             Tinit=[Ta+0.1,Tstm1_under];
             for rr=1:3
@@ -455,22 +494,31 @@ else
         end
     end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Messages of error or instability
 if not(isreal(Ts)) ||  isnan(Ts)
     disp('Error Computation Ts')
     return
 end
+
 if abs(Ts) >= 120
     disp('Numerical instability on Ts')
     return
 end
 if abs(Ts) <= eps
-    %%%% To prevent numerical instabilities
+    % To prevent numerical instabilities
     Ts=0.0;
 end
+
+%% POST COMPUTATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%% POST COMPUTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%                  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Debugging (Dec, 2024)
+%disp([Ta,Ts,Pre,zatm,disp_h,zom,zoh,Ws,ea])
+%==========================================================================
+
 %%% Aerodynamic resistence
 [ra]=Aerodynamic_Resistence(Ta,Ts,Pre,zatm,disp_h,zom,zoh,Ws,ea);
 %%%%%%%%%% Undercanopy and Leaf resitence

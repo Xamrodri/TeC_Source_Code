@@ -32,11 +32,11 @@ s = 2;  % This launcher can be used for different catchment. Here in this case s
 
 %% 
 if ISTA == 1 % << Local computer of MR >>
-path_output = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/2_Pyrenees_Distributed/5_Output_files/1_Model_outputs';
+path_output = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/2_Pyrenees_distributed/5_Output_files/1_Model_outputs';
 folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat'; % Put here the path of where you downloaded the repository
 else % << Or Cluster - MR login >>
-path_output = '/home/mrodrigu/1_TC/2_Outputs/2_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
-folder_path = '/home/mrodrigu/1_TC/1_Model'; % Put here the path of where you downloaded the repository. '/home/jouberto/TeC_Source_Code'
+path_output = '/nfs/scistore18/pelligrp/mrodrigu/1_TC/2_MegaWat/2_Pyrenees_distributed/5_Output_files/1_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
+folder_path = '/nfs/scistore18/pelligrp/mrodrigu/1_TC/2_MegaWat'; % Put here the path of where you downloaded the repository. '/home/jouberto/TeC_Source_Code'
 end
 
 %% Site specifications
@@ -191,9 +191,15 @@ addpath(genpath([folder_path, '/' study_name '/2_Inputs/1_Input_Carbon'])); % Ad
 addpath(genpath([folder_path, '/1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 outlocation = [path_output '/' char(simnm)];
 
+if ISTA == 2
+ncor = feature('numcores');
+parpool('local',ncor);
+end
 
 % Create output directory if it doesn't exist already
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
+
+
 
 %Deactivate hyperthreading
 N=1;
@@ -1041,11 +1047,23 @@ for t=fts:N_time_step
     %======================================================================
     % LOOP OVER CELLS
     %======================================================================
-    
-    parfor ij=3550:4000   
+    Follow=MASK;
+    for ij=1:num_cell   
         % Good practice to use a simple for loop for debugging/testing
         % ij is the index to go pixel by pixel through the mask
+        % ij=1:num_cell
         % disp(strcat('in the loop', ij))
+        
+        %% Debugging for a for loop
+        %Follow(ij) = 2222; %22307 - 22308 (row 107 - col 151)
+        %disp('bye')
+        %{
+        if ismember(ij, [num_cell/8, num_cell/4, num_cell/2, 3*num_cell/4])   
+        disp(ij)
+        end        
+        %Ta,Ts,Pre,zatm,disp_h,zom,zoh,Ws,ea
+        %} 
+        % =================================================================
 
         if MASKn(ij)== 1
             Elev=DTM(ij);

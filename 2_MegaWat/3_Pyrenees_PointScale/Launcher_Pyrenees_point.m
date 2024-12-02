@@ -1,9 +1,27 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% TETHYS-CHLORIS(T&C) - ADVANCED HYDROLOGICAL MODEL%%%%%%%%%%%
+%%%%%%%%%%%%%%              POINT SCALE MODEL                   %%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% AUTHOR INFO AND STUDY SITE
+%==========================================================================
+% Created on Nov 25, 2024
+% Author: MAXIMILIANO RODRIGUEZ
+% Code originally from: ACHILLE JOUBERTON
+% Area of Study: Pyrenees
+% Region: Cinca Subcatchment
+% Code explanation: This code launches the Point Scale version of TC model.
+% Output variables are managed by the file OUTPUT_MANAGER_DIST_LABEL.
+% Some code and names still referes to previous versions of the code.
+%==========================================================================
+
+%% Clear all
 clc; clear all;
 
-%%%%%%%% LINES TO BE CHANGED %%%%%%%%
+%% Directories
+folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
 
-folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code\'; % Put here the path of where you downloaded the repository
-
+%% Pixel selection
 point_id = 1; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run the point-scale version of T&C
 
 %AWS_OnGlacier (1) : at the location of an AWS located on the debris-covered
@@ -14,13 +32,13 @@ point_id = 1; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run th
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-study_name = 'Kyzylsu_pointscale';
+study_name = 'Pyrenees_pointscale';
 
 % How to store outputs %%%%
 output_daily = 1;  % Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
 
-% Study site details
-SITE ='Kyzylsu'; s = 2;
+%% Study site details
+SITE ='Cinca_Mid'; s = 2;
 FORCING = "ERA5Land";
 Lat = 39.0969; Lon = 71.4176;
 UTM_zone = 42; DeltaGMT= 5;
@@ -29,7 +47,7 @@ t_bef = 0.5; t_aft = 0.5;
   
 x1s =  "01-Jul-2021 00:00:00"; % Starting point of the simulation
 x2s =  "30-Sep-2023 23:00:00"; % Last timestep of the simulation
-dtm_file = char("dtm_Kyzylsu_100m.mat"); 
+dtm_file = char("dtm_Cinca_Mid_250m.mat"); 
 Tmod = 0; % temperature modification above clean ice [°C];
 Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
 Z_min = 3370; % lowest elevation for linear precipitation modification (min factor -> 0)
@@ -37,13 +55,16 @@ Z_max = 5000; % highest elevation for linear precipitation modification (max fac
 locs = [1 , 3]; % should be either 1, 3 or 52.  1 : AWS_OnGlacier, 3: Pluvio
 loc = locs(point_id);
 
-outlet_names = "Gauge4";
+outlet_names = "Cinca_Mid_OUT";
 outlet_name = char(outlet_names);
 
-%%% Precipitation phase parametrization
-
-%1 = 2-threshold, 2 = Ding 2017, 3 = single-threshold, 4 = Pomeroy 2013, 5
-%= Wang 2019, 6 = Jennings 2018
+%% Precipitation phase parametrization
+% 1 = 2-threshold, 
+% 2 = Ding 2017, 
+% 3 = single-threshold, 
+% 4 = Pomeroy 2013,
+% 5 = Wang 2019, 
+% 6 = Jennings 2018
 
 parameterize_phase.OPT_Pr_Part = 2; % Choice of the precipitation phase scheme
 parameterize_phase.Tmax = 2; % Upper air temperature for dual temperature threshold
@@ -56,7 +77,7 @@ hSTL = 0.003; %m
 % Albedo scheme choice
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
  
-% Select simulation period (start and end)
+%% Select simulation period (start and end)
 if exist('date_start','var') % If not provided in the batch file used to call the function (cluster)
     date_start = datetime(date_start);
     date_end = datetime(date_end);
@@ -65,9 +86,9 @@ else
     date_end = datetime(x2s);
 end 
 
-% Provide a comment on the simulation to name the output directory
+%% Provide a comment on the simulation to name the output directory
 if ~exist('sim_comment','var') % If not provided in the batch file used to call the function (cluster)
- sim_comment = "Kyzylsu_pointscale_oldTC";
+ sim_comment = "Cinca_pointscale_oldTC";
 end 
  simnm = strcat(FORCING, "_", datestr(datetime("now"),'ddmmyy'),"_",num2str(year(date_start)),"_", num2str(year(date_end)) ,"_",sim_comment);
 
@@ -78,12 +99,13 @@ out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat'); % file path in
 
 res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
 
-%dependencies
-addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
-addpath(genpath([folder_path, '/Inputs'])); % Add path to Ca_Data
-addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
+%% Dependencies
+addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
+addpath(genpath([folder_path, '3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
+%addpath(genpath([folder_path, '3_Pyrenees_PointScale/2_Inputs'])); % Add path to Ca_Data
+%addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
 
 load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -98,10 +120,8 @@ load('Ca_Data.mat');
 Ca_all = Ca;
 topo = 1;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%% Impose measured albedo on glacier areas %%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Impose measured albedo on glacier areas
 fn_alb_elev = [SITE '_Albedo_vs_elev.mat'];
 
 if exist(fn_alb_elev,'file')>0
@@ -126,8 +146,7 @@ else
     Afirn = DTM.*0 + 0.28;   
 end
 
-%POIs
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% POIs
 POI = readtable([SITE '_MultiPoints.txt']); %import table with points info
 [POI.LAT, POI.LON] = utm2ll(POI.LON_UTM, POI.LAT_UTM, UTM_zone);
 
@@ -137,8 +156,6 @@ if exist('loc','var') %Option 1: if run on a cluster as an array task, use clust
 else
     LOC = 2; %1:size(POI,1); %loc = 11;       %Option 2: Manually select the indices
 end 
-
-
 
 for loc = LOC  
  
