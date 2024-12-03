@@ -93,7 +93,7 @@ end
  simnm = strcat(FORCING, "_", datestr(datetime("now"),'ddmmyy'),"_",num2str(year(date_start)),"_", num2str(year(date_end)) ,"_",sim_comment);
 
 % Create the directy where model outputs will be stored
-outlocation = [folder_path,'/Case_study/' study_name '/Outputs'];
+outlocation = [folder_path,'Case_study/' study_name '/Outputs'];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
 
