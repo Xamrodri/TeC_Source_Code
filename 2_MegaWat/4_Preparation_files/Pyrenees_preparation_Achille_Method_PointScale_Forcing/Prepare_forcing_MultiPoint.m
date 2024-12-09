@@ -32,7 +32,6 @@ if ~exist('fnum ','var')
      fnum = 1;  % If not be defined to the bash script
 end
 
-
 SITEs = ["Langtang", "Cinca_Mid"];
 SITE = char(SITEs(s));
 
@@ -85,35 +84,6 @@ res = str2num(extractBetween(string(dtm_file), [SITE '_'], 'm.mat')); % model re
 addpath(genpath([root '5_Common_inputs']));
 addpath(genpath([root '1_Functions']));
 outlocation = [root '3_Pyrenees_PointScale/2_Forcing/'];
-
-%{
-    if strcmp(SITE,'Rolwaling')
-        addpath(genpath([root '/TC_forcing/',upper(SITE),'/Distributed/NHM/Processed_data']));
-%         addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/ERA5Land_25052023/BC']));
-%         addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/ERA5Land_25052023/DOWNSCALED_NON_BC']));
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper('Trambau'),'/BC']));
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper('Trambau'),'/DOWNSCALED_NON_BC']));
-    elseif strcmp(SITE,'Parlung4') || strcmp(SITE,'Mugagangqiong') || strcmp(SITE,'Kyzylsu')
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/BC']));
-        addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/DOWNSCALED_NON_BC']));
-    end 
-    addpath(genpath([root '/TC/']));
-    outlocation = [root,'/TC_forcing/',upper(SITE),'/Multipoints/',sim_nm,'/'];
-    addpath(genpath([root, '/TC_setups/',SITE,'/RUNS/INPUTS']));
-    mkdir(outlocation);
-    addpath(genpath(outlocation));
-    path_poi = [root '/TC_setups/' SITE '/Preprocessing/OUTPUTS/Multipoints/' SITE '_' num2str(res) 'm'];
-elseif strcmp(machine,'WSL28243')
-    path_poi = [root '/T&C/TC_setups/' SITE '/Preprocessing/OUTPUTS/Multipoints/' SITE '_' num2str(res) 'm'];
-    addpath(genpath([root '/T&C/TC/']))
-    addpath(genpath([root, '/T&C/TC_Setups/',SITE,'/RUNS/INPUTS']));
-    addpath([root '\T&C\TC_forcing\' upper(SITE) '\Distributed\BC'])
-    addpath([root '\T&C\TC_forcing\' upper(SITE) '\Distributed\DOWNSCALED_NON_BC'])
-    outlocation = [root,'/T&C/TC_forcing/',upper(SITE),'/Multipoints/',sim_nm,'/'];
-    mkdir(outlocation);
-    addpath(genpath(outlocation));
-end
-%}
 
 load(dtm_file)
 

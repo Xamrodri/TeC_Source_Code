@@ -103,7 +103,7 @@ out = strcat(outlocation,'INIT_COND_', SITE ,'_MultiPoint.mat'); % file path ini
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
-addpath(genpath([folder_path, '3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
+addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 
 load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
