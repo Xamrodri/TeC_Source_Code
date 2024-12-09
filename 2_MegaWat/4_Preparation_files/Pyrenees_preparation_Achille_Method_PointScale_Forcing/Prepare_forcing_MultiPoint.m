@@ -1,46 +1,47 @@
-% clear all;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Creation initiated on Dec 03, 2024
+% Author: Maximiliano Rodriguez
+% Code originally from: Achille Jouberton
+% Area of Study: Pyrenees
+% Region: Cinca Subcatchment
+% Code explanation: This codes prepare the matrices for forcing for the
+% Multi Point model.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% clear all;
 close all;
 clc;
+clear;
 
-%==========================================================================
-% PATHS
-%==========================================================================
- 
+%% INITIAL PARAMETERS FOR MODEL INITIALIZATION 
 Bdrive = 0; 
-ISTA = 1;
+ISTA = 1; % 1:local computer, 2: Cluster
+s = 2; % catchment selection
+%% DIRECTORIES
 
-% profile on
-
-%%%%%  Computer %%%%%¨
-
-machine=getenv('computername');
-
-if Bdrive == 1
-    root = s;  % Need to add my B-drive folder path here
-elseif strcmp(machine,'WSL28243') %%% << Laptop >>
-    root='C:\Users\jouberto\Desktop';
-elseif isempty(machine) && (ISTA ~= 1) %%% << HYPERION >>
-    root='/home/jouberto';
-elseif isempty(machine) && (ISTA == 1) %%% << HYPERION >>
-    root='/nfs/scistore18/pelligrp/ajoubert';
+if ISTA == 1
+root = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/';
+elseif ISTA == 2 %%% << HYPERION >>
+root = '/nfs/scistore18/pelligrp/mrodrigu/1_TC/2_MegaWat';
+else %%% << Incorrect input >>
+error("Incorrect parameter for directory")
 end
 
+%% Other variables
 if ~exist('fnum ','var')
-     fnum = 1;  % If notbe defined to the bash script
+     fnum = 1;  % If not be defined to the bash script
 end
 
-if ~exist('s','var')
-     s = 1;  % If not defined to the bash script
-end
 
-SITEs = ["Langtang", "Kyzylsu", "Parlung24K","Rolwaling","Parlung4","Mugagangqiong"];
+SITEs = ["Langtang", "Cinca_Mid"];
 SITE = char(SITEs(s));
 
 FORCINGs = ["ERA5Land","NHM-200m"]; 
 FORCING = char(FORCINGs(fnum));
 
-x1s = ["01-Oct-2016 00:00:00","01-Jan-1970 00:00:00", "01-Oct-2018 19:00:00","01-Jan-2011 00:00:00","01-Jan-1970 00:00:00","01-Jan-1970 00:00:00"];
-x2s = ["30-Sep-2019 23:00:00","30-Sep-2023 23:00:00","01-Oct-2018 19:00:00","31-Dec-2022 23:00:00","30-Sep-2023 23:00:00","30-Sep-2023 23:00:00"];
+%% Period of modelling
+x1s = ["01-Oct-2016 00:00:00","01-Sep-2022 00:00:00"];
+x2s = ["30-Sep-2019 23:00:00","30-Sep-2023 23:00:00"];
 
 x1 = char(x1s(s));
 x2 = char(x2s(s));
@@ -59,8 +60,8 @@ vars_DS = vars_DSs(s,:);
 
 sim_nm = [SITE '_' FORCING '_' x1(8:11) '_' x2(8:11)];
 
-Lats = [28.2108, 39.0969, 29.773,27.836191,29.233504,32.235];
-Lons = [85.5695,71.4176,95.699, 86.531051, 96.923511,87.486];
+Lats = [28.2108, 39.0969];
+Lons = [85.5695, 71.4176];
 DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
 
@@ -72,16 +73,20 @@ elseif strcmp('NHM-200m',FORCING)
     t_afts = [0,0.5,0.25,-0.5];
 end
 
-dtm_files = ["dtm_Langtang_100m.mat", "dtm_Kyzylsu_100m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_100m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
+%% DTM
+dtm_files = ["dtm_Langtang_100m.mat", "dtm_Cinca_Mid_250m.mat"];
 
 Lat = Lats(s); Lon = Lons(s);
 DeltaGMT=DeltaGMTs(s); t_bef=t_befs(s); t_aft=t_afts(s); 
 dtm_file = char(dtm_files(s)); Zbas=Zbass(s); 
 res = str2num(extractBetween(string(dtm_file), [SITE '_'], 'm.mat')); % model resolution
 
-%path to distributed forcing
+%% Path to distributed forcing
+addpath(genpath([root '5_Common_inputs']));
+addpath(genpath([root '1_Functions']));
+outlocation = [root '3_Pyrenees_PointScale/2_Forcing/'];
 
-if isempty(machine) %%% << CLUSTER >>
+%{
     if strcmp(SITE,'Rolwaling')
         addpath(genpath([root '/TC_forcing/',upper(SITE),'/Distributed/NHM/Processed_data']));
 %         addpath(genpath(['/nfs/scistore18/pelligrp/tshaw/DOWNSCALING/OUTPUT/HMA/',upper(SITE),'/ERA5Land_25052023/BC']));
@@ -108,11 +113,13 @@ elseif strcmp(machine,'WSL28243')
     mkdir(outlocation);
     addpath(genpath(outlocation));
 end
+%}
 
 load(dtm_file)
 
+%% EXTRACT TOPOGRAPHIC/SHADING DATA FROM DISTRIBUTED set-up
 %==========================================================================
-% EXTRACT TOPOGRAPHIC/SHADING DATA FROM DISTRIBUTED set-up
+% 
 %==========================================================================
 
 [Slo_top,Aspect]=Slope_Aspect_indexes(DTM_orig,cellsize,'mste');
@@ -129,7 +136,8 @@ numcell = numel(DTM);
 [YE,MO,DA,HO,MI,SE] = datevec(Top_Date);
 Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
 
-if (exist('poi_id','var')&& poi_id==1) %||  ~exist('poi_id','var') %Opt.1 if run on a cluster as an array task, use cluster array task ID as loc
+%if from Achille code.  
+%if (exist('poi_id','var')&& poi_id==1) %||  ~exist('poi_id','var') %Opt.1 if run on a cluster as an array task, use cluster array task ID as loc
 
 [Slo_top_S,Aspect_S]=Slope_Aspect_indexes(DTM_orig,cellsize,'mste');
 Aspect_S(isnan(Aspect_S))=0;
@@ -140,6 +148,7 @@ Slo_top_S(Slo_top_S<0.001)=0.001;
 ShF_S= zeros(numcell,length(Top_Date));
 h_Sts = zeros(length(Top_Date),1);
 zeta_Sts = zeros(length(Top_Date),1);
+
 parfor t = 1:length(Top_Date)
     t
     Datam_S=Datam(t,:);
@@ -154,12 +163,13 @@ SvF_S = reshape(SvF_S, numcell,1);
 
 save([outlocation SITE '_ShF_' FORCING '.mat'], 'Top_Date','ShF_S','Slo_top_S','SvF_S','Ct_S','h_Sts','Aspect_S','zeta_Sts','cellsize', '-v7.3')
 
-end
+%end
 
 %==========================================================================
 % EXTRACT FORCING DATA FROM DOWNSCALED/BIASCORRECTED ERA5-Land or NHM-200m
 %==========================================================================
 
+%{
 % Read POI table
 tic
 T=readtable([path_poi '/' SITE '_MultiPoints.txt']);
@@ -328,3 +338,5 @@ toc
 % p = profile('info');
 % % save([outlocation 'profile_outputs'],'p')
 % profsave(p, [outlocation 'profile_outputs'])
+
+%}

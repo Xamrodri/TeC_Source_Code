@@ -12,7 +12,7 @@
 % Region: Cinca Subcatchment
 % Code explanation: This code launches the Point Scale version of TC model.
 % Output variables are managed by the file OUTPUT_MANAGER_DIST_LABEL.
-% Some code and names still referes to previous versions of the code.
+% Some code and names still refers to previous versions of the code.
 %==========================================================================
 
 %% Clear all
@@ -21,42 +21,57 @@ clc; clear all;
 %% Directories
 folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
 
-%% Pixel selection
-point_id = 1; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run the point-scale version of T&C
+%% Modelling period
+x1s =  "01-Nov-2022 00:00:00"; % Starting point of the simulation
+x2s =  "01-Jun-2023 23:00:00"; % Last timestep of the simulation
 
-%AWS_OnGlacier (1) : at the location of an AWS located on the debris-covered
-%portion of Kyzylsu Glacier in Tajikistan
+date_start = datetime(x1s);
+date_end = datetime(x2s);
 
-%Pluviometer (2) : at the location of an pluviometer located on grassland at
-%3371m a.s.l. nearby Kyzylsu Glacier
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%% MODEL PARAMETERS
 study_name = 'Pyrenees_pointscale';
+% Time step for the model
+dt=3600; % [s]
+dth=1; % [h]
 
-% How to store outputs %%%%
-output_daily = 1;  % Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
+% Integration interval for Solar variables
+% Hours or fraction before and after.
+t_bef = 0.5; t_aft = 0.5;
+%% Pixel selection
+%==========================================================================
+% Depends on the point to be modelled
+% Select for which pixel to run the point-scale version of T&C
+% 1: AWS_OnGlacier
+% 2: Pluvio
+%==========================================================================
+point_id = 1;     
+LOC = point_id;
+
+%% Data storing  
+%==========================================================================
+% How to store outputs
+% Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
+%==========================================================================
+output_daily = 1; 
 
 %% Study site details
-SITE ='Cinca_Mid'; s = 2;
+SITE ='Cinca_Mid'; 
+s = 2; % ID for catchment selection
 FORCING = "ERA5Land";
-Lat = 39.0969; Lon = 71.4176;
-UTM_zone = 42; DeltaGMT= 5;
+UTM_zone = 31; % for Spain
+DeltaGMT= 1; % for Spain
+outlet_names = "Cinca_Mid_OUT";
+outlet_name = char(outlet_names);
 
-t_bef = 0.5; t_aft = 0.5;
-  
-x1s =  "01-Jul-2021 00:00:00"; % Starting point of the simulation
-x2s =  "30-Sep-2023 23:00:00"; % Last timestep of the simulation
+%% Load DEM  
 dtm_file = char("dtm_Cinca_Mid_250m.mat"); 
+res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
+disp(strcat('Model resolution: ',num2str(res)))
+
 Tmod = 0; % temperature modification above clean ice [°C];
 Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
 Z_min = 3370; % lowest elevation for linear precipitation modification (min factor -> 0)
 Z_max = 5000; % highest elevation for linear precipitation modification (max factor -> Pmod)
-locs = [1 , 3]; % should be either 1, 3 or 52.  1 : AWS_OnGlacier, 3: Pluvio
-loc = locs(point_id);
-
-outlet_names = "Cinca_Mid_OUT";
-outlet_name = char(outlet_names);
 
 %% Precipitation phase parametrization
 % 1 = 2-threshold, 
@@ -76,36 +91,20 @@ hSTL = 0.003; %m
 
 % Albedo scheme choice
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
- 
-%% Select simulation period (start and end)
-if exist('date_start','var') % If not provided in the batch file used to call the function (cluster)
-    date_start = datetime(date_start);
-    date_end = datetime(date_end);
-else 
-    date_start = datetime(x1s);
-    date_end = datetime(x2s);
-end 
 
-%% Provide a comment on the simulation to name the output directory
-if ~exist('sim_comment','var') % If not provided in the batch file used to call the function (cluster)
- sim_comment = "Cinca_pointscale_oldTC";
-end 
- simnm = strcat(FORCING, "_", datestr(datetime("now"),'ddmmyy'),"_",num2str(year(date_start)),"_", num2str(year(date_end)) ,"_",sim_comment);
-
-% Create the directy where model outputs will be stored
-outlocation = [folder_path,'Case_study/' study_name '/Outputs'];
+%% Create the directory where model outputs will be stored
+outlocation = [folder_path,'3_Pyrenees_PointScale/4_Outputs/'];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
-out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
 
-res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
+% Saving initial conditions of the model
+out = strcat(outlocation,'INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
 
 %% Dependencies
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
 addpath(genpath([folder_path, '3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
-%addpath(genpath([folder_path, '3_Pyrenees_PointScale/2_Inputs'])); % Add path to Ca_Data
-%addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
+
 
 load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -150,58 +149,56 @@ end
 POI = readtable([SITE '_MultiPoints.txt']); %import table with points info
 [POI.LAT, POI.LON] = utm2ll(POI.LON_UTM, POI.LAT_UTM, UTM_zone);
 
-% Select the indices of POI to run T&C for
-if exist('loc','var') %Option 1: if run on a cluster as an array task, use cluster array task ID as loc
-    LOC = loc; 
-else
-    LOC = 2; %1:size(POI,1); %loc = 11;       %Option 2: Manually select the indices
-end 
-
 for loc = LOC  
- 
-%get location info
-id_location = char(string(POI.Name(loc)));
+ %% Get location for POI
+id_location = char(string(POI.Name(loc))); %id
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
-Zbas = DTM(POI.ROW(loc),POI.COL(loc));
-
-%location name and cell index
-ij = POI.idx(loc);
-[i, j] = ind2sub(size(DTM), ij);
-
-if strcmp(id_location,outlet_name) && ~strcmp(SITE,'Parlung4')
-    Zbas = DTM(Youtlet, Xoutlet);
-    ij = sub2ind(size(DTM),Youtlet,Xoutlet);
-end 
+Zbas = DTM(POI.ROW(loc),POI.COL(loc)); % Altitude
+%ij = POI.idx(loc);
+ij = sub2ind(size(DTM),POI.COL(loc),POI.ROW(loc)); % Location
+[i, j] = ind2sub(size(DTM), ij); % Location
 
 %% FORCING
-
+%==========================================================================
+%
+%==========================================================================
 load(strcat(id_location,'.mat')); % Load forcing table for the current POI
 
+Date_all=forcing_all.Time; 
+
+%define period and time zone info
+x1=find(date_start == Date_all,1);
+x2=find(date_end == Date_all,1);
+
+
+%% Displaying modelling parameters
 disp(['Site selected: ' SITE])
 disp(['Forcing selected: ' char(FORCING)])
 disp(['Running T&C for pixel: ' id_location])
 disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)])
 
-%fetch time and do date handling
-Date_all=forcing_all.Time; 
-% Time step 
-dt=3600; %%[s]
-dth=1; %%[h]
-%define period and time zone info
-x1=find(date_start == Date_all,1);
-x2=find(date_end == Date_all,1);
-
+%% Fetch time and do date handling
 Date = Date_all(x1:x2);
 [YE,MO,DA,HO,MI,SE] = datevec(Date);
 Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
 clear YE MO DA HO MI SE
 
-%load carbon data and narrow down to period
-d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
+%% Carbon data
+%==========================================================================
+% Load carbon data and narrow down to period
+%==========================================================================
+
+d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);
+d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
 Ca=Ca_all(d1:d2); 
 clear d1 d2
-Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol]
+
+Oa= 210000; % Intercellular Partial Pressure Oxygen [umolO2/mol]
+
+
+%% Meteorological input
+
 %narrow down period of forcing data
 forcing = forcing_all(x1:x2,:);
 NN= height(forcing);%%% time Step
@@ -216,20 +213,17 @@ Ameas = zeros(NN,1);
 N=forcing.LWIN; Latm=forcing.LWIN;
 
 % Precipitation
-Pr=forcing.PP;Pr(isnan(Pr))=0; Pr(Pr<0.001)=0;
+Pr=forcing.PP;
+Pr(isnan(Pr))=0;
+Pr(Pr<0.001)=0;
 
 if Pmod >0
   Pr = Pr.*Pmod_S(ij);
 end
 
-% if SITE == "Kyzylsu"
-%     Pre_p = Pre_ref(x1:x2)-54.3758;%%%%%%%%%%%%%%PATCH!
-%     Pre = Pre_p.*exp((-9.81/287).*(Zbas-Z_ref)./(Ta_ref(x1:x2)+273.15));%%%%%%%%%%%%%%%%%PATCH!
-% else
 Pre=forcing.PRESS;    
-% end
 
-%%% 2m air temperature
+% 2m air temperature
 Ta=forcing.TA; 
 
 % Apply Tmod 
@@ -237,15 +231,17 @@ if (GLH(ij)>0) && (DEB_MAP(ij) < 10) % glacier, but without debris
     Ta(Ta >0) = Ta(Ta >0) + Tmod;
 end 
 
-%%% Wind Speed
+% Wind Speed
 Ws=forcing.FF; Ws(Ws < 0.01) = 0.01;
-%%% Relative humidity
+
+% Relative humidity
 if max(forcing.RH)<= 1
     U=forcing.RH;
 else
     U=forcing.RH./100;
 end
-%%% Radiation
+
+% Radiation
 SAD1=forcing.SAD1;SAD2=forcing.SAD2; SAB1=forcing.SAB1;SAB2=forcing.SAB2;
 PARB=forcing.PARB; PARD=forcing.PARD;
 alpha=0; %switch for albedo
@@ -253,18 +249,18 @@ Ameas_t=0; %albedo
 Aice_meas_on_hourly=zeros(height(forcing),1); %albedo
 Asno_meas_on_hourly=zeros(height(forcing),1); %albedo
 
-%%% esat/ea/Ds/Tdew
+% esat/ea/Ds/Tdew
 a=17.27; b=237.3;
-esat=611*exp(a*Ta./(b+Ta)); %Vapour pressure at saturation (Pa)
-ea=U.*esat;                 %Vapour pressure (Pa)
-Ds= esat - ea;              %Vapor Pressure Deficit (Pa)
+esat=611*exp(a*Ta./(b+Ta)); % Vapour pressure at saturation (Pa)
+ea=U.*esat;                 % Vapour pressure (Pa)
+Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
 Ds(Ds<0)=0; 
 xr=a*Ta./(b+Ta)+log10(U);
-Tdew=b*xr./(a-xr);               %Presumed dewpoint temperature (°C)
+Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
 clear a b xr;
 
+%% DING PARAMETERIZATION
 % Initial daily mean values for Ding parametrization
-
 Ta_Ding_d = nanmean(Ta(1:24));
 Pre_Ding_d = nanmean(Pre(1:24));
 ea_Ding_d = nanmean(ea(1:24));
@@ -392,7 +388,6 @@ end
 
 zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
 
-
 %%% SOIL
 PSAN=reshape(PSAN/100,num_cell,1); Psan = PSAN(ij); % Soil sand content at pixel ij
 PCLA=reshape(PCLA/100,num_cell,1); Pcla = PCLA(ij); % Soil clay content at pixel ij
@@ -417,7 +412,8 @@ else
     SNOWALB=reshape(SNOWALB,num_cell,1);
 end 
 
-%% INITIAL CONDITIONS AND PARAMETERS (run this only once in MultiPoint mode!)
+%% SAVING INITIAL CONDITIONS AND PARAMETERS 
+% (run this only once in MultiPoint model!)
 if exist(out, 'file') == 2
 load(out);
 else
@@ -427,15 +423,19 @@ INIT_COND_v2(num_cell,m_cell,n_cell,...
 load(out);
 end
 
-%define parameter file
-PARAM_IC = strcat(cd,'/Inputs/MOD_PARAM_Multipoint.m');
-
 %% RUN MODEL
+%==========================================================================
+% PARAM_IC: Define parameter file
+% MAIN_FRAME: Contains the model
+%==========================================================================
+PARAM_IC = strcat(folder_path,'3_Pyrenees_PointScale/3_Inputs/MOD_PARAM_Multipoint.m');
 MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
 
-Date_R = char(Date);%make date useable for R
-
 %% Output manager
+%==========================================================================
+%
+%==========================================================================
+Date_R = char(Date); % make date usable for R
 
 Param_t = table(Lat,Lon,Zbas,dbThick,'VariableNames',{'Lat','Lon','Zbas','dbThick'});
 Param_t = [Param_t, struct2table(SnowIce_Param), struct2table(Deb_Par)];
@@ -453,10 +453,9 @@ Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET,ros,'Vari
 'Ta','Ws','U','N','Rsw',...
 'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ros'});
 
-%Max (Try)
-out_my =table(Date, ZWT, 'VariableNames',{'Date', 'WaterTable'})
-
-if output_daily == 1 % If I want to only save daily aggregated output 
+% For daily outputs
+% If I want to only save daily aggregated output
+if output_daily == 1
 
 Outputs_tt = table2timetable(Outputs_t);
 
@@ -471,18 +470,22 @@ Outputs_t = timetable2table(Outputs_d);
 
 end 
 
-writetable(Outputs_t, strcat(outlocation,'/',id_location,'_results.txt'))
-writetable(Param_t, strcat(outlocation,'/',id_location,'_param.txt') )
+writetable(Outputs_t, strcat(outlocation,id_location,'_results.txt'))
+writetable(Param_t, strcat(outlocation,id_location,'_param.txt') )
 end 
 
-%% Quick run evaluation
+%% Run evaluation
+%==========================================================================
+%
+%==========================================================================
 
-path_evaluation = [folder_path 'Case_study\' study_name '\Evaluation_data'];
+path_evaluation = [folder_path '3_Pyrenees_PointScale/1_Evaluation_data/'];
 
+%{
 if point_id == 1
 
 % On-glacier AWS data
-AWS = load([path_evaluation '\AWS_Kyzylsu_15min_2021-06-28_2023-09-12.mat']);
+AWS = load([path_evaluation 'AWS_Kyzylsu_15min_2021-06-28_2023-09-12.mat']);
 AWS = AWS.AWS_tt_15;
 
 SMB_aws = Outputs_tt.ICE.*0.001./0.91 + Outputs_tt.SND ...
@@ -529,3 +532,4 @@ plot(out_my.Date, out_my.WaterTable); hold on; grid on;
 ylim([0 2000])
 %}
 
+%}

@@ -34,9 +34,11 @@ s = 2;  % This launcher can be used for different catchment. Here in this case s
 if ISTA == 1 % << Local computer of MR >>
 path_output = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/2_Pyrenees_distributed/5_Output_files/1_Model_outputs';
 folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat'; % Put here the path of where you downloaded the repository
-else % << Or Cluster - MR login >>
+elseif ISTA == 2 % << Or Cluster - MR login >>
 path_output = '/nfs/scistore18/pelligrp/mrodrigu/1_TC/2_MegaWat/2_Pyrenees_distributed/5_Output_files/1_Model_outputs';  %'/home/jouberto/TC_outputs/Kyzylsu/Distributed';
 folder_path = '/nfs/scistore18/pelligrp/mrodrigu/1_TC/2_MegaWat'; % Put here the path of where you downloaded the repository. '/home/jouberto/TeC_Source_Code'
+else
+error('Error in parameter to define directories')
 end
 
 %% Site specifications
@@ -52,7 +54,7 @@ if strcmp(machine,local_machine) %%% << Achille's laptop >>
 end
 %}
 
-SITEs = ["Langtang", "Cinca_Mid", "Parlung24K","Rolwaling","Parlung4","Mugagangqiong"]; % All of my study catchments
+SITEs = ["Langtang", "Cinca_Mid"]; % All of my study catchments
 FORCING = 'Forcing_(Chelsa)';
 Lats = [28.2108, 42.4269, 29.773,27.836191,29.233504,32.235];
 Lons = [85.5695,0.1776,95.699, 86.531051, 96.923511,87.486];
@@ -60,10 +62,10 @@ DeltaGMTs=[5.75,5,8,5.45,8,8];
 Zbass=[3862,3579,3800,5449,4600,5850]; %in this setup: elevation of the reference pressure logger
 
 % dtm file name
-dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Cinca_Mid_250m.mat", "dtm_24K_100m.mat","dtm_Rolwaling_200m.mat","dtm_Parlung4_100m.mat","dtm_Mugagangqiong_100m.mat"];
+dtm_files = ["dtm_dtSMB_Langtang_100m.mat", "dtm_Cinca_Mid_250m.mat"];
 
 % Catchment outlet POI name
-outlet_names = ["qqq","Cinca_Mid","ccc","Streamgauge_lake","Further_outlet_AWS4600","Outlet_gaging_station"];
+outlet_names = ["qqq","Cinca_Mid"];
 
 % Parameters
 Tmods = [0,0,0,0,0,0]; % temperature modification above clean ice [°C];
@@ -75,15 +77,17 @@ Tmins = [0, 0, -0.5, 0, -0.5, -0.5]; % Minimum air temperature for precipitation
  
 
 %% Simulation period
-% Starting point of the simulation
-x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00", "01-Oct-2018 00:00:00","01-Oct-2018 00:00:00","01-Jan-2015 00:00:00","01-Jan-2015 00:00:00"];
-% Ending point of the simulation
-x2s = ["30-Sep-2020 23:00:00", "02-Sep-2021 23:00:00", "28-Apr-2022 23:00:00","01-Dec-2019 00:00:00","31-Jan-2015 23:00:00","31-Jan-2015 23:00:00"];
 
-if exist('date_start','var')
-    x1 = datetime(date_start);
-    x2 = datetime(date_end);
-  else 
+if ISTA == 1 % << LOCAL >>
+    % Starting (x1) and ending (x2) points of the simulation
+    x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00"];
+    x2s = ["30-Sep-2020 23:00:00", "01-Sep-2021 23:50:00"];
+    x1=datetime(x1s(s));
+    x2=datetime(x2s(s));
+else % << CLUSTER >>
+    % Starting (x1) and ending (x2) points of the simulation
+    x1s = ["01-Oct-2018 00:00:00", "01-Sep-2021 00:00:00"];
+    x2s = ["30-Sep-2020 23:00:00", "30-Sep-2021 23:50:00"];
     x1=datetime(x1s(s));
     x2=datetime(x2s(s));
 end 
@@ -185,6 +189,7 @@ if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 %==========================================================================
 
 addpath(genpath([folder_path, '/' study_name '/2_Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path, '/5_Common_inputs/1_Input_Carbon'])); % Where are the inputs for carbon data
 addpath(genpath([folder_path, '/' study_name '/3_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
 addpath(genpath([folder_path, '/5_Common_inputs'])); % Where is located common inputs of the distributed and point scale models 
 addpath(genpath([folder_path, '/' study_name '/2_Inputs/1_Input_Carbon'])); % Add path to Ca_Data    
@@ -249,7 +254,7 @@ GLA_ID(GLH==0)=NaN;
 % Compute bedrock DEM for ice flow
 DTM_Bedrock = DTM_orig-GLH; 
 
-load([folder_path, '/2_Pyrenees_distributed/2_Inputs/1_Input_Carbon/Ca_Data.mat']);
+load(['Ca_Data.mat']);
 
 clear Xvs Yvs
 %%%
@@ -1047,8 +1052,8 @@ for t=fts:N_time_step
     %======================================================================
     % LOOP OVER CELLS
     %======================================================================
-    Follow=MASK;
-    for ij=1:num_cell   
+    %Follow=MASK; %Debugging
+    parfor ij=1:num_cell   
         % Good practice to use a simple for loop for debugging/testing
         % ij is the index to go pixel by pixel through the mask
         % ij=1:num_cell

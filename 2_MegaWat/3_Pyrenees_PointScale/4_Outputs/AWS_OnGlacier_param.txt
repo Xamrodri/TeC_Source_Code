@@ -1,8 +1,8 @@
 Parameter,Value
-Lat,39.096969852468
-Lon,71.4176899975761
-Zbas,3586.357421875
-dbThick,175
+Lat,42.6695997057689
+Lon,0.0438600069295779
+Zbas,605.451904296875
+dbThick,0
 TminS,-1.1
 TmaxS,2.5
 WatFreez_Th,-8
@@ -12,10 +12,10 @@ ros_max1,580
 ros_max2,300
 Ice_wc_sp,0.01
 ros_Ice_thr,500
-Aice,0.104353843958333
-alb,0.115
+Aice,0.28
+alb,0.13
 e_sur,0.94
-lan,0.985
+lan,0.94
 rho,1496
 cs,948
-zom,0.081
+zom,0.016

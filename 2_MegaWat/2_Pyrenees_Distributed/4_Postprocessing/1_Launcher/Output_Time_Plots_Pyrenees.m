@@ -1,13 +1,13 @@
 clc; clear all;
 
 %Folder where files are stored from the distributed model
-path_output = 'M:/19_ISTA/1_TC/3_Model_Source/3_Output_files/1_Model_outputs/';
-result = 'Region_(Distributed_Ebro)_SubBasin_(Cinca_Mid)_Forcing_(Chelsa)_RunningDate_(251124_1200)_RunningPeriod_(2021_2021)/';
+path_output = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/2_Pyrenees_distributed/5_Output_files/1_Model_outputs/';
+result = 'Region_(Distributed_Ebro)_SubBasin_(Cinca_Mid)_Forcing_(Chelsa)_RunningDate_(031224_1301)_RunningPeriod_(2021_2021)/';
 %Directory=path_output;
 %cd(Directory)
 
 %% Creating table tb from results
-tb = readtable([path_output, result,'Cell_data_final/OUTPUT_Cinca_Mid_PIXEL_Cinca_Mid_OUT.dat']);
+tb = readtable([path_output, result,'Cell_data_final/OUTPUT_Cinca_Mid_PIXEL_Cinca_Mid_High.dat']);
 NN =  tb.Date;
                 
 switch_plots = [1 ... % ICE
