@@ -3,21 +3,54 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Main Function
+%==========================================================================
+%{
+Input description:
+    Date [DD-MM-YY hh:mm:ss] - (Value or vector)
+    Lat [°]: Latitude
+    Lon [°]: Longitude
+    Zbas [m a.s.l.]: watershed elevation
+    DeltaGMT [hours??]: Distance from Greenwich Meridian for the day time???
+    Pr [mm???]: Precipitation??? - (Value or vector)
+    Tdew [°C]: dew point temperature - (Value or vector)
+    Rsw [W m-2????]: Measured Solar radiation - (Value or vector)
+    GRAPH_VAR: 0/1 switcher to plot outputs
+
+Input type
+    Date: Value or vector
+    Lat: Value
+    Lon: Value
+    Zbas: Value
+    DeltaGMT: Value
+    Pr: Value or vector
+    Tdew: Value or vector
+    Rsw: Value or vector
+    GRAPH_VAR: Value
+
+Outputs
+    SAD1 [W m-2]: First band diffuse radiation 
+    SAD2 [W m-2]: Second band diffuse radiation
+    SAB1 [W m-2]: First band direct radiation 
+    SAB2 [W m-2]: Second band direct radiation
+    PARB [W m-2]: PAR radiation direct
+    PARD [W m-2]: PAR radiation diffuse
+%}
+%==========================================================================
+
 function[SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Automatic_Radiation_Partition_ERA(Date,Lat,Lon,Zbas,DeltaGMT,Pr,Tdew,Rsw,GRAPH_VAR)
-%%% PROGRAM  INPUTS
-%%%% load Res_Location_Name.mat
-%%%D N Pr Tdew DeltaGMT Lon Lat Zbas
-%%% GRAPH_VAR 0/1 switcher to plot outputs 
-%%% Rsw --> Measured Solar radiation
-%load([cur_dir,'\Res_',Location_Name,'.mat']);
-D=Date; N=D*0;
+
+% load Res_Location_Name.mat
+% D N Pr Tdew DeltaGMT Lon Lat Zbas
+% load([cur_dir,'\Res_',Location_Name,'.mat']);
+% Date = datetime(2008, 1, 1, 10, 10, 10);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+D=Date; N=zeros(1,length(Date));
 D=reshape(D,length(D),1);
 [Anno,Mese,Giorno,Ora,Min,Sec]=datevec(D);
 Ora= Ora + (Min/30>1);
 Datam=[Anno,Mese,Giorno,Ora]; %% Datam %% [Yr, MO, DA, HR]
+%disp(Datam)
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 dt= 1;
 %%% Parameters LWP0 beta omega_A1 omega_A2
@@ -116,8 +149,16 @@ if GRAPH_VAR==1
     xlabel('T_aft'); ylabel('Optimization'); 
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Graphs 
+%==========================================================================
+% If GRAPH_VAR==1
+%==========================================================================
+
 i=0;
 SB=zeros(1,NT); SD=zeros(1,NT);SAB1=zeros(1,NT);SAB2=zeros(1,NT);SAD1=zeros(1,NT);SAD2=zeros(1,NT);PARB=zeros(1,NT);PARD=zeros(1,NT);
+
+%% Graph 1
 if GRAPH_VAR==1; bau = waitbar(0,'Waiting Please...'); end 
 for i=1:NT
     if GRAPH_VAR==1; waitbar(i/NT,bau); end 
@@ -127,6 +168,7 @@ for i=1:NT
     [SB(i),SD(i),SAB1(i),SAB2(i),SAD1(i),SAD2(i),PARB(i),PARD(i)]=ComputeRadiationForcingsN(Datam(i,:),DeltaGMT,Lon,Lat,...
         LWP0,N(i),Zbas,Tdew(i),beta_A,alpha_A,omega_A1,omega_A2,uo,un,rho_g,t_bef,t_aft);
 end
+
 if GRAPH_VAR==1; close(bau) ; end 
 %%%%%%%%
 Rsws=SB+SD;
@@ -148,6 +190,7 @@ N(isnan(Rsw))=0.15;
 %%%
 i=0;
 SB=zeros(1,NT); SD=zeros(1,NT);SAB1=zeros(1,NT);SAB2=zeros(1,NT);SAD1=zeros(1,NT);SAD2=zeros(1,NT);PARB=zeros(1,NT);PARD=zeros(1,NT);
+
 if GRAPH_VAR==1; bau = waitbar(0,'Waiting Please...'); end 
 for i=1:NT
    if GRAPH_VAR==1; waitbar(i/NT,bau); end 
@@ -162,6 +205,9 @@ Rsws=SB+SD;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Rsw(isnan(Rsw))=Rsws(isnan(Rsw));
+
+%% Graph 2
+
 if GRAPH_VAR==1;
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%
     disp('Rsw SIM:')
@@ -192,6 +238,12 @@ if GRAPH_VAR==1;
 end
 [SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Ratio_Evaluator(Rsws,Rsw,SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD); 
 end
+
+%% Function
+%==========================================================================
+% SUNFUNCTION: Ratio_Evaluator    
+%==========================================================================
+
 function[SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Ratio_Evaluator(Rsws,Rsw,SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Rsw=reshape(Rsw,1,length(Rsw));  Rsw(isnan(Rsw))=Rsws(isnan(Rsw));
@@ -214,7 +266,7 @@ end
 
 %% Function
 %==========================================================================
-% Subfunction  Estimate Cloud_Cover    
+% Subfunction: Estimate Cloud_Cover    
 %==========================================================================
 function[Nsim]=Estimate_CloudCover(Rsw,Rsws,Pr,D)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -257,55 +309,58 @@ end
 
 %% FUNCTION
 %==========================================================================
-% Subfunction  Compute radiation forcings 
+%{
+SUNFUNCTION: Compute radiation forcings 
+
+OUTPUT
+    EB: sky beam irradiance without terrain effects
+    ED: sky total diffuse irradiance  without terrain effects
+    EB1 [W/m^2]: sky beam irradiance VIS band[0.29 um - 0.70um ]
+    EB2 [W/m^2]: sky beam irradiance NIR band [0.70 um - 4.0 um ]
+    ED1 [W/m^2]: sky total diffuse flux at the ground  VIS band [0.29 um -0.70um ]
+    ED2 [W/m^2]: sky  total diffuse flux at the ground NIR band  [0.70 um-4.0 um ]
+
+INPUT
+    Datam: [Yr, MO, DA, HR]
+    DeltaGMT [°]
+    Lon [°]
+    Lat [°]
+    LWP0 [g/m^2]
+    N [0-1]: cloudiness
+    Zbas [m a.s.l.]: watershed elevation
+    Tdew [°C]: dew point temperature
+    beta_A: 0.05 [0-1] Angstrom turbidity parameters
+    alpha_A: 1.3 [0.5-2.5] Angstrom turbidity parameters
+    omega_A1: 0.92 [0.74-0.94] aerosol single-scattering albedo band 1
+    omega_A2: 0.84 [0.74-0.94] aerosol single-scattering albedo band 2
+    uo: 0.35 [0.22-0.35] [cm] ozone amount in vertical column
+    un [cm]: 0.0002 [0.0001-0.046] total nitrogen dioxide amount
+    rho_g: 0.15 [0.05-0.3] %% [] spatial average regional albedo
+%}
 %==========================================================================
 
 function[EB,ED,EB1,EB2,ED1,ED2,PARB,PARD]=ComputeRadiationForcingsN(Datam,DeltaGMT,Lon,Lat,...
     LWP0,N,Zbas,Tdew,beta_A,alpha_A,omega_A1,omega_A2,uo,un,rho_g,t_bef,t_aft)
-%%%OTUPUT
-%%%  EB %% sky beam irradiance without terrain effects
-%%%% ED %% sky total diffuse irradiance  without terrain effects
-%%EB1 [W/m^2] sky beam irradiance VIS band[0.29 um - 0.70um ]
-%%EB2  [W/m^2]   sky beam irradiance NIR band [0.70 um - 4.0 um ]
-%%ED1 [W/m^2]    sky total diffuse flux at the ground  VIS band [0.29 um -0.70um ]
-%%%ED2   [W/m^2]  sky  total diffuse flux at the ground NIR band  [0.70 um-4.0 um ]
-%%%%%%%%%%
-%%% INPUT
-%%% Datam %% [Yr, MO, DA, HR]
-%%% DeltaGMT [°]
-%%% Lon [°]
-%%% Lat [°]
-%%% LWP0 [g/m^2]
-%%% N [0-1] cloudiness
-%Zbas [m a.s.l.]  watershed elevation
-%Tdew [°C] dew point temperature
-%beta_A   0.05 [0-1] Angstrom turbidity parameters
-%alpha_A  1.3 [0.5-2.5]Angstrom turbidity parameters
-%omega_A1  %% 0.92 [0.74-0.94]aerosol single-scattering albedo band 1
-%omega_A2 %% 0.84 [0.74-0.94] aerosol single-scattering albedo band 2
-%%% uo 0.35 [0.22-0.35]  %% [cm] ozone amount in vertical column
-%%% un 0.0002 [0.0001-0.046] %% [cm] total nitrogen dioxide amount
-%%%  rho_g 0.15 [0.05-0.3] %% [] spatial average regional albedo
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Constants
-So    = 1366.1;  % [W/m^2] Solar constant
 
 %% Function
 %==========================================================================
-% SetSunVariables
+% SUNFUNCTION:: SetSunVariables
+% LWP: Liquid Water Path whit cloudiness  [g/m^2]
 %==========================================================================
+
 [delta_S,h_S,zeta_S,T_sunrise,T_sunset,L_day,E0,jDay,Delta_TSL] = SetSunVariables(Datam,DeltaGMT,Lon,Lat,t_bef,t_aft);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Subfunction SetSunVariables   %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Subfunction SetSunVariables  
+% Constants
+So    = 1366.1;  % [W/m^2] Solar constant
 Sop = So*E0; %% Actual Solar constant [W/m^2]
-%%%
+
 %%% Partition Energy two bands Gueymard (2004; 2008)
-So1 = Sop*0.4651;  %%  [W/m^2]Extraterrestrial  Radiation VIS band [0.29 um - 0.70 um ]
-So2 = Sop*0.5195; %% [W/m^2] %%Extraterrestrial Radiation NIR band [0.70 um - 4.0 um ]
+So1 = Sop*0.4651;  %  [W/m^2] Extraterrestrial  Radiation VIS band [0.29 um - 0.70 um ]
+So2 = Sop*0.5195; % [W/m^2] Extraterrestrial Radiation NIR band [0.70 um - 4.0 um ]
 %LWP = exp(N*log(LWP0)) - 1; %%% Liquid Water Path whit cloudiness  [g/m^2]
 LWP = LWP0*N; %% Liquid Water Path whit cloudiness  [g/m^2]
+
 if(LWP < 1.1)
     Ntmp = 0; %% Cloudiness
 else
@@ -332,8 +387,8 @@ end
 %%%%%%%%%%Correction Flat Surface
 EB1=EB1*sin(h_S);
 EB2=EB2*sin(h_S);
-EB = EB1 + EB2;%% [W/m^2] % beam irradiance
-ED = ED1 + ED2; %% [W/m^2] %total diffuse flux at the ground
+EB = EB1 + EB2; % beam irradiance [W/m^2]
+ED = ED1 + ED2; % total diffuse flux at the ground [W/m^2]
 %%%% PAR Radiation estimation
 PARB = EB1*Mb;
 PARD = Mg*(EB1+ED1)- PARB;
@@ -343,28 +398,31 @@ end
 
 %% Function
 %==========================================================================
-% Subfunction SetSunVariables
+%{
+SUNFUNCTION: SetSunVariables
+
+INPUT
+    Datam [Yr, MO, DA, HR]
+    DeltaGMT [°]
+    Lon [°]
+    Lat [°]
+
+OUTPUT
+    delta_S: Solar declination
+    tau_S: Hour angle of the sun
+    h_S [rad]: solar altitude
+    zeta_S: Sun's azimuth
+    T_sunrise [h]: sunrise time,
+    T_sunset  [h]: sunset time,
+    L_day [h]: total day length
+    r_ES []: ratio of the actual Earth-Sun to the mean Earth-Sun  distance
+    jDay: Julian Day
+    Delta_TSL [h]: Time difference between standard and local meridian
+%}
 %==========================================================================
 
 function [delta_S,h_S,zeta_S,T_sunrise,T_sunset,L_day,E0,jDay,Delta_TSL] = SetSunVariables(Datam,DeltaGMT,Lon,Lat,t_bef,t_aft)
-%%% INPUT
-%%% Datam %% [Yr, MO, DA, HR]
-%%% DeltaGMT [°]
-%%% Lon [°]
-%%% Lat [°]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OUTPUT
-%%delta_S,  Solar declination
-%%tau_S,  Hour angle of the sun
-%%h_S, [rad] solar altitude
-%%zeta_S, Sun's azimuth
-%%T_sunrise, [h]  sunrise time,
-%%T_sunset,  [h]sunset time,
-%%L_day, [h] total day length
-%%r_ES,[] ratio of the actual Earth-Sun to the mean Earth-Sun  distance
-%%jDay,    Julian Day
-%%Delta_TSL [h] Time difference between standard and local meridian
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Determine the julian day of the current time
 days = [31 28 31 30 31 30 31 31 30 31 30 31];
 nowYR=Datam(1); nowMO=Datam(2); nowDA=Datam(3); nowHR =Datam(4);
@@ -437,29 +495,33 @@ end
 
 %% Function
 %==========================================================================
-% Subfunction SetClearSkyRadiation
+%{
+SUBFUNCTION: SetClearSkyRadiation
+
+INPUT
+    h_S,[rad]  solar altitude
+    Zbas [m a.s.l.]  watershed elevation
+    Tdew [°C] dew point temperature
+    So1 [W/m^2]  Extraterrestrial  Radiation VIS band [0.29 um - 0.70 um ]
+    So2  % [W/m^2] %%Extraterrestrial Radiation NIR band [0.70 um - 4.0 um ]
+    beta_A   0.05 [0-1] Angstrom turbidity parameters
+    alpha_A  1.3 [0.5-2.5]Angstrom turbidity parameters
+    omega_A1  %% 0.92 [0.74-0.94]aerosol single-scattering albedo band 1
+    omega_A2 %% 0.84 [0.74-0.94] aerosol single-scattering albedo band 2
+    uo 0.35 [0.22-0.35]  %% [cm] ozone amount in vertical column
+    un 0.0002 [0.0001-0.046] %% [cm] total nitrogen dioxide amount
+    rho_g 0.15 [0.05-0.3] %% [] spatial average regional albedo
+
+OUTPUT
+    Eb1 [W/m^2]: clear sky beam irradiance VIS band [0.29 um - 0.70 um ]
+    Eb2 [W/m^2]: clear sky beam irradiance NIR band [0.70 um - 4.0 um ]
+    Ed1 [W/m^2]: clear sky total diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
+    Ed2 [W/m^2]: clear sky total diffuse flux at the ground NIR band [0.70 um - 4.0um ]
+%}
 %==========================================================================
 
 function [Eb1,Eb2,Ed1,Ed2,Edp1,Edp2,rho_s1,rho_s2,Mb,Mg] = SetClearSkyRadiation(h_S,Zbas,Tdew,So1,So2,beta_A,alpha_A,omega_A1,omega_A2,uo,un,rho_g)
-%%%% INPUT
-%%h_S,[rad]  solar altitude
-%Zbas [m a.s.l.]  watershed elevation
-%Tdew [°C] dew point temperature
-%So1 [W/m^2]  Extraterrestrial  Radiation VIS band [0.29 um - 0.70 um ]
-%So2  % [W/m^2] %%Extraterrestrial Radiation NIR band [0.70 um - 4.0 um ]
-%beta_A   0.05 [0-1] Angstrom turbidity parameters
-%alpha_A  1.3 [0.5-2.5]Angstrom turbidity parameters
-%omega_A1  %% 0.92 [0.74-0.94]aerosol single-scattering albedo band 1
-%omega_A2 %% 0.84 [0.74-0.94] aerosol single-scattering albedo band 2
-%%% uo 0.35 [0.22-0.35]  %% [cm] ozone amount in vertical column
-%%% un 0.0002 [0.0001-0.046] %% [cm] total nitrogen dioxide amount
-%%%  rho_g 0.15 [0.05-0.3] %% [] spatial average regional albedo
-%%% OUTPUT
-%%Eb1 [W/m^2]  clear sky beam irradiance VIS band [0.29 um - 0.70 um ]
-%%Eb2  [W/m^2]  clear sky beam irradiance NIR band [0.70 um - 4.0 um ]
-%%Ed1 [W/m^2]  clear sky total diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
-%%%Ed2   [W/m^2]  clear sky total diffuse flux at the ground NIR band [0.70 um - 4.0um ]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 h_SD = 180/pi*h_S; %% [°]  solar altitude
 Z=90-h_SD; %% sun zenit angle [°]
@@ -615,35 +677,38 @@ end
 
 %% Function
 %==========================================================================
-% Subfunction SetCloudySkyRadiation
+%{
+SUNFUNCTION: SetCloudySkyRadiation
+
+INPUT
+    h_S [rad]: solar altitude
+    LWP [g/m^2]: Liquid Water Path whit cloudiness  
+    Eb1 [W/m^2]: clear sky beam irradiance VIS band [0.29 um - 0.70 um ]
+    Eb2 [W/m^2]: clear sky beam irradiance NIR band [0.70 um - 4.0 um ]
+    Edp1 [W/m^2]: clear sky incidente irradiance  diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
+    Edp2 [W/m^2]: clear sky incidente irradiance diffuse flux at the ground NIR band [0.70 um -4.0um ]
+    N [0-1]: cloudiness
+    rho_s1 rho_s2: clear sky albedo
+    rho_g: ground albedo
+
+OUTPUT
+    EB1 [W/m^2]: cloud sky beam irradiance VIS band [0.29 um - 0.70 um ]
+    EB2 [W/m^2]: cloud sky beam irradiance NIR band [0.70 um - 4.0 um ]
+    ED1 [W/m^2]: cloud sky total diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
+    ED2 [W/m^2]: cloud sky  total diffuse flux at the ground NIR band [0.70 um - 4.0um ]
+%}
 %==========================================================================
 
 function [EB1,EB2,ED1,ED2] = SetCloudySkyRadiation(LWP,h_S,Eb1,Eb2,Edp1,Edp2,N,rho_s1,rho_s2,rho_g)
-%%%% INPUT
-%%h_S,[rad]  solar altitude
-%LWP % Liquid Water Path whit cloudiness  [g/m^2]
-%%%Eb1 [W/m^2]  clear sky beam irradiance VIS band [0.29 um - 0.70 um ]
-%%Eb2  [W/m^2]  clear sky beam irradiance NIR band [0.70 um - 4.0 um ]
-%%Edp1 [W/m^2]  clear sky incidente irradiance  diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
-%%%Edp2   [W/m^2] clear sky incidente irradiance diffuse flux at the ground NIR band [0.70 um -4.0um ]
-%%% N [0-1] cloudiness
-%%% rho_s1 rho_s2   clear sky albedo
-%%% rho_g ground albedo
-%%% OUTPUT
-%%EB1 [W/m^2]  cloud sky beam irradiance VIS band [0.29 um - 0.70 um ]
-%%EB2  [W/m^2]  cloud sky beam irradiance NIR band [0.70 um - 4.0 um ]
-%%ED1 [W/m^2]   cloud sky total diffuse flux at the ground  VIS band [0.29 um - 0.70um ]
-%%%ED2   [W/m^2]  cloud sky  total diffuse flux at the ground NIR band [0.70 um - 4.0um ]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 if(h_S > 0) % if there is sunshine
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     %%%% Partition in Two principals band
     K = [0.4651 0.5195 0.5195 0.5195];
-    %% 4 band approach of Slingo 1989
-    %% Slingo (1989) considered four spectral  bands, one in UV/VIS and three in NIR wavelength
-    %% intervals: [0.25um ÷ 0.69um], [0.69um ÷ 1.19um], [1.19um ÷ 2.38um], [2.38?m ÷ 4.0um]
-    %% Parameterization of Slingo (1989)
+    % 4 band approach of Slingo 1989
+    % Slingo (1989) considered four spectral  bands, one in UV/VIS and three in NIR wavelength
+    % intervals: [0.25um ÷ 0.69um], [0.69um ÷ 1.19um], [1.19um ÷ 2.38um], [2.38?m ÷ 4.0um]
+    % Parameterization of Slingo (1989)
     k = [0.460 0.326 0.181 0.033]; %% respective fraction of solar irradiance at the top of the atmosphere
     a = [2.817 2.682 2.264 1.281]*1e-2;  %%[m^2/g]
     b = [1.305 1.346 1.454 1.641]; %% [um m^2 /g]

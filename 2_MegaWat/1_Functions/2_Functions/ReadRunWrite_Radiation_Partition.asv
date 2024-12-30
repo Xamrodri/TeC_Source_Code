@@ -72,12 +72,12 @@ DeltaGMT = 1; %%%%%%%%%%%% CHECK
 "AUTOMATIC COMPUTATION OF RADIATION PARTITION.M"
 
 Outputs:
-    SAD1 [W m-2]: First band diffuse radiation
-    SAD2 [W m-2]: Second band diffuse radiation 
-    SAB1 [W m-2]: First band direct radiation 
-    SAB2 [W m-2]: Second band direct radiation 
-    PARB [W m-2]: PAR radiation direct 
-    PARD [W m-2]: PAR radiation diffuse 
+    SAD1: First band diffuse radiation (W m-2)
+    SAD2: Second band diffuse radiation (W m-2)
+    SAB1: First band direct radiation (W m-2)
+    SAB2: Second band direct radiation (W m-2)
+    PARB: PAR radiation direct (W m-2)
+    PARD: PAR radiation diffuse (W m-2)
     t_bef [hours]: Optimized intergration interval for solar radiation variables 
     t_aft [hours or fraction after]: Optimized intergration interval for solar radiation variables
     N=Latm: cloudcover
