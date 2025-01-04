@@ -20,16 +20,28 @@ clc; clear all;
 
 %% Directories
 folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
+forc_path = 'M:/19_ISTA/18_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
+
+%% Catchment selection
+s = 2; % ID for catchment selection
+
+%% Study site details
+SITE = ["Cinca_Mid", "Apennines"]; 
+FORCING = "ERA5Land";
+UTM_zone = 33; % for Spain
+DeltaGMT= 1; % for Spain
+outlet_names = ["Cinca_Mid_OUT", "Apennine_out"];
+%outlet_name = char(outlet_names);
 
 %% Modelling period
-x1s =  "01-Nov-2022 00:00:00"; % Starting point of the simulation
-x2s =  "01-Jun-2023 23:00:00"; % Last timestep of the simulation
+x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
+x2s =  ["01-Jun-2023 23:00:00", "01-Feb-2008 00:00:00"]; % Last timestep of the simulation
 
-date_start = datetime(x1s);
-date_end = datetime(x2s);
+date_start = datetime(x1s(s));
+date_end = datetime(x2s(s));
 
 %% MODEL PARAMETERS
-study_name = 'Pyrenees_pointscale';
+study_name = ["Pyrenees_pointscale", "Apennine_pointscale"];
 % Time step for the model
 dt=3600; % [s]
 dth=1; % [h]
@@ -54,19 +66,9 @@ LOC = point_id;
 %==========================================================================
 output_daily = 1; 
 
-%% Study site details
-SITE ='Cinca_Mid'; 
-s = 2; % ID for catchment selection
-FORCING = "ERA5Land";
-UTM_zone = 31; % for Spain
-DeltaGMT= 1; % for Spain
-outlet_names = "Cinca_Mid_OUT";
-outlet_name = char(outlet_names);
 
 %% Load DEM  
-dtm_file = char("dtm_Cinca_Mid_250m.mat"); 
-res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
-disp(strcat('Model resolution: ',num2str(res)))
+
 
 Tmod = 0; % temperature modification above clean ice [°C];
 Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
@@ -105,23 +107,30 @@ addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
+%% Load DEM and geographical information
+dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Apennines_250m.mat"]; 
+res = 250; % simulation resolution [m]
+disp(strcat('Model resolution: ',num2str(res)))
 
-load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE(s),'/',dtm_file(s))
+load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
+
+[m_cell,n_cell]=size(DTM);
 
 % Precipitation vertical gradient
 Pmod_S = MASK;
 rate = Pmod/(Z_max-Z_min);
 Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 
-% Load CO2 data
+%% Load CO2 data
 load('Ca_Data.mat');
 Ca_all = Ca;
 topo = 1;
 
 
 %% Impose measured albedo on glacier areas
-fn_alb_elev = [SITE '_Albedo_vs_elev.mat'];
+fn_alb_elev = strcat(SITE(s), '_Albedo_vs_elev.mat');
 
 if exist(fn_alb_elev,'file')>0
 disp('Using measured glacier albedo')
@@ -146,26 +155,46 @@ else
 end
 
 %% POIs
-POI = readtable([SITE '_MultiPoints.txt']); %import table with points info
-[POI.LAT, POI.LON] = utm2ll(POI.LON_UTM, POI.LAT_UTM, UTM_zone);
+POI = readtable(strcat(folder_path,'3_Pyrenees_PointScale/3_Inputs/2_Apennine/Apennine_MultiPoints.txt')); %import table with points info
+%[POI.LAT, POI.LON] = utm2ll(POI.LON_UTM, POI.LAT_UTM, UTM_zone);
 
+%% FOR LOOP for locations
+loc = 1;
 for loc = LOC  
- %% Get location for POI
+
+%% Get location for POI
+%==========================================================================
+%{
+yllcorner and xllcorner represent the bottom corner of the original DEM
+before flipup it which was set in the preparation file. 
+DTM is flipped from the preparation file
+Check: imagesc(DTM)
+Consider that in matlab the cell (1,1) in the the upper left corner and
+the (n,m) cell is the the bottom right corner. 
+%}
+%==========================================================================
 id_location = char(string(POI.Name(loc))); %id
-Lat = POI.LAT(loc);
-Lon = POI.LON(loc);
-Zbas = DTM(POI.ROW(loc),POI.COL(loc)); % Altitude
+y_coord = POI.UTM_Y(loc);
+x_coord = POI.UTM_X(loc);
+
+pixelX = floor((x_coord - xllcorner) / cellsize) + 1;
+pixelY = floor((y_coord - yllcorner) / cellsize) + 1;
+
 %ij = POI.idx(loc);
-ij = sub2ind(size(DTM),POI.COL(loc),POI.ROW(loc)); % Location
+ij = sub2ind(size(DTM),pixelX,pixelY); % Location
 [i, j] = ind2sub(size(DTM), ij); % Location
+
+Zbas = DTM(j,i); % Altitude
+
 
 %% FORCING
 %==========================================================================
-%
+% ERA5
 %==========================================================================
-load(strcat(id_location,'.mat')); % Load forcing table for the current POI
+forc_file = strcat(forc_path,'2_Radiation_Partition/Forcing_ERA5_Land_Apennine_hill_2008_all.mat'); % Put here the path of where you downloaded the repository
+load(forc_file); % Load forcing table for the current POI
 
-Date_all=forcing_all.Time; 
+Date_all=forc.Date; 
 
 %define period and time zone info
 x1=find(date_start == Date_all,1);
@@ -173,7 +202,7 @@ x2=find(date_end == Date_all,1);
 
 
 %% Displaying modelling parameters
-disp(['Site selected: ' SITE])
+disp(strcat("Site selected: ", SITE(s)))
 disp(['Forcing selected: ' char(FORCING)])
 disp(['Running T&C for pixel: ' id_location])
 disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)])
@@ -198,22 +227,35 @@ Oa= 210000; % Intercellular Partial Pressure Oxygen [umolO2/mol]
 
 
 %% Meteorological input
+%==========================================================================
+%{
+FORCINGS: 
+    Precipitation
+    Air Pressure
+    Temperature
+    Wind Speed
+    Relative humidity
+    Radiation
+    Vapor pressure 
+    Dew Point temperature
+%}
+%==========================================================================
 
-%narrow down period of forcing data
-forcing = forcing_all(x1:x2,:);
+% Period of forcing data
+forcing = forc(x1:x2,:);
 NN= height(forcing);%%% time Step
 
-%height of virtual station
+% Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
 zatm_surface = [18 18 2 2 18 18];
-zatm_hourly_on=0;
+zatm_hourly_on = 0;
 
 %load all forcing data
 Ameas = zeros(NN,1);
 N=forcing.LWIN; Latm=forcing.LWIN;
 
 % Precipitation
-Pr=forcing.PP;
+Pr=forcing.Total_Precipitation;
 Pr(isnan(Pr))=0;
 Pr(Pr<0.001)=0;
 
@@ -221,10 +263,11 @@ if Pmod >0
   Pr = Pr.*Pmod_S(ij);
 end
 
-Pre=forcing.PRESS;    
+% Air Pressure
+Pre=forcing.Pressure;    
 
 % 2m air temperature
-Ta=forcing.TA; 
+Ta=forcing.Temperature; 
 
 % Apply Tmod 
 if (GLH(ij)>0) && (DEB_MAP(ij) < 10) % glacier, but without debris
@@ -232,32 +275,33 @@ if (GLH(ij)>0) && (DEB_MAP(ij) < 10) % glacier, but without debris
 end 
 
 % Wind Speed
-Ws=forcing.FF; Ws(Ws < 0.01) = 0.01;
+Ws=forcing.Wind_Speed; Ws(Ws < 0.01) = 0.01;
 
 % Relative humidity
-if max(forcing.RH)<= 1
-    U=forcing.RH;
-else
-    U=forcing.RH./100;
-end
+U=forcing.RH;
 
 % Radiation
 SAD1=forcing.SAD1;SAD2=forcing.SAD2; SAB1=forcing.SAB1;SAB2=forcing.SAB2;
 PARB=forcing.PARB; PARD=forcing.PARD;
+
+% Albedo parameters
 alpha=0; %switch for albedo
 Ameas_t=0; %albedo
 Aice_meas_on_hourly=zeros(height(forcing),1); %albedo
 Asno_meas_on_hourly=zeros(height(forcing),1); %albedo
 
-% esat/ea/Ds/Tdew
+% Vapor pressure - Dew Point temperature
+%esat/ea/Ds/Tdew
 a=17.27; b=237.3;
 esat=611*exp(a*Ta./(b+Ta)); % Vapour pressure at saturation (Pa)
 ea=U.*esat;                 % Vapour pressure (Pa)
-Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
-Ds(Ds<0)=0; 
-xr=a*Ta./(b+Ta)+log10(U);
-Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
+%Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
+%Ds(Ds<0)=0; 
+%xr=a*Ta./(b+Ta)+log10(U);
+%Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
 clear a b xr;
+Tdew= forc.Dew_Point_Temp;
+
 
 %% DING PARAMETERIZATION
 % Initial daily mean values for Ding parametrization
@@ -265,15 +309,16 @@ Ta_Ding_d = nanmean(Ta(1:24));
 Pre_Ding_d = nanmean(Pre(1:24));
 ea_Ding_d = nanmean(ea(1:24));
 
-%% TOPOGRAPHY
+%% RADIATION AND TOPOGRAPHY
 num_cell=numel(DTM);
-[m_cell,n_cell]=size(DTM);
+
 MASK = MASK.*0+1;
 MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
-    m = matfile([SITE '_ShF_' char(FORCING) '.mat']); % ShF matrix created during pre-processing step
+    
+    m = matfile([SITE "_ShF_" char(FORCING) '.mat']); % ShF matrix created during pre-processing step
 
     x1_top=find(date_start==m.Top_Date,1);
     x2_top=find(date_end==m.Top_Date,1); 
