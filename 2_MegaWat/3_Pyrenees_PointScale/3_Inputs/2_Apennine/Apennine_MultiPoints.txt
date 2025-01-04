@@ -1,0 +1,3 @@
+Name	Station	Elevation_m_	VariableMeasured	UTM_X	UTM_Y	ID
+Apennine_hill	None	750	None	345990	4734191	0
+Apennine_out	Stream_gauge	0.3	None	270009	4630652	0
