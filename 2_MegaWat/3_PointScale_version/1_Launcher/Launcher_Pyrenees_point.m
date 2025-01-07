@@ -23,25 +23,25 @@ folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path o
 forc_path = 'M:/19_ISTA/18_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
 
 %% Catchment selection
-s = 2; % ID for catchment selection
+s = 3; % ID for catchment selection
 
 %% Study site details
-SITE = ["Cinca_Mid", "Tiber"]; 
+SITE = ["Cinca_Mid", "Tiber","Tiber"]; 
 FORCING = "ERA5Land";
 UTM_zone = 33; % for Spain
 DeltaGMT= 1; % for Spain
-outlet_names = ["Cinca_Mid_OUT", "Apennine_out"];
+outlet_names = ["Cinca_Mid_OUT", "Apennine_out","Monte_Terminillo"];
 %outlet_name = char(outlet_names);
 
 %% Modelling period
-x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
-x2s =  ["01-Jun-2023 23:00:00", "30-Dec-2008 23:00:00"]; % Last timestep of the simulation
+x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
+x2s =  ["01-Jun-2023 23:00:00", "30-Dec-2008 23:00:00", "30-Dec-2008 23:00:00"]; % Last timestep of the simulation
 
 date_start = datetime(x1s(s));
 date_end = datetime(x2s(s));
 
 %% MODEL PARAMETERS
-study_name = ["Pyrenees_pointscale", "Apennine_pointscale"];
+study_name = ["Pyrenees_pointscale", "Apennine_pointscale", "Apennine_pointscale"];
 % Time step for the model
 dt=3600; % [s]
 dth=1; % [h]
@@ -56,7 +56,7 @@ t_bef = 0.5; t_aft = 0.5;
 % 1: AWS_OnGlacier
 % 2: Pluvio
 %==========================================================================
-point_id = 1;     
+point_id = 3;     
 LOC = point_id;
 
 %% Data storing  
@@ -107,7 +107,7 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is lo
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 %% Load DEM and geographical information
-dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Tiber_250m.mat"]; 
+dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Tiber_250m.mat" "dtm_Tiber_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)))
 
@@ -159,7 +159,7 @@ POI = readtable(strcat(folder_path,'3_PointScale_version/3_Inputs/2_Apennine/Ape
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
 %% FOR LOOP for locations
-loc=1;
+%loc=1;
 for loc = LOC  
 
 %% Get location for POI
@@ -192,7 +192,7 @@ Lon = POI.LON(loc);
 %==========================================================================
 % ERA5
 %==========================================================================
-forc_file = strcat(forc_path,'2_Radiation_Partition/Forcing_ERA5_Land_Apennine_hill_2008_all.mat'); % Put here the path of where you downloaded the repository
+forc_file = strcat(forc_path,'2_Radiation_Partition/Forcing_ERA5_Land_',outlet_names(s),'_2008_all.mat'); % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
 
 Date_all=forc.Date; 
@@ -263,9 +263,8 @@ zatm_hourly_on = 0;
 %load all forcing data
 %LW Radiation? (ex LWIN)
 Ameas = zeros(NN,1);
-N=forcing.LW_rad_downward_HH; Latm=forcing.LW_rad_downward_HH; %(what is this for?)
-N=zeros(NN,1); %??
-
+Latm=forcing.LW_rad_downward_HH; % Latm:Incoming long wave radiation [W m-2]
+N=ones(NN,1)/2; % cloud cover [-]
 
 % Precipitation
 Pr=forcing.Total_Precipitation;

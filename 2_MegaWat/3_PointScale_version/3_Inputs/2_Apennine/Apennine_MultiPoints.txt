@@ -1,3 +1,4 @@
-Name	Station	Elevation_m_	VariableMeasured	UTM_X	UTM_Y	ID
-Apennine_hill	None	750	None	345990	4734191	0
-Apennine_out	Stream_gauge	0.3	None	270009	4630652	0
+Name	Station	Elevation_m_	VariableMeasured	UTM_X	UTM_Y
+Apennine_hill	None	750	None	345990	4734191
+Apennine_out	Stream_gauge	0.3	None	270009	4630652
+Monte_Terminillo	Snow_station	1685	Snow_depth	334956.45	4702314.83
