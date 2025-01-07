@@ -7,6 +7,10 @@
 %%%%%%%% INITIZIALIZATION VARIABLE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Debugger
+%disp(strcat('Initial MAIN_FRAME:',num2str(size(Ca,2))))
+
+
 %%% j time dt = 1 day 
 %%% i time dt = 1h
 %%% ms soil layer
@@ -319,6 +323,9 @@ else
     Wlevm1 = Rd(1)+Rh(1);
 end
 
+%% Debugger
+%disp(strcat('MAIN_FRAME, Before iter:',num2str(size(Ca,2))))
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%% Iterations for each time step
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -592,6 +599,9 @@ for i=2:NN
         end
         NetWatWet(i) = q_runon(i) - Wlevm1 ;
     end
+    
+    % Debugging
+    % disp(size(Ca))
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%% HYDROLOGIC UNIT

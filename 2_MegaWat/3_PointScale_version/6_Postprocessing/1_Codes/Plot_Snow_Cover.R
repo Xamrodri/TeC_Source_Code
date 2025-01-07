@@ -14,7 +14,7 @@
 ################################################################################
 
 rm(list = ls())
-dev.off()
+#dev.off()
 
 # define &-sign for pasting string-elements
 '&' <- function(...) UseMethod('&')

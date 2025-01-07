@@ -8,8 +8,8 @@
 % Created on Nov 25, 2024
 % Author: MAXIMILIANO RODRIGUEZ
 % Code originally from: ACHILLE JOUBERTON
-% Area of Study: Pyrenees
-% Region: Cinca Subcatchment
+% Area of Study: Apennines - Tiber River
+% Region: Apennines
 % Code explanation: This code launches the Point Scale version of TC model.
 % Output variables are managed by the file OUTPUT_MANAGER_DIST_LABEL.
 % Some code and names still refers to previous versions of the code.
@@ -34,8 +34,8 @@ outlet_names = ["Cinca_Mid_OUT", "Apennine_out"];
 %outlet_name = char(outlet_names);
 
 %% Modelling period
-x1s =  ["01-Nov-2022 00:00:00", "01-Feb-2008 00:00:00"]; % Starting point of the simulation
-x2s =  ["01-Jun-2023 23:00:00", "30-Apr-2008 00:00:00"]; % Last timestep of the simulation
+x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
+x2s =  ["01-Jun-2023 23:00:00", "30-Dec-2008 23:00:00"]; % Last timestep of the simulation
 
 date_start = datetime(x1s(s));
 date_end = datetime(x2s(s));
@@ -111,7 +111,7 @@ dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Tiber_250m.mat"];
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)))
 
-dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE(s),'/',dtm_file(s))
+dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE(s),'/',dtm_file(s));
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
@@ -219,12 +219,21 @@ clear YE MO DA HO MI SE
 % Load carbon data and narrow down to period
 %==========================================================================
 
-d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);
-d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
+formattedDate_CO2 = datetime(Date_CO2, 'ConvertFrom', 'datenum');
+
+d1 = find(formattedDate_CO2 == Date(1));
+d2 = find(formattedDate_CO2 == Date(end));
+
+%d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);
+%d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
 Ca=Ca_all(d1:d2); 
 clear d1 d2
 
 Oa= 210000; % Intercellular Partial Pressure Oxygen [umolO2/mol]
+
+% Debugging
+% formattedDate = datetime(Date_CO2, 'ConvertFrom', 'datenum');
+% disp(strcat('Launcher',num2str(size(Ca,2))))
 
 
 %% Meteorological input
@@ -465,16 +474,23 @@ else
     SNOWALB=reshape(SNOWALB,num_cell,1);
 end 
 
+% Debugger
+% disp(strcat('Before INIT_COND_V2 caller',num2str(size(Ca,2))))
+
 %% SAVING INITIAL CONDITIONS AND PARAMETERS 
+%==========================================================================
+% In MultiPoint analysis INIT_COND_Tiber_MultiPoint.mat is created.
+% This can cause problems with the initial conditions. Specially with Ca.
+%==========================================================================
 % (run this only once in MultiPoint model!)
-if exist(out, 'file') == 2
-load(out);
-else
+%if exist(out, 'file') == 2
+%load(out);
+%else
 INIT_COND_v2(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,m.Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
 load(out);
-end
+%end
 
 %% RUN MODEL
 %==========================================================================

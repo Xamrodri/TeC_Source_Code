@@ -157,6 +157,7 @@ Ws_undertm1=    1*MASKn; % Wind speed in the under-canopy [m/s]
 ZWTtm1=         0*MASKn; % Water table depth [mm]
 
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%% SPECIFICATIONS FOR HIGH & LOW VEGETATION 
 %%%%%%%%%%%%%%%%%  (DEFINED FURTHER BELOW)
