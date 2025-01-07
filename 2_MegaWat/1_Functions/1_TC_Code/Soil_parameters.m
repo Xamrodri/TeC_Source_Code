@@ -22,8 +22,13 @@ DF = 1; %% density factor
 %%% cv_s =  Volumetric heat capacity soil solid [J/m^3 K]
 %%% K_usle %%% Soil Erodibility factor [ton*h/MJ*mm]  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Check 
-Psil=1-Psan-Pcla-Porg; 
+
+%% Debugging
+%disp(Psan)
+%disp(Pcla)
+
+%% Check 
+Psil=1-Psan-Pcla; %-Porg; % MAX MODIFICATION JAN 1, 2025
 if Psil < 0
     disp('SOIL PERCENTAGE INPUTS INCONSISTENT')
     return 

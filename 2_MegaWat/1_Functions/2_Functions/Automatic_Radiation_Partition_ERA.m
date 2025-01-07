@@ -10,7 +10,7 @@ Input description:
     Lat [°]: Latitude
     Lon [°]: Longitude
     Zbas [m a.s.l.]: watershed elevation
-    DeltaGMT [hours??]: Distance from Greenwich Meridian for the day time???
+    DeltaGMT [hours??]: Distance from Greenwich Meridian???
     Pr [mm???]: Precipitation??? - (Value or vector)
     Tdew [°C]: dew point temperature - (Value or vector)
     Rsw [W m-2????]: Measured Solar radiation - (Value or vector)

@@ -26,7 +26,7 @@ forc_path = 'M:/19_ISTA/18_Forcing/2_Apennines/10_Output/'; % Put here the path 
 s = 2; % ID for catchment selection
 
 %% Study site details
-SITE = ["Cinca_Mid", "Apennines"]; 
+SITE = ["Cinca_Mid", "Tiber"]; 
 FORCING = "ERA5Land";
 UTM_zone = 33; % for Spain
 DeltaGMT= 1; % for Spain
@@ -34,8 +34,8 @@ outlet_names = ["Cinca_Mid_OUT", "Apennine_out"];
 %outlet_name = char(outlet_names);
 
 %% Modelling period
-x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
-x2s =  ["01-Jun-2023 23:00:00", "01-Feb-2008 00:00:00"]; % Last timestep of the simulation
+x1s =  ["01-Nov-2022 00:00:00", "01-Feb-2008 00:00:00"]; % Starting point of the simulation
+x2s =  ["01-Jun-2023 23:00:00", "30-Apr-2008 00:00:00"]; % Last timestep of the simulation
 
 date_start = datetime(x1s(s));
 date_end = datetime(x2s(s));
@@ -69,10 +69,9 @@ output_daily = 1;
 
 %% Load DEM  
 
-
 Tmod = 0; % temperature modification above clean ice [°C];
 Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
-Z_min = 3370; % lowest elevation for linear precipitation modification (min factor -> 0)
+Z_min = 570; % lowest elevation for linear precipitation modification (min factor -> 0)
 Z_max = 5000; % highest elevation for linear precipitation modification (max factor -> Pmod)
 
 %% Precipitation phase parametrization
@@ -95,11 +94,11 @@ hSTL = 0.003; %m
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 %% Create the directory where model outputs will be stored
-outlocation = [folder_path,'3_Pyrenees_PointScale/4_Outputs/'];
+outlocation = [folder_path,'3_PointScale_version/4_Outputs/'];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 
 % Saving initial conditions of the model
-out = strcat(outlocation,'INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
+out = strcat(outlocation,'INIT_COND_', SITE(s) ,'_MultiPoint.mat'); % file path initial conditions
 
 %% Dependencies
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
@@ -108,20 +107,21 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is lo
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 %% Load DEM and geographical information
-dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Apennines_250m.mat"]; 
+dtm_file = ["dtm_Cinca_Mid_250m.mat" "dtm_Tiber_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)))
 
 dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE(s),'/',dtm_file(s))
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
+DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 
 % Precipitation vertical gradient
-Pmod_S = MASK;
-rate = Pmod/(Z_max-Z_min);
-Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
+%Pmod_S = MASK;
+%rate = Pmod/(Z_max-Z_min);
+%Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 
 %% Load CO2 data
 load('Ca_Data.mat');
@@ -155,11 +155,11 @@ else
 end
 
 %% POIs
-POI = readtable(strcat(folder_path,'3_Pyrenees_PointScale/3_Inputs/2_Apennine/Apennine_MultiPoints.txt')); %import table with points info
-%[POI.LAT, POI.LON] = utm2ll(POI.LON_UTM, POI.LAT_UTM, UTM_zone);
+POI = readtable(strcat(folder_path,'3_PointScale_version/3_Inputs/2_Apennine/Apennine_MultiPoints.txt')); %import table with points info
+[POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
 %% FOR LOOP for locations
-loc = 1;
+loc=1;
 for loc = LOC  
 
 %% Get location for POI
@@ -185,7 +185,8 @@ ij = sub2ind(size(DTM),pixelX,pixelY); % Location
 [i, j] = ind2sub(size(DTM), ij); % Location
 
 Zbas = DTM(j,i); % Altitude
-
+Lat = POI.LAT(loc);
+Lon = POI.LON(loc);
 
 %% FORCING
 %==========================================================================
@@ -251,20 +252,23 @@ zatm_surface = [18 18 2 2 18 18];
 zatm_hourly_on = 0;
 
 %load all forcing data
+%LW Radiation? (ex LWIN)
 Ameas = zeros(NN,1);
-N=forcing.LWIN; Latm=forcing.LWIN;
+N=forcing.LW_rad_downward_HH; Latm=forcing.LW_rad_downward_HH; %(what is this for?)
+N=zeros(NN,1); %??
+
 
 % Precipitation
 Pr=forcing.Total_Precipitation;
 Pr(isnan(Pr))=0;
 Pr(Pr<0.001)=0;
 
-if Pmod >0
-  Pr = Pr.*Pmod_S(ij);
-end
+%if Pmod >0
+%  Pr = Pr.*Pmod_S(ij);
+%end
 
-% Air Pressure
-Pre=forcing.Pressure;    
+% Air Pressure in Pa. If Pa/100 then in hPa to make similar to Achille (BECAREFUL)
+Pre=forcing.Pressure/100;    
 
 % 2m air temperature
 Ta=forcing.Temperature; 
@@ -278,7 +282,8 @@ end
 Ws=forcing.Wind_Speed; Ws(Ws < 0.01) = 0.01;
 
 % Relative humidity
-U=forcing.RH;
+% Divided by 100 to set the number in the range 0-1
+U=forcing.RH/100;
 
 % Radiation
 SAD1=forcing.SAD1;SAD2=forcing.SAD2; SAB1=forcing.SAB1;SAB2=forcing.SAB2;
@@ -295,8 +300,8 @@ Asno_meas_on_hourly=zeros(height(forcing),1); %albedo
 a=17.27; b=237.3;
 esat=611*exp(a*Ta./(b+Ta)); % Vapour pressure at saturation (Pa)
 ea=U.*esat;                 % Vapour pressure (Pa)
-%Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
-%Ds(Ds<0)=0; 
+Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
+Ds(Ds<0)=0; 
 %xr=a*Ta./(b+Ta)+log10(U);
 %Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
 clear a b xr;
@@ -316,9 +321,8 @@ MASK = MASK.*0+1;
 MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
-    %load topography data and narrow down to period
-    
-    m = matfile([SITE "_ShF_" char(FORCING) '.mat']); % ShF matrix created during pre-processing step
+    %load topography data and narrow down to period 
+    m = matfile(strcat(folder_path,'3_PointScale_version/2_Forcing/',SITE(s),'_ShF_',char(FORCING),'_2018.mat')); % ShF matrix created during pre-processing step
 
     x1_top=find(date_start==m.Top_Date,1);
     x2_top=find(date_end==m.Top_Date,1); 
@@ -433,10 +437,14 @@ end
 
 zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
 
-%%% SOIL
-PSAN=reshape(PSAN/100,num_cell,1); Psan = PSAN(ij); % Soil sand content at pixel ij
-PCLA=reshape(PCLA/100,num_cell,1); Pcla = PCLA(ij); % Soil clay content at pixel ij
-PORG=reshape(PORG/100,num_cell,1); Porg= PORG(ij); % Soil organic content at pixel ij
+%% SOIL 
+%==========================================================================
+% Vector is divided by 100 to put the numbers within 0-1
+% Original PSAN, PCLA and PORG come with values between 0-100 g/100g
+%==========================================================================
+PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
+PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
+PORG=reshape(PORG,num_cell,1)/100; Porg= PORG(ij); % Soil organic content at pixel ij
 
 ms=10 ; %% 11 ; 
 SOIL_TH=reshape(SOIL_TH,num_cell,1);
@@ -473,7 +481,7 @@ end
 % PARAM_IC: Define parameter file
 % MAIN_FRAME: Contains the model
 %==========================================================================
-PARAM_IC = strcat(folder_path,'3_Pyrenees_PointScale/3_Inputs/MOD_PARAM_Multipoint.m');
+PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint.m');
 MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
 
 %% Output manager
@@ -490,8 +498,7 @@ Param_t = renamevars(Param_t,{'OriginalVariableNames','Var1'},{'Parameter','Valu
 %%post-compute sublimation from ESN
 SSN = ESN.*(Ts<0);
 
-% Here I manually choose the T&C outputs I want to save at each point. 
-
+% Here I manually choose the T&C outputs I want to save at each point.
 Outputs_t = table(Date,EICE,ESN,SND,SWE,...
 Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET,ros,'VariableNames',{ ...
 'Date','EICE','ESN','SND','SWE',...
