@@ -19,8 +19,8 @@
 clc; clear all;
 
 %% Directories
-folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
-forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
+folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
+forc_path = 'M:/19_ISTA/18_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
 
 %% Catchment selection
 s = 3; % ID for catchment selection
