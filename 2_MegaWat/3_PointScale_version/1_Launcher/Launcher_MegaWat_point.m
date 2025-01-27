@@ -128,6 +128,9 @@ load('Ca_Data.mat');
 Ca_all = Ca;
 topo = 1;
 
+%% FAKE SNOW (TRIAL)
+load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/4_Snow_Depth/Apennine_Init_Snow_Depth_virtual.mat'));
+load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/5_Snow_Albedo/Apennine_Init_Snow_Albedo_virtual.mat'));
 
 %% Impose measured albedo on glacier areas
 fn_alb_elev = strcat(SITE(s), '_Albedo_vs_elev.mat');
@@ -448,7 +451,7 @@ zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
 %% SOIL 
 %==========================================================================
 % Vector is divided by 100 to put the numbers within 0-1
-% Original PSAN, PCLA and PORG come with values between 0-100 g/100g
+% Original PSAN, PCLA and PORG come with values between 0-100, g/100g
 %==========================================================================
 PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
 PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
@@ -499,104 +502,81 @@ load(out);
 PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint.m');
 MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
 
+%% Post-compute calculations
+%==========================================================================
+% Negative evapotranspiration (ET) is dew
+%==========================================================================
+% post-compute sublimation from ESN
+SSN = ESN.*(Ts<0);
+ET(ET < 0) = 0; 
+
 %% Output manager
 %==========================================================================
-%
+%{
+As outputs:
+    Hourly outputs
+    Daily outputs
+    Parameters
+%}
 %==========================================================================
-Date_R = char(Date); % make date usable for R
 
+% Make date usable for R
+Date_R = char(Date); 
+
+%% Parameter output
 Param_t = table(Lat,Lon,Zbas,dbThick,'VariableNames',{'Lat','Lon','Zbas','dbThick'});
 Param_t = [Param_t, struct2table(SnowIce_Param), struct2table(Deb_Par)];
 Param_t = rows2vars(Param_t);
 Param_t = renamevars(Param_t,{'OriginalVariableNames','Var1'},{'Parameter','Value'});
 
-%%post-compute sublimation from ESN
-SSN = ESN.*(Ts<0);
+% Exporting as .txt
+writetable(Param_t, strcat(outlocation,id_location,'_param.txt') )
 
 % Here I manually choose the T&C outputs I want to save at each point.
 Outputs_t = table(Date,EICE,ESN,SND,SWE,...
-Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET,ros,'VariableNames',{ ...
+Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET, ETen ,QE,ros,'VariableNames',{ ...
 'Date','EICE','ESN','SND','SWE',...
 'Ta','Ws','U','N','Rsw',...
-'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ros'});
+'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ETen','QE','ros'});
 
-% For daily outputs
-% If I want to only save daily aggregated output
+%% Hourly output
+writetable(Outputs_t, strcat(outlocation,id_location,'_hourly_results.txt'))
+
+%% Daily outputs
+% If daily outputs are activated
+
 if output_daily == 1
 
-Outputs_tt = table2timetable(Outputs_t);
+Outputs_tt = table2timetable(Outputs_t); 
 
 Outputs_ds = retime(Outputs_tt,'daily',@nansum);
 Outputs_dm = retime(Outputs_tt,'daily',@nanmean);
 
 Outputs_d = Outputs_dm; 
+
 Outputs_d.Pr = Outputs_ds.Pr;
 Outputs_d.Pr_sno = Outputs_ds.Pr_sno;
+Outputs_d.ET = Outputs_ds.ET;
+Outputs_d.ETen = Outputs_ds.ETen;
 
 Outputs_t = timetable2table(Outputs_d);
 
+% Exporting as .txt
+writetable(Outputs_t, strcat(outlocation,id_location,'_daily_results.txt'))
 end 
 
-writetable(Outputs_t, strcat(outlocation,id_location,'_results.txt'))
-writetable(Param_t, strcat(outlocation,id_location,'_param.txt') )
+
 end 
 
-%% Run evaluation
+%% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================
 %
 %==========================================================================
 
-path_evaluation = [folder_path '3_Pyrenees_PointScale/1_Evaluation_data/'];
+% Resample the DEM to a new resolution (e.g., 30 meters)
+DEM_resampled_out = resample(DEM, 500); 
 
-%{
-if point_id == 1
-
-% On-glacier AWS data
-AWS = load([path_evaluation 'AWS_Kyzylsu_15min_2021-06-28_2023-09-12.mat']);
-AWS = AWS.AWS_tt_15;
-
-SMB_aws = Outputs_tt.ICE.*0.001./0.91 + Outputs_tt.SND ...
-    - Outputs_tt.ICE(find(Outputs_tt.Date>datetime(2021,6,26),1)).*0.001./0.91 ...
-    - Outputs_tt.SND(find(Outputs_tt.Date>datetime(2021,6,26),1));
-
-fi2 = figure('Renderer', 'painters', 'Position',[141.6667 244.3333 460.0000 370.6667]);
-plot(AWS.Date(hour(AWS.Date) == 11), AWS.HS(hour(AWS.Date) == 11).*0.01 - AWS.HS(find(AWS.Date>datetime(2021,6,26),1))*0.01,'k','LineWidth',1.1); hold on; grid on;
-plot(Outputs_tt.Date, SMB_aws,'Color',[1 0 0 0.7],'LineWidth',1.1)
-% plot(SMB_aws_noDB.Time, SMB_aws_noDB.DH_AWS,'Color',[0 0 1 0.7],'LineWidth',1.1)
-xlim([datetime(2021,7,1) datetime(2023,8,31)])
-% legend('Measurement','Model','Model (without debris)','location','SouthWest')
-legend('Measurement','Model','location','SouthWest')
-title('On-glacier AWS'); ylabel('Surface elevation change [m]')
-% exportgraphics(fi2,[outlocation '\T&C_AWS_validation_new.png'],'Resolution',300,'BackgroundColor','none')
-
-end 
-
-if point_id == 2
-
-% Load pluviometer data 
-Pluvio = load([path_evaluation '\Pluviostation_Kyzylsu_2021-07-04_2023-09-13.mat']);
-Pluvio = Pluvio.Pluvio_all;
-SND_meas = 3.90 - Pluvio.DIST_corr(hour(Pluvio.Date) == 12);
-SND_meas(SND_meas>1.5) = NaN;
-
-
-fi2 = figure('Renderer', 'painters', 'Position',[245.6667 411.6667 595.3333 286.3333]);
-plot(Pluvio.Date(hour(Pluvio.Date) == 12), SND_meas,'k','LineWidth',1.1); hold on; grid on;
-plot(Outputs_tt.Date, Outputs_tt.SND,'Color',[1 0 0 0.7],'LineWidth',1.1)
-% plot(SMAP_Pluvio.Date, SMAP_Pluvio.SND_SMAP,'Color',[0 0 1 0.7],'LineWidth',0.8);
-xlim([datetime(2021,7,1) datetime(2023,7,31)])
-legend('Obs','T&C','location','NorthWest')
-ylim([0 2]); ylabel('Snow depth [m]');
-title('Pluviometer')
-% exportgraphics(fi2,[outlocation '\T&C_SnowDepth_validation_AlbBrock.png'],'Resolution',300,'BackgroundColor','none')
-
-end
-
-%Max plot
-%{
-fi3 = figure('Renderer', 'painters', 'Position',[141.6667 244.3333 460.0000 370.6667]);
-plot(out_my.Date, out_my.WaterTable); hold on; grid on;
-ylim([0 2000])
-%}
-
-%}
+% Display the original and resampled DEMs
+imagesc(DEM);
+figure;
+imagesc(DEM_resampled);

@@ -667,9 +667,10 @@ for i=2:NN
     
 end  %End of iteration 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%% CHECKS %%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% CHECKS
+%==========================================================================
+% CHECKS
+%==========================================================================
 %close(bau)
 Computational_Time =toc;
 %profile off
@@ -685,6 +686,7 @@ disp(1000*Computational_Time/NN)
 if OPT_SoilBiogeochemistry == 1
     NEE = -(NPP_H+NPP_L)*Ccrown' + R_litter + R_microbe + R_ew; %% [gC/m2 day]
 end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% MASS BALANCE CHECK
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -702,16 +704,37 @@ disp(Ck);
 disp(mean(DQ));
 % T_H, T_L  EG, EIn_urb, EIn_rock, [mm/h]
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% ENERGY TRANSFORMATION CHECK %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-Laten= 1000*(2501.3 - 2.361*(Ta)); %%%
-ETen = (QE)*1000*3600./(reshape(Laten,size(QE))*1000);  %% [mm/h]
-ET =  sum(T_H+EIn_H,2) + sum(T_L+EIn_L,2) +  EG +  ELitter + ESN + ESN_In + EWAT +  EICE+ EIn_urb + EIn_rock ;  %% [mm/h]
+%% Evaporation check
+%==========================================================================
+% QE: Latent heat [W m-2]
+% Laten: Latent heat of vaporization in [J kg-1]
+% ETen: [mm h-1]
+% EG: Evaporation from Bare soil [mm h-1]
+% ELitter: Evaporation from the Litter [mm h-1]
+% ESN: Evaporation from the snowpack at the ground [mm h-1]
+% ESN_In: Evaporation from intercepted snow [mm h-1]
+% ET: Evapotranspiration [mm h-1]
+% EWAT: Evaporation from water and ponds [mm h-1]
+% EICE: Evaporation/sublimation from Ice [mm h-1]
+% EIn_urb: Evaporation from Urban [mm h-1] 
+% EIn_rock: Evaporation from Rocks [mm h-1] 
+% EIn_H: Evaporation from intercepted water High Vegetation [mm h-1]
+% EIn_L: Evaporation from intercepted water Low Vegetation [mm h-1]
+% T_L: Transpiration Low Vegetation [mm h-1]
+% T_H: Transpiration High Vegetation [mm h-1]
+%==========================================================================
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%% CARBON BALANCE CHECK
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Evaporation from latent heat using temperature
+Laten= 1000*(2501.3 - 2.361*(Ta));
+ETen = (QE)*1000*3600./(reshape(Laten,size(QE))*1000);
+
+% Evaporation from model components
+ET =  sum(T_H+EIn_H,2) + sum(T_L+EIn_L,2) +  EG +  ELitter + ESN + ESN_In + EWAT +  EICE+ EIn_urb + EIn_rock ;
+
+%% Carbon balance check
+%==========================================================================
+% CARBON BALANCE CHECK
+%==========================================================================
 for kj=1:cc
     if RA_H(end,kj) == 0
         dB_H= squeeze((B_H(1,kj,:)-B_H(end-1,kj,:)));
