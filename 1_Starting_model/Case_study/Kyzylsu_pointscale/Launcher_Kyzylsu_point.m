@@ -1,8 +1,8 @@
 clc; clear all;
 
 %%%%%%%% LINES TO BE CHANGED %%%%%%%%
-
-folder_path = 'M:\19_ISTA\1_TC\3_Model_Source\TeC_Source_Code\'; % Put here the path of where you downloaded the repository
+folder_mod = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/1_Starting_model/'
+folder_path = strcat(folder_mod, 'Case_study/Kyzylsu_pointscale/'); % Put here the path of where you downloaded the repository
 
 point_id = 1; %1 : AWS_OnGlacier, 2: Pluvio   % Select for which pixel to run the point-scale version of T&C
 
@@ -28,7 +28,7 @@ UTM_zone = 42; DeltaGMT= 5;
 t_bef = 0.5; t_aft = 0.5;
   
 x1s =  "01-Jul-2021 00:00:00"; % Starting point of the simulation
-x2s =  "30-Sep-2023 23:00:00"; % Last timestep of the simulation
+x2s =  "30-Sep-2021 23:00:00"; % Last timestep of the simulation
 dtm_file = char("dtm_Kyzylsu_100m.mat"); 
 Tmod = 0; % temperature modification above clean ice [°C];
 Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
@@ -79,11 +79,12 @@ out = strcat(outlocation,'/INIT_COND_', SITE ,'_MultiPoint.mat'); % file path in
 res = str2num(extractBetween(string(dtm_file),[SITE '_'],'m.mat')); % simulation resolution [m]
 
 %dependencies
-addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'/Case_study/' study_name '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'/Case_study/' study_name '/Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
-addpath(genpath([folder_path, '/Inputs'])); % Add path to Ca_Data
-addpath(genpath([folder_path, '/T&C_Code'])); % Add path to T&C codes
+addpath(genpath([folder_path, 'Inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path, '/Inputs/Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path,'Forcing/'])); % Where is located the meteorological forcing and Shading matrix 
+%addpath(genpath([folder_path, '/Inputs'])); % Add path to Ca_Data
+addpath(genpath([folder_mod, '/T&C_Code'])); % Add path to T&C codes
+addpath(genpath([folder_mod, '/Inputs'])); % Add path to T&C codes
 
 load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -459,7 +460,7 @@ writetable(Param_t, strcat(outlocation,'/',id_location,'_param.txt') )
 end 
 
 %% Quick run evaluation
-
+%{
 path_evaluation = [folder_path 'Case_study\' study_name '\Evaluation_data'];
 
 if point_id == 1
@@ -512,3 +513,4 @@ plot(out_my.Date, out_my.WaterTable); hold on; grid on;
 ylim([0 2000])
 %}
 
+%}
