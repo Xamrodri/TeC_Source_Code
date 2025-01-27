@@ -19,8 +19,8 @@
 clc; clear all;
 
 %% Directories
-folder_path = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
-forc_path = 'M:/19_ISTA/18_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
+folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
+forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
 
 %% Catchment selection
 s = 3; % ID for catchment selection
@@ -129,8 +129,8 @@ Ca_all = Ca;
 topo = 1;
 
 %% FAKE SNOW (TRIAL)
-load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/4_Snow_Depth/Apennine_Init_Snow_Depth_virtual.mat'));
-load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/5_Snow_Albedo/Apennine_Init_Snow_Albedo_virtual.mat'));
+%load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/4_Snow_Depth/Apennine_Init_Snow_Depth_virtual.mat'));
+%load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/5_Snow_Albedo/Apennine_Init_Snow_Albedo_virtual.mat'));
 
 %% Impose measured albedo on glacier areas
 fn_alb_elev = strcat(SITE(s), '_Albedo_vs_elev.mat');
@@ -197,6 +197,8 @@ Lon = POI.LON(loc);
 %==========================================================================
 forc_file = strcat(forc_path,'2_Radiation_Partition/Forcing_ERA5_Land_',outlet_names(s),'_2008_all.mat'); % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
+forc.SW_rad_downward_HH(1)=0; %Correction for first input (CHECK)
+forc.LW_rad_downward_HH(1)=200; %Correction for first input (CHECK)
 
 Date_all=forc.Date; 
 
@@ -274,9 +276,9 @@ Pr=forcing.Total_Precipitation;
 Pr(isnan(Pr))=0;
 Pr(Pr<0.001)=0;
 
-%if Pmod >0
-%  Pr = Pr.*Pmod_S(ij);
-%end
+if Pmod >0
+  Pr = Pr.*Pmod_S(ij);
+end
 
 % Air Pressure in Pa. If Pa/100 then in hPa to make similar to Achille (BECAREFUL)
 Pre=forcing.Pressure/100;    
@@ -313,10 +315,10 @@ esat=611*exp(a*Ta./(b+Ta)); % Vapour pressure at saturation (Pa)
 ea=U.*esat;                 % Vapour pressure (Pa)
 Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
 Ds(Ds<0)=0; 
-%xr=a*Ta./(b+Ta)+log10(U);
-%Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
+xr=a*Ta./(b+Ta)+log10(U);
+Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
 clear a b xr;
-Tdew= forc.Dew_Point_Temp;
+%Tdew= forc.Dew_Point_Temp;
 
 
 %% DING PARAMETERIZATION
@@ -328,7 +330,7 @@ ea_Ding_d = nanmean(ea(1:24));
 %% RADIATION AND TOPOGRAPHY
 num_cell=numel(DTM);
 
-MASK = MASK.*0+1;
+%MASK = MASK.*0+1;
 MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
@@ -572,7 +574,7 @@ end
 %==========================================================================
 %
 %==========================================================================
-
+%{
 % Resample the DEM to a new resolution (e.g., 30 meters)
 DEM_resampled_out = resample(DEM, 500); 
 
@@ -580,3 +582,4 @@ DEM_resampled_out = resample(DEM, 500);
 imagesc(DEM);
 figure;
 imagesc(DEM_resampled);
+%}
