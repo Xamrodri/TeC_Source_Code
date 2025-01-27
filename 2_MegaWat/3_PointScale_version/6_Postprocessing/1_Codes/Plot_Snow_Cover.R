@@ -6,11 +6,12 @@
 # 2025/01/06
 #
 #
+# Maximiliano Rodriguez | Cryosphere and Mountain Hydrosphere | 
+# Institute of Science and Technology (ISTA) |
+# Am Campus 1 | 3400 Klosterneuburg | mrodrigu@ist.ac.at
 #
-# Maximiliano Rodriguez | High Mountain Glaciers and Hydrology | 
-#  Swiss Federal Institute for Forest, Snow and Landscape Research, WSL |
-#  Office MG E 35 | Zürcherstrasse 111, 8903 Birmensdorf | pascal.buri@wsl.ch
-#
+# Code explanation:
+#   Plot for Snow depth 
 ################################################################################
 
 #=============================================================================== 
@@ -41,7 +42,7 @@ library(extrafont) #Fonts
 #=============================================================================== 
 
 # TC results
-path_model = 'M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'
+path_model = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'
 path_results =  path_model&'3_PointScale_version/4_Outputs/Monte_Terminillo_results.txt'
 
 TC_data <- read.csv(path_results, header = TRUE)
