@@ -8,7 +8,7 @@ function[SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD,N,Rsws,t_bef,t_aft]=Automatic_Radia
 %%% GRAPH_VAR 0/1 switcher to plot outputs 
 %%% Rsw --> Measured Solar radiation
 %load([cur_dir,'\Res_',Location_Name,'.mat']);
-D=Date; N=D*0;
+D=Date; N=zeros(size(D,1),1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

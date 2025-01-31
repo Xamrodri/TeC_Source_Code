@@ -1,42 +1,48 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Subfunction  Albedo_Snow_Properties     %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
+
+Subfunction  Albedo_Snow_Properties
+
+References [Oleson, et al., 2004]
+
+INPUT
+    dt = [s]
+    ros = snow density [kg/m^3]
+    D =  snow depth [m]
+    h_S solar heigth [rad]
+    Ts
+    rostm1
+    Dtm1
+    tau_snotm1 [] Relative Age of snow (t-1)
+    MTa = maximum air temperature for the day divided so hourly
+    MTatm1 = maximum air temperature for the day divided so hourly at time
+
+before
+    SWE = snow water equivalen [mm w.e.]
+    Aice = ice albedo
+    Deb_Par.alb = debris albedo
+    Cdeb = debris-covered glacier or not
+    Cice = glacier or not
+    Pr_sno = snowfall
+
+OUTPUT
+    tau_sno [] %% Relative Age of snow
+    snow_alb.dir_vis
+    snow_alb.dif_vis
+    snow_alb.dir_nir
+    snow_alb.dif_nir
+    AMTa_out = accumulated maximum air temperature as output in tau_sno
+
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function[snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method)
 
-%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% References [Oleson, et al., 2004]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% INPUT
-%%% dt = [s]
-%%% ros = snow density [kg/m^3]
-%%% D =  snow depth [m]
-%%% h_S solar heigth [rad]
-%%% Ts
-%%% rostm1
-%%% Dtm1
-%%% tau_snotm1 [] Relative Age of snow (t-1)
-%%% MTa = maximum air temperature for the day divided so hourly
-%%% MTatm1 = maximum air temperature for the day divided so hourly at time
-%%% before
-%%% SWE = snow water equivalen [mm w.e.]
-%%% Aice = ice albedo
-%%% Deb_Par.alb = debris albedo
-%%% Cdeb = debris-covered glacier or not
-%%% Cice = glacier or not
-%%% Pr_sno = snowfall
 Pr_sno_day= Pr_sno_day+Pr_sno*dt/3600; %% [mm] 
+
 if size(Ta_day,1)==1; Ta_day=Ta_day';end
-%%% OUTPUT
-% tau_sno [] %% Relative Age of snow
-%snow_alb.dir_vis
-%snow_alb.dif_vis
-%snow_alb.dir_nir
-%snow_alb.dif_nir
-%%AMTa_out = accumulated maximum air temperature as output in tau_sno
-%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%
+
 e_sno = 0.97; %%% Snow emissivity
+
 %%%%%%%%%%
 %Choose method based on if glacier or not
 % if Cice==1
@@ -44,8 +50,10 @@ e_sno = 0.97; %%% Snow emissivity
 % else
 %     ANS=2; %Use previous method for most surfaces
 % end
+
 ANS=Albsno_method;
-%%%%%%%
+
+%% CASES
 switch ANS
     case 1
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

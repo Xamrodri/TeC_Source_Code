@@ -1036,7 +1036,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Updated Snow Albedo
 if Csno > 0
-    [snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method);
+    [snow_alb,tau_sno,e_sno] = Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method);
 else
     snow_alb.dir_vis = ALB;
     snow_alb.dir_nir = ALB;

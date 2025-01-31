@@ -42,7 +42,8 @@ EG=zeros(NN,1); ESN=zeros(NN,1);ESN_In=zeros(NN,1);
 EWAT=zeros(NN,1);EIn_urb=zeros(NN,1);
 EIn_rock=zeros(NN,1); dw_SNO=zeros(NN,1);
 G=zeros(NN,1); SWE=zeros(NN,1);
-SND=zeros(NN,1);%snow_alb=zeros(NN,1);
+SND=zeros(NN,1);
+%snow_alb=ones(NN,1);
 ros=zeros(NN,1);In_SWE=zeros(NN,1);SP_wc=zeros(NN,1);
 WR_SP=zeros(NN,1);U_SWE=zeros(NN,1);NIn_SWE=zeros(NN,1);
 dQ=zeros(NN,1);Qfm=zeros(NN,1);t_sls=zeros(NN,1);
@@ -602,10 +603,11 @@ for i=2:NN
     
     % Debugging
     % disp(size(Ca))
-
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%% HYDROLOGIC UNIT
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% HYDROLOGIC UNIT
+    %======================================================================
+    %
+    %======================================================================
     [V(i,:),Vice(i,:),O(i,:),Oice(i,:),ZWT(i),OF(i),OS(i),OH(i,:),OL(i,:),Psi_s_H(i,:),Psi_s_L(i,:),Rd(i),Qi_out(i,:),WTR(i,:),...
         Rh(i),Lk(i),f(i),WIS(i),Ts(i),Pr_sno(i),Pr_liq(i),Csno(i),Cice(i),NDVI(i),rb_H(i,:),rb_L(i,:),rs_sunH(i,:),...
         rs_sunL(i,:),rs_shdH(i,:),rs_shdL(i,:),r_litter(i,:),...
@@ -643,6 +645,7 @@ for i=2:NN
         pow_dis,a_dis,Salt(i),...
         SPAR,SN,OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_SM,OPT_STh,OPT_FR_SOIL,OPT_PH, ...
         parameterize_phase, hSTL, Albsno_method);    
+    
     %%%%%%%%%%%%%%%%%%%%%%%%%%% End of HYDROLOGIC UNIT %%%%%%%%%%%%%%%%%%%%
     
     %%%%%%%%% Prognostic temperature

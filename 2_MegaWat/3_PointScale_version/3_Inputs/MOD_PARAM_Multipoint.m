@@ -1,9 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% PARAMETER FILE TEMPLATE FOR T&C %%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%
+%{
+
+PARAMETER FILE TEMPLATE FOR T&C 
+
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%% LANGTANG 
+
 cur_dir=cd;
 %cd(Directory)
 %%%%%%% Basic Grid Cell Information - Not relevant for plot scale 
@@ -58,8 +62,8 @@ end
 %%% Rainfall disaggrgation information 
 a_dis = NaN ;
 pow_dis = NaN;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 %% SOIL PARAMETERS 
 % Pcla= 0.2;
 % Psan= 0.4;
@@ -98,7 +102,7 @@ end
 Ks_Zs(ix-1:end)=10^4; 
 clear ix
 
-%%%%
+
 %%%%%%%%%%% Matric Potential
 Kfc = 0.2; %% [mm/h]
 Phy = 10000; %% [kPa]
@@ -109,13 +113,15 @@ Ofc(Ks_Zs<0.2)=Osat(Ks_Zs<0.2);
 Oice = 0;
 %%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%========================== SNOW PARAMETER ============================
-TminS=-1.1;%% Threshold temperature snow
-TmaxS= 2.5;%% Threshold temperature snow
-ros_max1=580;%520; %600; %%% [kg/m^3]
-ros_max2=300;%320; %450; %%% [kg/m^3]
+%% SNOW AND ICE PARAMETERS
+%==========================================================================
+%
+%==========================================================================
+
+TminS=-1.1; %% Threshold temperature snow
+TmaxS= 2.5; %% Threshold temperature snow
+ros_max1 = 580; %520; %600; %%% [kg/m^3]
+ros_max2 = 300; %320; %450; %%% [kg/m^3]
 Th_Pr_sno = 8; %%% [mm/h] Threshold Intensity of snow to consider a New SnowFall
 
 %========================= ICE Parameter =============================
@@ -127,19 +133,24 @@ dz_ice = 0.45; %% [mm / h] Water Freezing Layer progression without snow-layer
 
 %======================= Albedo for snow/ice ========================
 
-%Ameas=rand(NN,1); %Making dummy variable here, but add measured if you have it, it will only be used if one of the switches is on. Any missing data leave as NaN and modelled Albedo will be used.
-Aice_meas_on_hourly=NaN(NN,1);
-Asno_meas_on_hourly=NaN(NN,1);
-idxa=isnan(Ameas)==1;
-Aice_meas_on_hourly(idxa)=0;  %Use modelled ice albedo if not measured
-Aice_meas_on_hourly(~idxa)=alpha; %Switch; When = 1 use measured ice albedo when available (Change to 0 if you don't want to use measured albedo at all)
-Asno_meas_on_hourly(idxa)=0;  %Use modelled snow albedo if not measured
-Asno_meas_on_hourly(~idxa)=alpha; %Switch; When = 1 use measured snow albedo when available (Change to 0 if you don't want to use measured albedo at all)
+% Ameas=rand(NN,1); %Making dummy variable here, but add measured if you have it, it will only be used if one of the switches is on. 
+% Any missing data leave as NaN and modelled Albedo will be used.
+%Aice_meas_on_hourly = NaN(NN,1);
+%Asno_meas_on_hourly = NaN(NN,1);
+
+%idxa=isnan(Ameas)==1;
+%Aice_meas_on_hourly(idxa)=0;  %Use modelled ice albedo if not measured
+%Aice_meas_on_hourly(~idxa)=alpha; %Switch; When = 1 use measured ice albedo when available (Change to 0 if you don't want to use measured albedo at all)
+%Asno_meas_on_hourly(idxa)=0;  %Use modelled snow albedo if not measured
+%Asno_meas_on_hourly(~idxa)=alpha; %Switch; When = 1 use measured snow albedo when available (Change to 0 if you don't want to use measured albedo at all)
 
 Aice = 0.28; %% Default ice albedo (needed for Restating_parameters_temporary until in loop)
+
 if exist('Afirn','var')
      Aice=Afirn(ij); %Use landsat distributed measured albedo
 end 
+
+%% Debris Cover Glacier
 % ============= Debris Cover Glacier =====================================
 %MAKE SURE DEBRIS THICKNESS 0 FOR CLEAN GLACIER!!%
 
@@ -446,10 +457,12 @@ if OPT_SoilBiogeochemistry == 1
 end
 %%%
 
-%%%%%%%%%%% Initial conditions Hydrology/non-Vegetation %%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% HYDROLOGY
+%==========================================================================
+% Initial conditions Hydrology/non-Vegetation
+%==========================================================================
 SWE(1)=SWEtm1(ij); %% [mm]
-SND(1)=SNDtm1(ij); %%[m]
+SND(1)=SNDtm1(ij); %% [m]
 Ts(1)=Ta(1)+2;
 Tdamp(1)=Ta(1);
 Tdp(1,:)= Ta(1)*ones(1,ms);
@@ -459,6 +472,7 @@ snow_alb.dir_vis = 0.6;
 snow_alb.dif_vis = 0.6;
 snow_alb.dir_nir = 0.6;
 snow_alb.dif_nir = 0.6;
+
 In_L(1,:)=In_Ltm1(ij); In_H(1,:)=In_Htm1(ij);
 In_urb(1)=In_urbtm1(ij); In_rock(1)= In_rocktm1(ij);
 In_Litter(1)=In_Littertm1(ij);
@@ -482,9 +496,11 @@ V(1,:) = (O(1,:) -Ohy).*dz.*0; % TRYING WITH 0 initial water content in soil
 cd(cur_dir)
 %%%%%%%%%%%%%%%%%
 
+%% VEGETATION
+%==========================================================================
+% Initial conditions Vegetation 
+%==========================================================================
 
-%%%%%%%%%%% Initial conditions Vegetation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Ci_sunL(1,:) = [Ca(1)]; % %% [umolCO2/mol]
 Ci_sunH(1,:) = [Ca(1)]; %% [umolCO2/mol]
 Ci_shdL(1,:) = [Ca(1)]; % %% [umolCO2/mol]

@@ -43,7 +43,7 @@ library(extrafont) #Fonts
 
 # TC results
 path_model = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'
-path_results =  path_model&'3_PointScale_version/4_Outputs/Monte_Terminillo_results.txt'
+path_results =  path_model&'3_PointScale_version/4_Outputs/Monte_Terminillo_daily_results.txt'
 
 TC_data <- read.csv(path_results, header = TRUE)
 str(TC_data) #Type of data
@@ -89,11 +89,11 @@ TC_data_sel <- TC_data %>% filter(Date >= x1 & Date <= x2)
 # PLOTS
 #===============================================================================
 
-path_plot = "M:/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/6_Postprocessing/2_Plots/"
+path_plot = "C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/6_Postprocessing/2_Plots/"
 tiff(filename = path_plot&"Snow_Depth.tif", width = 5, height = 5, units = "in", res = 600 ,pointsize = 12)
 
 x = 1:nrow(TC_data_sel)
-yl = c(0,4) #y axis size
+yl = c(0,2) #y axis size
 
 plot(x,TC_data_sel$SND,xlim = c(0,365),ylim = yl, type="o", pch=16,
      xlab="",ylab="", frame.plot = F,axes=F, col = 'blue', xaxs = "i", yaxs = "i")

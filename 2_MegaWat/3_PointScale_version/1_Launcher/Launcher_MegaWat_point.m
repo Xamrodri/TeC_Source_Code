@@ -20,7 +20,7 @@ clc; clear all;
 
 %% Directories
 folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
-forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Apennines/10_Output/'; % Put here the path of where you downloaded the repository
+forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Extractions_Point/3_Radiation_Partition/'; % Put here the path of where you downloaded the repository
 
 %% Catchment selection
 s = 3; % ID for catchment selection
@@ -28,13 +28,13 @@ s = 3; % ID for catchment selection
 %% Study site details
 SITE = ["Cinca_Mid", "Tiber","Tiber"]; 
 FORCING = "ERA5Land";
-UTM_zone = 33; % for Spain
-DeltaGMT= 1; % for Spain
+UTM_zone = 33; % for Italy
+DeltaGMT= 1; % for Italy
 outlet_names = ["Cinca_Mid_OUT", "Apennine_out","Monte_Terminillo"];
 %outlet_name = char(outlet_names);
 
 %% Modelling period
-x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00", "01-Jan-2008 00:00:00"]; % Starting point of the simulation
+x1s =  ["01-Nov-2022 00:00:00", "01-Jan-2008 00:00:00", "01-Jan-2008 01:00:00"]; % Starting point of the simulation
 x2s =  ["01-Jun-2023 23:00:00", "30-Dec-2008 23:00:00", "30-Dec-2008 23:00:00"]; % Last timestep of the simulation
 
 date_start = datetime(x1s(s));
@@ -47,8 +47,9 @@ dt=3600; % [s]
 dth=1; % [h]
 
 % Integration interval for Solar variables
-% Hours or fraction before and after.
-t_bef = 0.5; t_aft = 0.5;
+% Hours or fraction before and after. Values obtained from the
+% Automatic_Radiation_Partition_I
+t_bef = 1.5; t_aft = -0.5;
 %% Pixel selection
 %==========================================================================
 % Depends on the point to be modelled
@@ -66,13 +67,12 @@ LOC = point_id;
 %==========================================================================
 output_daily = 1; 
 
-
 %% Load DEM  
 
-Tmod = 0; % temperature modification above clean ice [°C];
-Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
-Z_min = 570; % lowest elevation for linear precipitation modification (min factor -> 0)
-Z_max = 5000; % highest elevation for linear precipitation modification (max factor -> Pmod)
+%Tmod = 0; % temperature modification above clean ice [°C];
+%Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
+%Z_min = 570; % lowest elevation for linear precipitation modification (min factor -> 0)
+%Z_max = 5000; % highest elevation for linear precipitation modification (max factor -> Pmod)
 
 %% Precipitation phase parametrization
 % 1 = 2-threshold, 
@@ -119,9 +119,9 @@ DTM(isnan(DTM)) == 0; %%??
 [m_cell,n_cell]=size(DTM);
 
 % Precipitation vertical gradient
-%Pmod_S = MASK;
-%rate = Pmod/(Z_max-Z_min);
-%Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
+% Pmod_S = MASK;
+% rate = Pmod/(Z_max-Z_min);
+% Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 
 %% Load CO2 data
 load('Ca_Data.mat');
@@ -195,10 +195,8 @@ Lon = POI.LON(loc);
 %==========================================================================
 % ERA5
 %==========================================================================
-forc_file = strcat(forc_path,'2_Radiation_Partition/Forcing_ERA5_Land_',outlet_names(s),'_2008_all.mat'); % Put here the path of where you downloaded the repository
+forc_file = strcat(forc_path,'Forcing_ERA5_Land_',outlet_names(s),'_2008_corr_all.mat'); % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
-forc.SW_rad_downward_HH(1)=0; %Correction for first input (CHECK)
-forc.LW_rad_downward_HH(1)=200; %Correction for first input (CHECK)
 
 Date_all=forc.Date; 
 
@@ -245,14 +243,15 @@ Oa= 210000; % Intercellular Partial Pressure Oxygen [umolO2/mol]
 %==========================================================================
 %{
 FORCINGS: 
-    Precipitation
-    Air Pressure
-    Temperature
-    Wind Speed
-    Relative humidity
-    Radiation
-    Vapor pressure 
-    Dew Point temperature
+    Precipitation [mm]
+    Air Pressure [Pa]
+    Temperature [C]
+    Wind Speed [m s-1]    
+    Radiation [W m-2]    
+    Dew Point temperature [C]
+
+CALCULATIONS:
+    Relative Humidity [-]
 %}
 %==========================================================================
 
@@ -265,61 +264,58 @@ zatm_hourly = repmat(2.00,height(forcing),1);
 zatm_surface = [18 18 2 2 18 18];
 zatm_hourly_on = 0;
 
-%load all forcing data
-%LW Radiation? (ex LWIN)
-Ameas = zeros(NN,1);
-Latm=forcing.LW_rad_downward_HH; % Latm:Incoming long wave radiation [W m-2]
-N=ones(NN,1)/2; % cloud cover [-]
-
-% Precipitation
-Pr=forcing.Total_Precipitation;
+%% Precipitation
+Pr=forcing.Total_Precipitation_HH;
 Pr(isnan(Pr))=0;
-Pr(Pr<0.001)=0;
+Pr(Pr<0.01)=0;
 
-if Pmod >0
-  Pr = Pr.*Pmod_S(ij);
-end
-
-% Air Pressure in Pa. If Pa/100 then in hPa to make similar to Achille (BECAREFUL)
+%% Air pressure
+% Air Pressure in mbar based on the PDF for variables and parameters of TC
+% Pressure comes in Pa from ERA5
 Pre=forcing.Pressure/100;    
 
+%% Temperature
 % 2m air temperature
-Ta=forcing.Temperature; 
+Ta=forcing.Temperature;
 
-% Apply Tmod 
-if (GLH(ij)>0) && (DEB_MAP(ij) < 10) % glacier, but without debris
-    Ta(Ta >0) = Ta(Ta >0) + Tmod;
-end 
-
-% Wind Speed
+%% Wind Speed
 Ws=forcing.Wind_Speed; Ws(Ws < 0.01) = 0.01;
 
-% Relative humidity
+%% Relative humidity
 % Divided by 100 to set the number in the range 0-1
 U=forcing.RH/100;
 
-% Radiation
-SAD1=forcing.SAD1;SAD2=forcing.SAD2; SAB1=forcing.SAB1;SAB2=forcing.SAB2;
+%% Longwave radiation
+% N can be cloud cover [-] or longwave incoming radiation [W m-2]
+% Latm=forcing.LW_rad_downward_HH; % Latm:Incoming long wave radiation [W m-2]
+% N=ones(NN,1); % cloud cover [-]
+% N = forcing.LW_rad_downward_HH;
+N = forcing.N;
+
+%% Radiation partition
+SAD1=forcing.SAD1; SAD2=forcing.SAD2; 
+SAB1=forcing.SAB1; SAB2=forcing.SAB2;
 PARB=forcing.PARB; PARD=forcing.PARD;
 
-% Albedo parameters
-alpha=0; %switch for albedo
-Ameas_t=0; %albedo
-Aice_meas_on_hourly=zeros(height(forcing),1); %albedo
-Asno_meas_on_hourly=zeros(height(forcing),1); %albedo
+%% Albedo parameters
+%Ameas = ones(NN,1);
+alpha = 0; % switch for albedo
+%Ameas_t=0; % albedo
+%Aice_meas_on_hourly = ones(height(forcing),1)/2; % albedo
+%Asno_meas_on_hourly = ones(height(forcing),1)/2; % albedo
 
-% Vapor pressure - Dew Point temperature
+%% Vapor pressure - Dew Point temperature
 %esat/ea/Ds/Tdew
-a=17.27; b=237.3;
-esat=611*exp(a*Ta./(b+Ta)); % Vapour pressure at saturation (Pa)
-ea=U.*esat;                 % Vapour pressure (Pa)
-Ds= esat - ea;              % Vapor Pressure Deficit (Pa)
+esat=forc.es;   % Vapour pressure at saturation (Pa)
+ea=forc.ea;     % Vapour pressure (Pa)
+Ds= esat - ea;  % Vapor Pressure Deficit (Pa)
 Ds(Ds<0)=0; 
-xr=a*Ta./(b+Ta)+log10(U);
-Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
-clear a b xr;
-%Tdew= forc.Dew_Point_Temp;
+Tdew= forc.Dew_Point_Temp;
 
+%a=17.27; b=237.3;
+%clear a b xr;
+%xr=a*Ta./(b+Ta)+log10(U);
+%Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
 
 %% DING PARAMETERIZATION
 % Initial daily mean values for Ding parametrization
@@ -364,6 +360,7 @@ if topo == 1
     SAD2(sin(h_S) <= 0.10)  =  0;
     PARB(sin(h_S) <= 0.10)  =  0;
     PARD(sin(h_S) <= 0.10)  =  0;
+
     SAD1 = SAD1.*SvF + Ct.*rho_g.*((SAB1./sin(h_S)).*cos_fst + (1-SvF).*SAD1);
     SAD2 = SAD2.*SvF + Ct.*rho_g.*((SAB2./sin(h_S)).*cos_fst + (1-SvF).*SAD2);
     PARD = PARD.*SvF + Ct.*rho_g.*((PARB./sin(h_S)).*cos_fst + (1-SvF).*PARD);
@@ -373,10 +370,13 @@ if topo == 1
     PARB = (PARB./sin(h_S)).*cos_fst.*ShF;
 
     %correSITEions, temporary
-    SAB1(SAB1<0)=0;SAB2(SAB2<0)=0;PARB(PARB<0)=0;PARD(PARD<0)=0;
-    SAD1(SAD1<0)=0;SAD2(SAD2<0)=0;
-    SAB1(isnan(SAB1)) = 0;SAB2(isnan(SAB2)) = 0;SAD1(isnan(SAD1)) = 0;SAD2(isnan(SAD2)) = 0;
-    PARB(isnan(PARB)) = 0;PARD(isnan(PARD)) = 0;
+    SAB1(SAB1<0)=0; SAB2(SAB2<0)=0;
+    PARB(PARB<0)=0; PARD(PARD<0)=0;
+    SAD1(SAD1<0)=0; SAD2(SAD2<0)=0;
+
+    SAB1(isnan(SAB1))= 0; SAB2(isnan(SAB2)) = 0;
+    SAD1(isnan(SAD1))= 0; SAD2(isnan(SAD2)) = 0;
+    PARB(isnan(PARB))= 0; PARD(isnan(PARD)) = 0;
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 else
@@ -463,10 +463,14 @@ ms=10 ; %% 11 ;
 SOIL_TH=reshape(SOIL_TH,num_cell,1);
 ms_max = 10; %% Number of soil layers
 
+%% GLACIERS
 %%% DEBRIS
+% INIT_COND_v2 has md_max parameter
+% Do not delete this code
 DEB_MAP=reshape(DEB_MAP,num_cell,1);
 md_max = 10; %% % Number of debris layers
 
+%% SNOW
 %%% Initial snow depth
 SNOWD=reshape(SNOWD,num_cell,1);
 
@@ -490,10 +494,17 @@ end
 %if exist(out, 'file') == 2
 %load(out);
 %else
+if topo == 1
 INIT_COND_v2(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,m.Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
 load(out);
+else 
+INIT_COND_v2(num_cell,m_cell,n_cell,...
+   cc_max,ms_max,md_max,...
+   MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
+load(out);
+end
 %end
 
 %% RUN MODEL
