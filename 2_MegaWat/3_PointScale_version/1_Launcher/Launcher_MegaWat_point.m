@@ -265,9 +265,14 @@ zatm_surface = [18 18 2 2 18 18];
 zatm_hourly_on = 0;
 
 %% Precipitation
+
+% Precipitation from ERA5Land
 Pr=forcing.Total_Precipitation_HH;
 Pr(isnan(Pr))=0;
 Pr(Pr<0.01)=0;
+
+%Precipitation from stations
+
 
 %% Air pressure
 % Air Pressure in mbar based on the PDF for variables and parameters of TC
@@ -386,63 +391,68 @@ else
 end
 
 %% LAND COVER
-ksv=reshape(VEG_CODE,num_cell,1);
-%%% 1 Fir (evergr.)
-%%% 2 Larch (decid.)
-%%% 3 Grass C3
-%%% 4 Shrub (decid.)
-%%% 5 Broadleaf evergreen
-%%% 6 Broadleaf deciduous
-%%% 7 Rock
-ksv(ksv==8)=7; %%% 8 Ice = 7 Rock
+%==========================================================================
+%{
+Classes in T&C:
+        1 Fir (evergr.)
+        2 Larch (decid.)
+        3 Grass C3
+        4 Shrub (decid.)
+        5 Broadleaf evergreen
+        6 Broadleaf deciduous
+        7 Rock
+%}
+%==========================================================================
 
-%land cover partition
+ksv=reshape(VEG_CODE,num_cell,1);
+
+%% LAND COVER PARTITION
 cc_max = 1; %% one vegetation types
 switch ksv(ij)
     case 1
-        %%%% LAND COVER PARTITION  Fir - evergreen
+        % Fir - evergreen
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
+        cc=length(Ccrown); %% Crown area
         II = [1 0 0 0 0 0]>0;  
     case 2
-        %%%% LAND COVER PARTITION  Larch - deciduous
+        % Larch - deciduous
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];  
         cc=length(Ccrown);%% Crown area
         II = [0 1 0 0 0 0]>0;  
     case 3
-        %%%% LAND COVER PARTITION  Grass C3
+        % Grass C3
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];
         cc=length(Ccrown);%% Crown area
         II = [0 0 1 0 0 0]>0;  
     case 4
-        %%%% LAND COVER PARTITION  Shrub dec.
+        % Shrub dec.
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.1; Ccrown = [0.9];
         cc=length(Ccrown);%% Crown area
         II = [0 0 0 1 0 0]>0;  
     case 5
-        %%%% LAND COVER PARTITION  broadleaf evergreen vegetation dec.
+        % broadleaf evergreen vegetation dec.
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];
         cc=length(Ccrown);%% Crown area
         II = [0 0 0 0 1 0]>0;  
     case 6
-        %%%% LAND COVER PARTITION  broadleaf deciduous vegetation dec.
+        % broadleaf deciduous vegetation dec.
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];
         cc=length(Ccrown);%% Crown area
         II = [0 0 0 0 0 1]>0;  
     case 7
-        %%%% LAND COVER PARTITION  Rock
+        % Rock or Glaciers
         Cwat = 0; Curb = 0.0 ; Crock = 1.0;
         Cbare = 0.0; Ccrown = [0.0];
         cc=length(Ccrown);%% Crown area
         II = [ 0 0 0 1 0 0]>0;  
 
-
+  
     otherwise
         disp('INDEX FOR SOIL VEGETATION PARAMETER INCONSISTENT')
         return

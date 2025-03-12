@@ -358,10 +358,11 @@ for i=2:NN
             IS= Ccrown*squeeze(ISOIL_L(j-1,:,:)) + Ccrown*squeeze(ISOIL_H(j-1,:,:));
             REXMY= Ccrown*squeeze(Rexmy_L(j-1,:,:)) + Ccrown*squeeze(Rexmy_H(j-1,:,:));
             FireA = 1*((sum(ManIH==-5) + sum(ManIL==-5)) > 0);
-
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%% BIOGEO_UNIT
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            %% BIOGEO_UNIT
+            %==============================================================
+            %
+            %==============================================================
             [P(j,:),LEAK_NH4(j),LEAK_NO3(j),LEAK_P(j),LEAK_K(j),LEAK_DOC(j),LEAK_DON(j),LEAK_DOP(j),...
                 R_NH4(j),R_NO3(j),R_P(j),R_K(j),R_DOC(j),R_DON(j),R_DOP(j),...
                 Nuptake_H(j,:),Puptake_H(j,:),Kuptake_H(j,:),Nuptake_L(j,:),Puptake_L(j,:),Kuptake_L(j,:),RexmyI(j,:),...
@@ -750,7 +751,7 @@ for kj=1:cc
         dB_L= squeeze((B_L(1,kj,:)-B_L(end,kj,:)));
     end
     %%%%%%%%
- %CkC_H(kj) =  sum(dB_H)+ sum(NPP_H(:,j)) - sum(Swm_H(:,j))-sum(Sfr_H(:,j))-sum(Sr_H(:,j))-sum(Slf_H(:,j)) - sum(Rexmy_H(:,j,:));%
+    %CkC_H(kj) =  sum(dB_H)+ sum(NPP_H(:,j)) - sum(Swm_H(:,j))-sum(Sfr_H(:,j))-sum(Sr_H(:,j))-sum(Slf_H(:,j)) - sum(Rexmy_H(:,j,:));%
     CkC_H(kj) =  sum(dB_H)+ sum(1.0368*An_H(:,kj)/24)- sum(Rmr_H(:,kj)) -sum(Rmc_H(:,kj)) -sum(Rms_H(:,kj)) -sum(Rg_H(:,kj))...
         -sum(TexC_H(:,kj));
     %- sum(Swm_H(:,kj))-sum(Sfr_H(:,kj))-sum(Sr_H(:,kj))-sum(Slf_H(:,kj)) - sum(Rexmy_H(:,kj,:));%
