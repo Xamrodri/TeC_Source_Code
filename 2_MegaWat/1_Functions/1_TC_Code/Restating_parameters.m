@@ -3,14 +3,14 @@
 %%% specified in the MOD_PARAM file
 %%!! Be careful as it could be dangerous to have parameters you did not decide
 
-%%% Rainfall Disaggregation
+%% Rainfall Disaggregation
 if not(exist('a_dis','var'))
     
     a_dis = NaN ;
     pow_dis = NaN;
 end
 
-%%%% Terrain Properties
+%% Terrain Properties
 if not(exist('aR','var'))
     fpr=1;
     SvF=1; %% Sky View Factor
@@ -26,7 +26,7 @@ if not(exist('aR','var'))
     aTop = 1000*cellsize^2./cellsize; %% [mm] Ratio betweeen Area/ContourLenght
 end
 
-%%% Soil Structural Parameters
+%% Soil Structural Parameters
 if not(exist('Omac','var'))
     if SPAR == 3
         disp('NOT SPECIFIED SOIL STRUCTURE PARAMETERS')
@@ -38,7 +38,7 @@ if not(exist('Omac','var'))
     Ks_mac = 100*Ks_Zs; %%[mm/h]
     lVGM =0.5*ones(1,ms); %  %% [-]
 end
-%%% Soil VG modifications
+%% Soil VG modifications
 if not(exist('bVG','var'))
     if SPAR == 1
         disp('NOT SPECIFIED CORRECTION FOR VG')
@@ -50,7 +50,8 @@ end
 if not(exist('lVG','var'))
     lVG =0.5*ones(1,ms); %  %% [-]
 end
-%%%%%%% Soil_Parameters
+
+%% Soil_Parameters
 Soil_Param.Ks_Zs=Ks_Zs;
 Soil_Param.Osat=Osat;
 Soil_Param.Ohy=Ohy;
@@ -85,33 +86,7 @@ if not(exist('In_max_rock','var'))
     In_max_rock=2; %% [mm]
 end
 
-%%%%%%%%%% Interception Parameters
-if not(exist('KcI','var'))
-    Interc_Param.Sp_SN_In=5.9;
-    Interc_Param.Sp_LAI_L_In=0.2;
-    Interc_Param.Sp_LAI_H_In=0.2;
-    Interc_Param.gcI=3.7;
-    Interc_Param.KcI=0.06;
-else
-    
-    Interc_Param.Sp_SN_In=Sp_SN_In;
-    Interc_Param.Sp_LAI_L_In=Sp_LAI_L_In;
-    Interc_Param.Sp_LAI_H_In=Sp_LAI_H_In;
-    Interc_Param.gcI=gcI;
-    Interc_Param.KcI=KcI;
-end
-if not(exist('Kct','var'))
-    Kct=0.75; %%%
-end
-if not(exist('d_leaf_H','var'))
-    d_leaf_H = [1]; %%[cm]
-    d_leaf_L= [1];  %% [cm]
-end
-if not(exist('OM_H','var'))
-    OM_H=1;
-    OM_L=1;
-end
-%%%%%% Snow-Ice Parameters
+%% Snow-Ice Parameters
 if not(exist('Aice','var'))
     SnowIce_Param.TminS=-0.8;
     SnowIce_Param.TmaxS=2.8;
@@ -167,8 +142,45 @@ if not(exist('Urb_Par','var'))
     Urb_Par.e_sur= 0.92;
     Urb_Par.BuildH= 12;
 end
-%%%%%%%%%%
-%%%%% Vegetation High Parameters
+
+%% Vegetation parameters
+%==========================================================================
+% Not generated if no vegetation 
+% function any(II>0) checks. 
+%==========================================================================
+%% Interception Parameters (vegetation)
+
+
+
+if not(exist('KcI','var'))
+    Interc_Param.Sp_SN_In=5.9;
+    Interc_Param.Sp_LAI_L_In=0.2;
+    Interc_Param.Sp_LAI_H_In=0.2;
+    Interc_Param.gcI=3.7;
+    Interc_Param.KcI=0.06;
+else
+    
+    Interc_Param.Sp_SN_In=Sp_SN_In;
+    Interc_Param.Sp_LAI_L_In=Sp_LAI_L_In;
+    Interc_Param.Sp_LAI_H_In=Sp_LAI_H_In;
+    Interc_Param.gcI=gcI;
+    Interc_Param.KcI=KcI;
+end
+if not(exist('Kct','var'))
+    Kct=0.75; %%%
+end
+if not(exist('d_leaf_H','var'))
+    d_leaf_H = [1]; %%[cm]
+    d_leaf_L= [1];  %% [cm]
+end
+if not(exist('OM_H','var'))
+    OM_H=1;
+    OM_L=1;
+end
+
+
+
+%% Vegetation High Parameters
 if not(exist('Vmax_H','var'))
     VegH_Param.KnitH=NaN*ones(1,cc);
     VegH_Param.mSl_H=NaN*ones(1,cc);
@@ -228,7 +240,7 @@ else
 end
 
 
-%%%%% Vegetation Low Parameters
+%% Vegetation Low Parameters
 if not(exist('Vmax_L','var'))
     VegL_Param.KnitL=NaN*ones(1,cc);
     VegL_Param.mSl_L=NaN*ones(1,cc);
@@ -287,6 +299,8 @@ else
     VegL_Param.Osm_reg_Max_L = Osm_reg_Max_L;   
     VegL_Param.eps_root_base_L=  eps_root_base_L; 
 end
+
+
 
 %%%%% Vegetation High Parameters for vegetation dynamics
 if not(exist('aSE_H','var'))
@@ -466,6 +480,9 @@ else
     VegL_Param_Dyn.Sl_emecrop= Sl_emecrop_L;
 end
 
+
+
+%% Root
 if not(exist('a_root_L','var'))
     a_root_L=0.001; 
 else

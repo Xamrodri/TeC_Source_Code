@@ -10,7 +10,6 @@
 %% Debugger
 %disp(strcat('Initial MAIN_FRAME:',num2str(size(Ca,2))))
 
-
 %%% j time dt = 1 day 
 %%% i time dt = 1h
 %%% ms soil layer
@@ -341,13 +340,14 @@ for i=2:NN
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%%%%%%%%% Model calculations
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+    
     if (Datam(i,4)==1) % Condition on date
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j=j+1; [jDay(j)]= JULIAN_DAY(Datam(i,:));
         [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)] = SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
-        clear h_S delta_S zeta_S T_sunrise T_sunset
-        
+        % PARFOR does not likethis
+        clear h_S delta_S zeta_S T_sunrise T_sunset 
+       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%% Biogeochemistry submodule
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -397,6 +397,7 @@ for i=2:NN
             Bam=NaN; Bem=NaN;
         end %%% End Biogeochemical module 
         
+       
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%% Calculations per Crown areas 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -421,10 +422,11 @@ for i=2:NN
                     Nreserve_H(j-1,cc),Preserve_H(j-1,cc),Kreserve_H(j-1,cc),Nuptake_H(j,cc),Puptake_H(j,cc),Kuptake_H(j,cc),FNC_H(j-1,cc),Se_bio,Tdp_bio,...
                     ParEx_H(cc),ExEM,Bam,Bem,Mpar_H(cc),TBio_Ht(j-1,cc),OPT_EnvLimitGrowth,OPT_VCA,OPT_VD,OPT_SoilBiogeochemistry);
                 %%%%%%%%%%%%%%%%%% End VEGGIE_UNIT %%%%%%%%%%%%%%%%%%%%%%%%
-
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%% Plant_Export
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+                %% PLANT EXPORT
+                %==========================================================
+                % Function
+                %==========================================================
                 [TexC_H(j,cc),TexN_H(j,cc),TexP_H(j,cc),TexK_H(j,cc),TNIT_H(j,cc),TPHO_H(j,cc),TPOT_H(j,cc),NuLit_H(j,cc,:),Nreserve_H(j,cc),Preserve_H(j,cc),Kreserve_H(j,cc),...
                     SupN_H(j,cc),SupP_H(j,cc),SupK_H(j,cc),ISOIL_H(j,cc,:)]= Plant_Exports(B_H(j,cc,:),B_H(j-1,cc,:),NuLit_H(j-1,cc,:),...
                     Slf_H(j,cc),Sfr_H(j,cc),Swm_H(j,cc),Sll_H(j,cc),Sr_H(j,cc),Rexmy_H(j,cc,:),Stoich_H(cc),Mpar_H(cc),fab_H(cc),fbe_H(cc),RB_H(j,cc,:),...
@@ -480,6 +482,7 @@ for i=2:NN
                 ISOIL_H(j,cc,:)=0; NuLit_H(j,cc,:)=0;
             
             end
+            
             
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%% Low vegetation for Crown areas
@@ -558,7 +561,8 @@ for i=2:NN
             end %%% End of conditions for root depth - low vegetation
             %%%%%%%%%%%%%%%%%
         end %%% End of calculations for Crowns
-
+        
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%%%%%%%%% Check on land cover fractions
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -589,6 +593,7 @@ for i=2:NN
         end
     end
     
+ 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %%%%%%%% Wetland option
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -605,6 +610,7 @@ for i=2:NN
     % Debugging
     % disp(size(Ca))
     
+   
     %% HYDROLOGIC UNIT
     %======================================================================
     %
@@ -671,6 +677,8 @@ for i=2:NN
     
 end  %End of iteration 
 
+
+
 %% CHECKS
 %==========================================================================
 % CHECKS
@@ -704,8 +712,8 @@ Ck = sum((Pr_liq(2:end)+Pr_sno(2:end))*dth)+ sum(IrD*dth) + sum(dV)...
     - sum(EICE*dth) + (IP_wc(1) -IP_wc(end)) + (ICE(1) -ICE(end)) + (WAT(1) -WAT(end)) + (FROCK(1) -FROCK(end)) + ...
     Asur*( (Vx_H(1,:)-Vx_H(end,:)) + (Vl_H(1,:)-Vl_H(end,:))  + (Vx_L(1,:)-Vx_L(end,:)) + (Vl_L(1,:)-Vl_L(end,:)) )*Ccrown' ; %%%[mm]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp(Ck);
-disp(mean(DQ));
+%disp(Ck);
+%disp(mean(DQ));
 % T_H, T_L  EG, EIn_urb, EIn_rock, [mm/h]
 
 %% Evaporation check
@@ -802,10 +810,12 @@ end
 
 CkExC = Tex - sum(IS(1:9));
 
+%PARFOR does not like this
 clear dB_H  dB_L dNres_H  dNres_L  dPres_H dKres_H  dPres_L dKres_L ed
 clear Se_bio Psi_bio Tdp_bio VSUM VTSUM  IS Tex 
 clear  Tstm0 snow_alb  kj m p  pdind STOT  PARAM_IC
 clear Bam Bem FireA Se_fc REXMY
+
 
 %Ckf=0*Ts;
 %for i=2:NN

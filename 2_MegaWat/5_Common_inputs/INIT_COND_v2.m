@@ -1,6 +1,6 @@
 function[]=INIT_COND_v2(num_cell,m_cell,n_cell,...
     cc_max,ms_max,md_max,...
-    MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out)
+    MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out, II, ij)
 
 
 %%%%%%%%% TEMPORAL INITIALIZATION
@@ -117,7 +117,7 @@ Rntm1=          0*MASKn; % Net radiation [W/m2]
 rostm1=         250*MASKn; % Snow density [kg/m3]
 SE_rocktm1=     0*MASKn; % Runoff on rocks [mm]
 SE_urbtm1=      0*MASKn; % Runoff on impervious surface (e.g. roads; Debris surface) [mm]
-Slo_head=       reshape(Slo_top_S,num_cell,1)*ones(1,ms_max);
+%Slo_head=       reshape(Slo_top_S,num_cell,1)*ones(1,ms_max);
 Smelttm1=       0*MASKn; % Snow melt [mm]
 
 SNDtm1=SNOWD;   SNDtm1(isnan(SNDtm1))=0;  
@@ -158,13 +158,14 @@ ZWTtm1=         0*MASKn; % Water table depth [mm]
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%% SPECIFICATIONS FOR HIGH & LOW VEGETATION 
-%%%%%%%%%%%%%%%%%  (DEFINED FURTHER BELOW)
-%%% 1 Fir (everg.), high vegetation
-%%% 2 Larch (decid.), high vegetation
-%%% 3 Grass C3, low vegetation
-%%% 4 Shrub (decid.), low vegetation
+%% SPECIFICATIONS FOR HIGH & LOW VEGETATION 
+%==========================================================================
+%{
+1 Fir (everg.), high vegetation
+2 Larch (decid.), high vegetation
+3 Grass C3, low vegetation
+4 Shrub (decid.), low vegetation
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 AgeDL_Htm1=     zeros(num_cell,cc_max);
 AgeDL_Ltm1=     zeros(num_cell,cc_max);
@@ -340,267 +341,509 @@ Vl_Htm1=        zeros(num_cell,cc_max);
 Vl_Ltm1=        zeros(num_cell,cc_max);
 Vx_Htm1=        zeros(num_cell,cc_max);
 Vx_Ltm1=        zeros(num_cell,cc_max);
-%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% 1 Fir (everg.) H  |  2 Larch (decid.) H 
-%%% 3 Grass C3     L  |  4 Shrub (decid.) L
-%%% 5 Grass C3     H  |  6 Shrub (decid.) H
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% AgeL:         Leaf Age [days] [979  220  0  0 305 0]
-AgeL_Htm1(ksv==1,1)=979; 
-AgeL_Htm1(ksv==2,1)=220; 
-AgeL_Ltm1(ksv==3,1)=0; 
-AgeL_Ltm1(ksv==4,1)=0; 
-AgeL_Htm1(ksv==5,1)=305; 
-AgeL_Htm1(ksv==6,1)=0; 
+%% CLASSIFICATION OF STUDY AREA
+%==========================================================================
+% 1 Fir (everg.) H  |  2 Larch (decid.) H 
+% 3 Grass C3     L  |  4 Shrub (decid.) L
+% 5 Grass C3     H  |  6 Shrub (decid.) H
+%
+% ksv vector maps CORINE classification to the aggregated classes from the 
+% file Legendkey. 
+% The aggregated classes are 8
+% 1 to 6 are vegetation.
+% 7: Rock
+% 8: Water
+% 9: Urban
+%==========================================================================
+%disp('here')
 
-% AgeDL:        Dead leaf Age [days]
-AgeDL_Htm1(ksv==1,1)=0; 
-AgeDL_Htm1(ksv==2,1)=0; 
-AgeDL_Ltm1(ksv==3,1)=0; 
-AgeDL_Ltm1(ksv==4,1)=0; 
-AgeDL_Htm1(ksv==5,1)=0; 
-AgeDL_Htm1(ksv==6,1)=0; 
+%% AgeL: Leaf Age [days] 
+% categories   [fir    larch   grass  shrub  BLever    BLdec]
+AgeL_class_H = [979    220     0      0      305       0    ];
+AgeL_class_L = [0      0       0      0      0         0    ];
 
-% AgePl:        Age of the forest stand or plantation [days]
-AgePl_Htm1(ksv==1,1)=0; 
-AgePl_Htm1(ksv==2,1)=0; 
-AgePl_Ltm1(ksv==3,1)=0; 
-AgePl_Ltm1(ksv==4,1)=0;
-AgePl_Htm1(ksv==5,1)=0;
-AgePl_Htm1(ksv==6,1)=0;
+AgeL_Htm1(ij,:) = AgeL_class_H(find(II == 1));
+AgeL_Ltm1(ij,:) = AgeL_class_L(find(II == 1));
 
-% Bfac_week:    Plant stress factor integrated at the weekly scale [0-1]
-Bfac_weekHtm1(ksv==1,1)=0; 
-Bfac_weekHtm1(ksv==2,1)=0; 
-Bfac_weekLtm1(ksv==3,1)=0; 
-Bfac_weekLtm1(ksv==4,1)=0;
-Bfac_weekHtm1(ksv==5,1)=0;
-Bfac_weekHtm1(ksv==6,1)=0;
+%AgeL_Htm1(ksv==1,1)=979; 
+%AgeL_Htm1(ksv==2,1)=220; 
+%AgeL_Ltm1(ksv==3,1)=0; 
+%AgeL_Ltm1(ksv==4,1)=0; 
+%AgeL_Htm1(ksv==5,1)=305; 
+%AgeL_Htm1(ksv==6,1)=0; 
 
-% Ci_sun:    CO2 sunlit leaf internal concentration [umolCO2/mol]
-Citm1_sunH(ksv==1,1)=Ca(1); 
-Citm1_sunH(ksv==2,1)=Ca(1); 
-Citm1_sunL(ksv==3,1)=Ca(1); 
-Citm1_sunL(ksv==4,1)=Ca(1);  
-Citm1_sunH(ksv==5,1)=Ca(1);  
-Citm1_sunH(ksv==6,1)=Ca(1);  
+%% AgeDL: Dead leaf Age [days]
+%categories     [fir    larch   grass  shrub  BLever    BLdec]
+AgeDL_class_H = [0      0       0      0      0         0    ]; 
+AgeDL_class_L = [0      0       0      0      0         0    ]; 
 
-% Ci_shd:    CO2 sunlit leaf internal concentration [umolCO2/mol]
-Citm1_shdH(ksv==1,1)=Ca(1); 
-Citm1_shdH(ksv==2,1)=Ca(1); 
-Citm1_shdL(ksv==3,1)=Ca(1); 
-Citm1_shdL(ksv==4,1)=Ca(1); 
-Citm1_shdH(ksv==5,1)=Ca(1); 
-Citm1_shdH(ksv==6,1)=Ca(1); 
+AgeDL_Htm1(ij,:) = AgeDL_class_H(find(II == 1));
+AgeDL_Ltm1(ij,:) = AgeDL_class_L(find(II == 1));
 
-% dflo:         Days from leaf onset [days]
-dflo_Htm1(ksv==1,1)=1; 
-dflo_Htm1(ksv==2,1)=1; 
-dflo_Ltm1(ksv==3,1)=0; 
-dflo_Ltm1(ksv==4,1)=0;   
-dflo_Htm1(ksv==5,1)=1;   
-dflo_Htm1(ksv==6,1)=1;   
+%disp(AgeDL_Htm1(ij,:))
+
+%AgeDL_Htm1(ksv==1,1)=0; 
+%AgeDL_Htm1(ksv==2,1)=0; 
+%AgeDL_Ltm1(ksv==3,1)=0; 
+%AgeDL_Ltm1(ksv==4,1)=0; 
+%AgeDL_Htm1(ksv==5,1)=0; 
+%AgeDL_Htm1(ksv==6,1)=0; 
+
+%% AgePl: Age of the forest stand or plantation [days]
+%categories   [fir    larch   grass  shrub  BLever    BLdec]
+AgePl_class_H = [0      0       0      0      0         0    ]; 
+AgePl_class_L = [0      0       0      0      0         0    ]; 
+
+AgePl_Htm1(ij,:) = AgePl_class_H(find(II == 1));
+AgePl_Ltm1(ij,:) = AgePl_class_L(find(II == 1));
+
+%AgePl_Htm1(ksv==1,1)=0; 
+%AgePl_Htm1(ksv==2,1)=0; 
+%AgePl_Ltm1(ksv==3,1)=0; 
+%AgePl_Ltm1(ksv==4,1)=0;
+%AgePl_Htm1(ksv==5,1)=0;
+%AgePl_Htm1(ksv==6,1)=0;
+
+%% Bfac_week: Plant stress factor integrated at the weekly scale [0-1]
+%categories   [fir    larch   grass  shrub  BLever    BLdec]
+Bfac_class_H =  [0      0       0      0      0         0    ]; 
+Bfac_class_L =  [0      0       0      0      0         0    ]; 
+
+Bfac_weekHtm1(ij,:) = Bfac_class_H(find(II == 1));
+Bfac_weekLtm1(ij,:) = Bfac_class_L(find(II == 1));
+
+%Bfac_weekHtm1(ksv==1,1)=0; 
+%Bfac_weekHtm1(ksv==2,1)=0; 
+%Bfac_weekLtm1(ksv==3,1)=0; 
+%Bfac_weekLtm1(ksv==4,1)=0;
+%Bfac_weekHtm1(ksv==5,1)=0;
+%Bfac_weekHtm1(ksv==6,1)=0;
+
+%% Ci_sun: CO2 sunlit leaf internal concentration [umolCO2/mol]
+%categories      [fir    larch   grass  shrub  BLever    BLdec]
+Citm1_class_H =  [Ca(1)  Ca(1)   0      0      Ca(1)     Ca(1)]; 
+Citm1_class_L =  [0      0       Ca(1)  Ca(1)  0         0    ]; 
+
+Citm1_sunH(ij,:) = Citm1_class_H(find(II == 1));
+Citm1_sunL(ij,:) = Citm1_class_L(find(II == 1));
+
+%Citm1_sunH(ksv==1,1)=Ca(1); 
+%Citm1_sunH(ksv==2,1)=Ca(1); 
+%Citm1_sunL(ksv==3,1)=Ca(1); 
+%Citm1_sunL(ksv==4,1)=Ca(1);  
+%Citm1_sunH(ksv==5,1)=Ca(1);  
+%Citm1_sunH(ksv==6,1)=Ca(1);  
+
+%% Ci_shd:  CO2 sunlit leaf internal concentration [umolCO2/mol]
+Citm1_shdH(ij,:) = Citm1_class_H(find(II == 1));
+Citm1_shdL(ij,:) = Citm1_class_L(find(II == 1));
+
+%Citm1_shdH(ksv==1,1)=Ca(1); 
+%Citm1_shdH(ksv==2,1)=Ca(1); 
+%Citm1_shdL(ksv==3,1)=Ca(1); 
+%Citm1_shdL(ksv==4,1)=Ca(1); 
+%Citm1_shdH(ksv==5,1)=Ca(1); 
+%Citm1_shdH(ksv==6,1)=Ca(1); 
+
+%% dflo:  Days from leaf onset [days]
+% categories    [fir  larch   grass  shrub   BLever    BLdec]
+dflo_class_H =  [1    1       0      0       1         1    ]; 
+dflo_class_L =  [0    0       0      0       0         0    ]; 
+
+dflo_Htm1(ij,:) = dflo_class_H(find(II == 1));
+dflo_Ltm1(ij,:) = dflo_class_L(find(II == 1));
+
+%dflo_Htm1(ksv==1,1)=1; 
+%dflo_Htm1(ksv==2,1)=1; 
+%dflo_Ltm1(ksv==3,1)=0; 
+%dflo_Ltm1(ksv==4,1)=0;   
+%dflo_Htm1(ksv==5,1)=1;   
+%dflo_Htm1(ksv==6,1)=1;   
 
 
-% e_rel:        Relative Efficiency of the photosynthesis apparatus due to Age/Day-length
-e_rel_Htm1(ksv==1,1)=1; 
-e_rel_Htm1(ksv==2,1)=1; 
-e_rel_Ltm1(ksv==3,1)=1; 
-e_rel_Ltm1(ksv==4,1)=1;   
-e_rel_Htm1(ksv==5,1)=1;   
-e_rel_Htm1(ksv==6,1)=1;   
+% e_rel: Relative Efficiency of the photosynthesis apparatus due to Age/Day-length
+% categories     [fir  larch   grass  shrub   BLever    BLdec]
+e_rel_class_H =  [1    1       0      0       1         1    ]; 
+e_rel_class_L =  [0    0       1      1       0         0    ]; 
+
+e_rel_Htm1(ij,:) = e_rel_class_H(find(II == 1));
+e_rel_Ltm1(ij,:) = e_rel_class_L(find(II == 1));
+
+%e_rel_Htm1(ksv==1,1)=1; 
+%e_rel_Htm1(ksv==2,1)=1; 
+%e_rel_Ltm1(ksv==3,1)=1; 
+%e_rel_Ltm1(ksv==4,1)=1;   
+%e_rel_Htm1(ksv==5,1)=1;   
+%e_rel_Htm1(ksv==6,1)=1;   
 
 
 % e_relN:       Relative Efficiency of the photosynthesis apparatus due to N Limitations
-e_relN_Htm1(ksv==1,1)=1; 
-e_relN_Htm1(ksv==2,1)=1; 
-e_relN_Ltm1(ksv==3,1)=1; 
-e_relN_Ltm1(ksv==4,1)=1;  
-e_relN_Htm1(ksv==5,1)=1; 
-e_relN_Htm1(ksv==6,1)=1;   
+% categories      [fir  larch   grass  shrub   BLever    BLdec]
+e_relN_class_H =  [1    1       0      0       1         1    ]; 
+e_relN_class_L =  [0    0       1      1       0         0    ]; 
+
+e_relN_Htm1(ij,:) = e_relN_class_H(find(II == 1));
+e_relN_Ltm1(ij,:) = e_relN_class_L(find(II == 1));
+
+%e_relN_Htm1(ksv==1,1)=1; 
+%e_relN_Htm1(ksv==2,1)=1; 
+%e_relN_Ltm1(ksv==3,1)=1; 
+%e_relN_Ltm1(ksv==4,1)=1;  
+%e_relN_Htm1(ksv==5,1)=1; 
+%e_relN_Htm1(ksv==6,1)=1;   
 
 
-% FNC:          Nitrogen Stress Factor for vegetation [0-1]
-FNC_Htm1(ksv==1,1)=1; 
-FNC_Htm1(ksv==2,1)=1; 
-FNC_Ltm1(ksv==3,1)=1; 
-FNC_Ltm1(ksv==4,1)=1;  
-FNC_Htm1(ksv==5,1)=1; 
-FNC_Htm1(ksv==6,1)=1; 
+%% FNC: Nitrogen Stress Factor for vegetation [0-1]
+% categories   [fir  larch   grass  shrub   BLever    BLdec]
+FNC_class_H =  [1    1       0      0       1         1    ];
+FNC_class_L =  [0    0       1      1       0         0    ];
 
-% hc:           Vegetation Height [m]
-hc_Htm1(ksv==1,1)=10; 
-hc_Htm1(ksv==2,1)=10; 
-hc_Ltm1(ksv==3,1)=0.1; 
-hc_Ltm1(ksv==4,1)=0.5;         
-hc_Htm1(ksv==5,1)=15; 
-hc_Htm1(ksv==6,1)=15;         
+FNC_Htm1(ij,:) = FNC_class_H(find(II == 1));
+FNC_Ltm1(ij,:) = FNC_class_L(find(II == 1));
 
-% Kreserve:     Mobile Reserve of Potassium in vegetation [gK/m2 PFT]
-Kreserve_Htm1(ksv==1,1)=1000; 
-Kreserve_Htm1(ksv==2,1)=1000; 
-Kreserve_Ltm1(ksv==3,1)=1000; 
-Kreserve_Ltm1(ksv==4,1)=1000;
-Kreserve_Htm1(ksv==5,1)=1000; 
-Kreserve_Htm1(ksv==6,1)=1000; 
+%FNC_Htm1(ksv==1,1)=1; 
+%FNC_Htm1(ksv==2,1)=1; 
+%FNC_Ltm1(ksv==3,1)=1; 
+%FNC_Ltm1(ksv==4,1)=1;  
+%FNC_Htm1(ksv==5,1)=1; 
+%FNC_Htm1(ksv==6,1)=1; 
 
-% LAI:          Leaf area index [-]         II = [1 0 1 0 0 0]>0;  
-LAI_Htm1(ksv==1,1)=3;
-LAI_Htm1(ksv==2,1)=2;
-LAI_Ltm1(ksv==3,1)=0;
-LAI_Ltm1(ksv==4,1)=0;
-LAI_Htm1(ksv==5,1)=2;
-LAI_Htm1(ksv==6,1)=0;
+%% hc: Vegetation Height [m]
+% categories   [fir  larch   grass  shrub   BLever    BLdec]
+hc_class_H =   [10  10       0      0       15        15   ]; 
+hc_class_L =   [0   0        0.1    0.5     0         0    ]; 
 
+hc_Htm1(ij, :) = hc_class_H(find(II == 1));
+hc_Ltm1(ij, :) = hc_class_L(find(II == 1));
 
-% NBLeaf:       New Leaf Biomass [gC/m2 day]
-NBLeaf_Htm1(ksv==1,1)=0; 
-NBLeaf_Htm1(ksv==2,1)=0; 
-NBLeaf_Ltm1(ksv==3,1)=0; 
-NBLeaf_Ltm1(ksv==4,1)=0; 
-NBLeaf_Htm1(ksv==5,1)=0; 
-NBLeaf_Htm1(ksv==6,1)=0; 
+%hc_Htm1(ksv==1,1)=10; 
+%hc_Htm1(ksv==2,1)=10; 
+%hc_Ltm1(ksv==3,1)=0.1; 
+%hc_Ltm1(ksv==4,1)=0.5;         
+%hc_Htm1(ksv==5,1)=15; 
+%hc_Htm1(ksv==6,1)=15;         
 
-% NBLI:         Integral of New Leaf Biomass over 30 days [gC/m2 day]
-NBLI_Htm1(ksv==1,1)=0; 
-NBLI_Htm1(ksv==2,1)=0; 
-NBLI_Ltm1(ksv==3,1)=0; 
-NBLI_Ltm1(ksv==4,1)=0; 
-NBLI_Htm1(ksv==5,1)=0;     
-NBLI_Htm1(ksv==6,1)=0;     
+%% Kreserve: Mobile Reserve of Potassium in vegetation [gK/m2 PFT]
+% categories         [fir    larch   grass  shrub   BLever    BLdec]
+Kreserve_class_H =   [1000   1000    1000   1000    1000      1000 ]; 
+Kreserve_class_L =   [1000   1000    1000   1000    1000      1000 ]; 
 
-% NPP:          Net Primary Production [gC/m2 PFT day]
-NPP_Htm1(ksv==1,1)=0; 
-NPP_Htm1(ksv==2,1)=0; 
-NPP_Ltm1(ksv==3,1)=0; 
-NPP_Ltm1(ksv==4,1)=0;  
-NPP_Htm1(ksv==5,1)=0;    
-NPP_Htm1(ksv==6,1)=0;    
+Kreserve_Htm1(ij,:) = Kreserve_class_H(find(II == 1));
+Kreserve_Ltm1(ij,:) = Kreserve_class_L(find(II == 1));
 
-% NPII:         Integral of Net Primary Production over 7 days [gC/m2 PFT day]
-NPPI_Htm1(ksv==1,1)=0; 
-NPPI_Htm1(ksv==2,1)=0; 
-NPPI_Ltm1(ksv==3,1)=0; 
-NPPI_Ltm1(ksv==4,1)=0;
-NPPI_Htm1(ksv==5,1)=0;
-NPPI_Htm1(ksv==6,1)=0;
+%Kreserve_Htm1(ksv==1,1)=1000; 
+%Kreserve_Htm1(ksv==2,1)=1000; 
+%Kreserve_Ltm1(ksv==3,1)=1000; 
+%Kreserve_Ltm1(ksv==4,1)=1000;
+%Kreserve_Htm1(ksv==5,1)=1000; 
+%Kreserve_Htm1(ksv==6,1)=1000; 
 
-% Nreserve:     Mobile Reserve of Nitrogen in vegetation [gN/m2 PFT]
-Nreserve_Htm1(ksv==1,1)=1000; 
-Nreserve_Htm1(ksv==2,1)=1000; 
-Nreserve_Ltm1(ksv==3,1)=1000; 
-Nreserve_Ltm1(ksv==4,1)=1000; 
-Nreserve_Htm1(ksv==5,1)=1000; 
-Nreserve_Htm1(ksv==6,1)=1000; 
+%% LAI: Leaf area index [-]
+% categories    [fir    larch   grass  shrub   BLever    BLdec]
+LAI_class_H =   [3      2       0      0       2         0    ]; 
+LAI_class_L =   [0      0       0      0       0         0    ];
 
-% PHE:          Phenology State [#]
-PHE_S_Htm1(ksv==1,1)=1; 
-PHE_S_Htm1(ksv==2,1)=1; 
-PHE_S_Ltm1(ksv==3,1)=1; 
-PHE_S_Ltm1(ksv==4,1)=1;
-PHE_S_Htm1(ksv==5,1)=1;
-PHE_S_Htm1(ksv==6,1)=1;
+LAI_Htm1(ij,:) = LAI_class_H(find(II == 1));
+LAI_Ltm1(ij,:) = LAI_class_L(find(II == 1));
 
-% Preserve:     Mobile Reserve of Phosporus in vegetation [gP/m2 PFT]
-Preserve_Htm1(ksv==1,1)=1000; 
-Preserve_Htm1(ksv==2,1)=1000; 
-Preserve_Ltm1(ksv==3,1)=1000; 
-Preserve_Ltm1(ksv==4,1)=1000;
-Preserve_Htm1(ksv==5,1)=1000;
-Preserve_Htm1(ksv==6,1)=1000;
+%LAI_Htm1(ksv==1,1)=3;
+%LAI_Htm1(ksv==2,1)=2;
+%LAI_Ltm1(ksv==3,1)=0;
+%LAI_Ltm1(ksv==4,1)=0;
+%LAI_Htm1(ksv==5,1)=2;
+%LAI_Htm1(ksv==6,1)=0;
 
-% Psi_x:        Soil water potential in the stem xylem [MPa]
-Psi_x_Htm1(ksv==1,1)=0; 
-Psi_x_Htm1(ksv==2,1)=0; 
-Psi_x_Ltm1(ksv==3,1)=0; 
-Psi_x_Ltm1(ksv==4,1)=0; 
-Psi_x_Htm1(ksv==5,1)=0; 
-Psi_x_Htm1(ksv==6,1)=0; 
+%% NBLeaf: New Leaf Biomass [gC/m2 day]
+% categories       [fir    larch   grass  shrub   BLever    BLdec]
+NBLeaf_class_H =   [0      0       0      0       0         0    ]; 
+NBLeaf_class_L =   [0      0       0      0       0         0    ];
 
-% Psi_l:        Leaf water potential in the leaves [MPa]
-Psi_l_Htm1(ksv==1,1)=0; 
-Psi_l_Htm1(ksv==2,1)=0; 
-Psi_l_Ltm1(ksv==3,1)=0; 
-Psi_l_Ltm1(ksv==4,1)=0;    
-Psi_l_Htm1(ksv==5,1)=0;    
-Psi_l_Htm1(ksv==6,1)=0;    
+NBLeaf_Htm1(ij,:) = NBLeaf_class_H(find(II == 1));
+NBLeaf_Ltm1(ij,:) = NBLeaf_class_L(find(II == 1));
 
-% SAI:          Stem area index [-]
-SAI_Htm1(ksv==1,1)=0.1; 
-SAI_Htm1(ksv==2,1)=0.1; 
-SAI_Ltm1(ksv==3,1)=0.01; 
-SAI_Ltm1(ksv==4,1)=0.01;
-SAI_Htm1(ksv==5,1)=0.1;
-SAI_Htm1(ksv==6,1)=0.2;
+%NBLeaf_Htm1(ksv==1,1)=0; 
+%NBLeaf_Htm1(ksv==2,1)=0; 
+%NBLeaf_Ltm1(ksv==3,1)=0; 
+%NBLeaf_Ltm1(ksv==4,1)=0; 
+%NBLeaf_Htm1(ksv==5,1)=0; 
+%NBLeaf_Htm1(ksv==6,1)=0; 
 
-% TBio:         Total standing biomass temporally variable [ton DM / ha ]
-TBio_Htm1(ksv==1,1)=1; 
-TBio_Htm1(ksv==2,1)=1; 
-TBio_Ltm1(ksv==3,1)=1; 
-TBio_Ltm1(ksv==4,1)=1; 
-TBio_Htm1(ksv==5,1)=1; 
-TBio_Htm1(ksv==6,1)=1; 
+%% NBLI: Integral of New Leaf Biomass over 30 days [gC/m2 day]
+% categories     [fir    larch   grass  shrub   BLever    BLdec]
+NBLI_class_H =   [0      0       0      0       0         0    ]; 
+NBLI_class_L =   [0      0       0      0       0         0    ];
 
-% Tden:         Tree density, High vegetation [n*ind/ ha]
-Tden_Htm1(ksv==1,1)=0; 
-Tden_Htm1(ksv==2,1)=0; 
-Tden_Ltm1(ksv==3,1)=0; 
-Tden_Ltm1(ksv==4,1)=0; 
-Tden_Htm1(ksv==5,1)=0; 
-Tden_Htm1(ksv==6,1)=0; 
+NBLI_Htm1(ij,:) = NBLI_class_H(find(II == 1));
+NBLI_Ltm1(ij,:) = NBLI_class_L(find(II == 1));
 
-% Vx:           Water Volume in the xylem [mm m2 ground/m2 PFT]
-Vx_Htm1(ksv==1,1)=0; 
-Vx_Htm1(ksv==2,1)=0; 
-Vx_Ltm1(ksv==3,1)=0; 
-Vx_Ltm1(ksv==4,1)=0;   
-Vx_Htm1(ksv==5,1)=0;          
-Vx_Htm1(ksv==6,1)=0;          
+%NBLI_Htm1(ksv==1,1)=0; 
+%NBLI_Htm1(ksv==2,1)=0; 
+%NBLI_Ltm1(ksv==3,1)=0; 
+%NBLI_Ltm1(ksv==4,1)=0; 
+%NBLI_Htm1(ksv==5,1)=0;     
+%NBLI_Htm1(ksv==6,1)=0;     
 
-% Vl:           Water Volume in the leaves [mm m2 ground/m2 PFT]
-Vl_Htm1(ksv==1,1)=0; 
-Vl_Htm1(ksv==2,1)=0; 
-Vl_Ltm1(ksv==3,1)=0; 
-Vl_Ltm1(ksv==4,1)=0;
-Vl_Htm1(ksv==5,1)=0;
-Vl_Htm1(ksv==6,1)=0;
+%% NPP:  Net Primary Production [gC/m2 PFT day]
+% categories    [fir    larch   grass  shrub   BLever    BLdec]
+NPP_class_H =   [0      0       0      0       0         0    ]; 
+NPP_class_L =   [0      0       0      0       0         0    ];
 
-% NupI:         Integrated Nitrogen|Phosphorous|Potassium uptake over 365 days [gX/m2 PFT day]
-NupI_Htm1(ksv==1,1,1)= 0; NupI_Htm1(ksv==1,1,2)= 0; NupI_Htm1(ksv==1,1,3)= 0; 
-NupI_Htm1(ksv==2,1,1)= 0; NupI_Htm1(ksv==2,1,2)= 0; NupI_Htm1(ksv==2,1,3)= 0;
-NupI_Ltm1(ksv==3,1,1)= 0; NupI_Ltm1(ksv==3,1,2)= 0; NupI_Ltm1(ksv==3,1,3)= 0;
-NupI_Ltm1(ksv==4,1,1)= 0; NupI_Ltm1(ksv==4,1,2)= 0; NupI_Ltm1(ksv==4,1,3)= 0;
-NupI_Htm1(ksv==5,1,1)= 0; NupI_Htm1(ksv==5,1,2)= 0; NupI_Htm1(ksv==5,1,3)= 0;
-NupI_Htm1(ksv==6,1,1)= 0; NupI_Htm1(ksv==6,1,2)= 0; NupI_Htm1(ksv==6,1,3)= 0;
+NPP_Htm1(ij,:) = NPP_class_H(find(II == 1));
+NPP_Ltm1(ij,:) = NPP_class_L(find(II == 1));
 
-% NupLit:       Nitrogen|Phosphorous|Potassium content in the litter [gN/m2 PFT]
-NupLit_Htm1(ksv==1,1,1)= 0; NupLit_Htm1(ksv==1,1,2)= 0; NupLit_Htm1(ksv==1,1,3)= 0; 
-NupLit_Htm1(ksv==2,1,1)= 0; NupLit_Htm1(ksv==2,1,2)= 0; NupLit_Htm1(ksv==2,1,3)= 0;
-NupLit_Ltm1(ksv==3,1,1)= 0; NupLit_Ltm1(ksv==3,1,2)= 0; NupLit_Ltm1(ksv==3,1,3)= 0; 
-NupLit_Ltm1(ksv==4,1,1)= 0; NupLit_Ltm1(ksv==4,1,2)= 0; NupLit_Ltm1(ksv==4,1,3)= 0; 
-NupLit_Htm1(ksv==5,1,1)= 0; NupLit_Htm1(ksv==5,1,2)= 0; NupLit_Htm1(ksv==5,1,3)= 0; 
-NupLit_Htm1(ksv==6,1,1)= 0; NupLit_Htm1(ksv==6,1,2)= 0; NupLit_Htm1(ksv==6,1,3)= 0; 
+%NPP_Htm1(ksv==1,1)=0; 
+%NPP_Htm1(ksv==2,1)=0; 
+%NPP_Ltm1(ksv==3,1)=0; 
+%NPP_Ltm1(ksv==4,1)=0;  
+%NPP_Htm1(ksv==5,1)=0;    
+%NPP_Htm1(ksv==6,1)=0;    
 
-% PARI:         Smoothed average of PAR radiation over 30 days (1); 45 days (2); 
+%% NPII: Integral of Net Primary Production over 7 days [gC/m2 PFT day]
+% categories    [fir    larch   grass  shrub   BLever    BLdec]
+NPPI_class_H =   [0      0       0      0       0         0    ]; 
+NPPI_class_L =   [0      0       0      0       0         0    ];
+
+NPPI_Htm1(ij,:) = NPPI_class_H(find(II == 1));
+NPPI_Ltm1(ij,:) = NPPI_class_L(find(II == 1));
+
+%NPPI_Htm1(ksv==1,1)=0; 
+%NPPI_Htm1(ksv==2,1)=0; 
+%NPPI_Ltm1(ksv==3,1)=0; 
+%NPPI_Ltm1(ksv==4,1)=0;
+%NPPI_Htm1(ksv==5,1)=0;
+%NPPI_Htm1(ksv==6,1)=0;
+
+%% Nreserve: Mobile Reserve of Nitrogen in vegetation [gN/m2 PFT]
+% categories         [fir    larch   grass  shrub   BLever    BLdec]
+Nreserve_class_H =   [1000   1000    0      0       1000      1000 ];
+Nreserve_class_L =   [0      0       1000   1000    0         0    ];
+
+Nreserve_Htm1(ij,:) = Nreserve_class_H(find(II == 1));
+Nreserve_Ltm1(ij,:) = Nreserve_class_L(find(II == 1));
+
+%Nreserve_Htm1(ksv==1,1)=1000; 
+%Nreserve_Htm1(ksv==2,1)=1000; 
+%Nreserve_Ltm1(ksv==3,1)=1000; 
+%Nreserve_Ltm1(ksv==4,1)=1000; 
+%Nreserve_Htm1(ksv==5,1)=1000; 
+%Nreserve_Htm1(ksv==6,1)=1000; 
+
+%% PHE: Phenology State [#]
+% categories      [fir    larch   grass  shrub   BLever    BLdec]
+PHE_S_class_H =   [1      1       0      0       1         1    ];
+PHE_S_class_L =   [0      0       1      1       0         0    ];
+
+PHE_S_Htm1(ij,:) = PHE_S_class_H(find(II == 1));
+PHE_S_Ltm1(ij,:) = PHE_S_class_L(find(II == 1));
+
+%PHE_S_Htm1(ksv==1,1)=1; 
+%PHE_S_Htm1(ksv==2,1)=1; 
+%PHE_S_Ltm1(ksv==3,1)=1; 
+%PHE_S_Ltm1(ksv==4,1)=1;
+%PHE_S_Htm1(ksv==5,1)=1;
+%PHE_S_Htm1(ksv==6,1)=1;
+
+%% Preserve: Mobile Reserve of Phosporus in vegetation [gP/m2 PFT]
+% categories         [fir    larch   grass  shrub   BLever    BLdec]
+Preserve_class_H =   [1000   1000    0      0       1000      1000 ];
+Preserve_class_L =   [0      0       1000   1000    0         0    ];
+
+Preserve_Htm1(ij,:) = Preserve_class_H(find(II == 1));
+Preserve_Ltm1(ij,:) = Preserve_class_L(find(II == 1));
+
+%Preserve_Htm1(ksv==1,1)=1000; 
+%Preserve_Htm1(ksv==2,1)=1000; 
+%Preserve_Ltm1(ksv==3,1)=1000; 
+%Preserve_Ltm1(ksv==4,1)=1000;
+%Preserve_Htm1(ksv==5,1)=1000;
+%Preserve_Htm1(ksv==6,1)=1000;
+
+%% Psi_x:        Soil water potential in the stem xylem [MPa]
+% categories      [fir    larch   grass  shrub   BLever    BLdec]
+Psi_x_class_H =   [0      0       0      0       0         0    ];
+Psi_x_class_L =   [0      0       0      0       0         0    ];
+
+Psi_x_Htm1(ij,:) = Psi_x_class_H(find(II == 1));
+Psi_x_Ltm1(ij,:) = Psi_x_class_L(find(II == 1));
+
+%Psi_x_Htm1(ksv==1,1)=0; 
+%Psi_x_Htm1(ksv==2,1)=0; 
+%Psi_x_Ltm1(ksv==3,1)=0; 
+%Psi_x_Ltm1(ksv==4,1)=0; 
+%Psi_x_Htm1(ksv==5,1)=0; 
+%Psi_x_Htm1(ksv==6,1)=0; 
+
+%% Psi_l:        Leaf water potential in the leaves [MPa]
+% categories      [fir    larch   grass  shrub   BLever    BLdec]
+Psi_l_class_H =   [0      0       0      0       0         0    ];
+Psi_l_class_L =   [0      0       0      0       0         0    ];
+
+Psi_l_Htm1(ij,:) = Psi_l_class_H(find(II == 1));
+Psi_l_Ltm1(ij,:) = Psi_l_class_L(find(II == 1));
+
+%Psi_l_Htm1(ksv==1,1)=0; 
+%Psi_l_Htm1(ksv==2,1)=0; 
+%Psi_l_Ltm1(ksv==3,1)=0; 
+%Psi_l_Ltm1(ksv==4,1)=0;    
+%Psi_l_Htm1(ksv==5,1)=0;    
+%Psi_l_Htm1(ksv==6,1)=0;    
+
+%% SAI: Stem area index [-]
+% categories    [fir    larch   grass  shrub   BLever    BLdec]
+SAI_class_H =   [0.1    0.1     0      0       0.1       0.2  ];
+SAI_class_L =   [0      0       0.01   0.01    0         0    ];
+
+SAI_Htm1(ij,:) = SAI_class_H(find(II == 1));
+SAI_Ltm1(ij,:) = SAI_class_L(find(II == 1));
+
+%SAI_Htm1(ksv==1,1)=0.1; 
+%SAI_Htm1(ksv==2,1)=0.1; 
+%SAI_Ltm1(ksv==3,1)=0.01; 
+%SAI_Ltm1(ksv==4,1)=0.01;
+%SAI_Htm1(ksv==5,1)=0.1;
+%SAI_Htm1(ksv==6,1)=0.2;
+
+%% TBio: Total standing biomass temporally variable [ton DM / ha ]
+% categories    [fir    larch   grass  shrub   BLever    BLdec]
+TBio_class_H =   [1      1       0      0       1         1    ];
+TBio_class_L =   [0      0       1      1       0         0    ];
+
+TBio_Htm1(ij,:) = TBio_class_H(find(II == 1));
+TBio_Ltm1(ij,:) = TBio_class_L(find(II == 1));
+
+%TBio_Htm1(ksv==1,1)=1; 
+%TBio_Htm1(ksv==2,1)=1; 
+%TBio_Ltm1(ksv==3,1)=1; 
+%TBio_Ltm1(ksv==4,1)=1; 
+%TBio_Htm1(ksv==5,1)=1; 
+%TBio_Htm1(ksv==6,1)=1; 
+
+%% Tden: Tree density, High vegetation [n*ind/ ha]
+% categories     [fir    larch   grass  shrub   BLever    BLdec]
+Tden_class_H =   [0      0       0      0       0         0    ];
+Tden_class_L =   [0      0       0      0       0         0    ];
+
+Tden_Htm1(ij,:) = Tden_class_H(find(II == 1));
+Tden_Ltm1(ij,:) = Tden_class_L(find(II == 1));
+
+%Tden_Htm1(ksv==1,1)=0; 
+%Tden_Htm1(ksv==2,1)=0; 
+%Tden_Ltm1(ksv==3,1)=0; 
+%Tden_Ltm1(ksv==4,1)=0; 
+%Tden_Htm1(ksv==5,1)=0; 
+%Tden_Htm1(ksv==6,1)=0; 
+
+%% Vx:           Water Volume in the xylem [mm m2 ground/m2 PFT]
+% categories   [fir    larch   grass  shrub   BLever    BLdec]
+Vx_class_H =   [0      0       0      0       0         0    ];
+Vx_class_L =   [0      0       0      0       0         0    ];
+
+Vx_Htm1(ij,:) = Vx_class_H(find(II == 1));
+Vx_Ltm1(ij,:) = Vx_class_L(find(II == 1));
+
+%Vx_Htm1(ksv==1,1)=0; 
+%Vx_Htm1(ksv==2,1)=0; 
+%Vx_Ltm1(ksv==3,1)=0; 
+%Vx_Ltm1(ksv==4,1)=0;   
+%Vx_Htm1(ksv==5,1)=0;          
+%Vx_Htm1(ksv==6,1)=0;          
+
+%% Vl:           Water Volume in the leaves [mm m2 ground/m2 PFT]
+% categories   [fir    larch   grass  shrub   BLever    BLdec]
+Vl_class_H =   [0      0       0      0       0         0    ];
+Vl_class_L =   [0      0       0      0       0         0    ];
+
+Vl_Htm1(ij,:) = Vl_class_H(find(II == 1));
+Vl_Ltm1(ij,:) = Vl_class_L(find(II == 1));
+
+%Vl_Htm1(ksv==1,1)=0; 
+%Vl_Htm1(ksv==2,1)=0; 
+%Vl_Ltm1(ksv==3,1)=0; 
+%Vl_Ltm1(ksv==4,1)=0;
+%Vl_Htm1(ksv==5,1)=0;
+%Vl_Htm1(ksv==6,1)=0;
+
+%% NupI:         Integrated Nitrogen|Phosphorous|Potassium uptake over 365 days [gX/m2 PFT day]
+% categories     [fir    larch   grass  shrub   BLever    BLdec]
+NupI_class_H =   [0      0       0      0       0         0    ];
+NupI_class_L =   [0      0       0      0       0         0    ];
+
+NupI_Htm1(ij,:,1) = NupI_class_H(find(II == 1));
+NupI_Ltm1(ij,:,1) = NupI_class_L(find(II == 1));
+
+NupI_Htm1(ij,:,2) = NupI_class_H(find(II == 1));
+NupI_Ltm1(ij,:,2) = NupI_class_L(find(II == 1));
+
+NupI_Htm1(ij,:,3) = NupI_class_H(find(II == 1));
+NupI_Ltm1(ij,:,3) = NupI_class_L(find(II == 1));
+
+%disp(NupI_Ltm1(ij,:,3))
+
+%NupI_Htm1(ksv==1,1,1)= 0; NupI_Htm1(ksv==1,1,2)= 0; NupI_Htm1(ksv==1,1,3)= 0; 
+%NupI_Htm1(ksv==2,1,1)= 0; NupI_Htm1(ksv==2,1,2)= 0; NupI_Htm1(ksv==2,1,3)= 0;
+%NupI_Ltm1(ksv==3,1,1)= 0; NupI_Ltm1(ksv==3,1,2)= 0; NupI_Ltm1(ksv==3,1,3)= 0;
+%NupI_Ltm1(ksv==4,1,1)= 0; NupI_Ltm1(ksv==4,1,2)= 0; NupI_Ltm1(ksv==4,1,3)= 0;
+%NupI_Htm1(ksv==5,1,1)= 0; NupI_Htm1(ksv==5,1,2)= 0; NupI_Htm1(ksv==5,1,3)= 0;
+%NupI_Htm1(ksv==6,1,1)= 0; NupI_Htm1(ksv==6,1,2)= 0; NupI_Htm1(ksv==6,1,3)= 0;
+
+%% NupLit:       Nitrogen|Phosphorous|Potassium content in the litter [gN/m2 PFT]
+% categories       [fir    larch   grass  shrub   BLever    BLdec]
+NupLit_class_H =   [0      0       0      0       0         0    ];
+NupLit_class_L =   [0      0       0      0       0         0    ];
+
+NupLit_Htm1(ij,:,1) = NupLit_class_H(find(II == 1));
+NupLit_Ltm1(ij,:,1) = NupLit_class_L(find(II == 1));
+
+NupLit_Htm1(ij,:,2) = NupLit_class_H(find(II == 1));
+NupLit_Ltm1(ij,:,2) = NupLit_class_L(find(II == 1));
+
+NupLit_Htm1(ij,:,3) = NupLit_class_H(find(II == 1));
+NupLit_Ltm1(ij,:,3) = NupLit_class_L(find(II == 1));
+
+%NupLit_Htm1(ksv==1,1,1)= 0; NupLit_Htm1(ksv==1,1,2)= 0; NupLit_Htm1(ksv==1,1,3)= 0; 
+%NupLit_Htm1(ksv==2,1,1)= 0; NupLit_Htm1(ksv==2,1,2)= 0; NupLit_Htm1(ksv==2,1,3)= 0;
+%NupLit_Ltm1(ksv==3,1,1)= 0; NupLit_Ltm1(ksv==3,1,2)= 0; NupLit_Ltm1(ksv==3,1,3)= 0; 
+%NupLit_Ltm1(ksv==4,1,1)= 0; NupLit_Ltm1(ksv==4,1,2)= 0; NupLit_Ltm1(ksv==4,1,3)= 0; 
+%NupLit_Htm1(ksv==5,1,1)= 0; NupLit_Htm1(ksv==5,1,2)= 0; NupLit_Htm1(ksv==5,1,3)= 0; 
+%NupLit_Htm1(ksv==6,1,1)= 0; NupLit_Htm1(ksv==6,1,2)= 0; NupLit_Htm1(ksv==6,1,3)= 0; 
+
+%% PARI:         Smoothed average of PAR radiation over 30 days (1); 45 days (2); 
 %               (3) 10 days average of the difference of (2) and (1) [W/m2] 
-PARI_Htm1(ksv==1,1,1)=0; PARI_Htm1(ksv==1,1,2)=0; PARI_Htm1(ksv==1,1,3)=0;
-PARI_Htm1(ksv==2,1,1)=0; PARI_Htm1(ksv==2,1,2)=0; PARI_Htm1(ksv==2,1,3)=0;  
-PARI_Ltm1(ksv==3,1,1)=0; PARI_Ltm1(ksv==3,1,2)=0; PARI_Ltm1(ksv==3,1,3)=0; 
-PARI_Ltm1(ksv==4,1,1)=0; PARI_Ltm1(ksv==4,1,2)=0; PARI_Ltm1(ksv==4,1,3)=0; 
-PARI_Htm1(ksv==5,1,1)=0; PARI_Htm1(ksv==5,1,2)=0; PARI_Htm1(ksv==5,1,3)=0; 
-PARI_Htm1(ksv==6,1,1)=0; PARI_Htm1(ksv==6,1,2)=0; PARI_Htm1(ksv==6,1,3)=0; 
+% categories     [fir    larch   grass  shrub   BLever    BLdec]
+PARI_class_H =   [0      0       0      0       0         0    ];
+PARI_class_L =   [0      0       0      0       0         0    ];
 
-% B:            Carbon Pools [gC/m^2] (n=CP)
-B_Htm1(ksv==1,1,1)= 310;   
-B_Htm1(ksv==1,1,2)= 556;
-B_Htm1(ksv==1,1,3)= 406;
-B_Htm1(ksv==1,1,4)= 411;
-B_Htm1(ksv==1,1,5)= 7;  
-B_Htm1(ksv==1,1,6)= 0;
-B_Htm1(ksv==1,1,7)= 16;
-B_Htm1(ksv==1,1,8)= 0;
+PARI_Htm1(ij,:,1) = PARI_class_H(find(II == 1));
+PARI_Ltm1(ij,:,1) = PARI_class_L(find(II == 1));
+
+PARI_Htm1(ij,:,1) = PARI_class_H(find(II == 1));
+PARI_Ltm1(ij,:,1) = PARI_class_L(find(II == 1));
+
+PARI_Htm1(ij,:,1) = PARI_class_H(find(II == 1));
+PARI_Ltm1(ij,:,1) = PARI_class_L(find(II == 1));
+
+%PARI_Htm1(ksv==1,1,1)=0; PARI_Htm1(ksv==1,1,2)=0; PARI_Htm1(ksv==1,1,3)=0;
+%PARI_Htm1(ksv==2,1,1)=0; PARI_Htm1(ksv==2,1,2)=0; PARI_Htm1(ksv==2,1,3)=0;  
+%PARI_Ltm1(ksv==3,1,1)=0; PARI_Ltm1(ksv==3,1,2)=0; PARI_Ltm1(ksv==3,1,3)=0; 
+%PARI_Ltm1(ksv==4,1,1)=0; PARI_Ltm1(ksv==4,1,2)=0; PARI_Ltm1(ksv==4,1,3)=0; 
+%PARI_Htm1(ksv==5,1,1)=0; PARI_Htm1(ksv==5,1,2)=0; PARI_Htm1(ksv==5,1,3)=0; 
+%PARI_Htm1(ksv==6,1,1)=0; PARI_Htm1(ksv==6,1,2)=0; PARI_Htm1(ksv==6,1,3)=0; 
+
+%% B:            Carbon Pools [gC/m^2] (n=CP)
+%(ksv==1,1,1) 
+% first: Type of vegetation (6 classifications)
+% Second: iteration (thousands)
+% Third: Type of biomass - soil (8 classifications)
+
+B_Htm1(ksv==1,1,1)= 310;  % Foliage 
+B_Htm1(ksv==1,1,2)= 556;  % Liv. Sapwwod
+B_Htm1(ksv==1,1,3)= 406;  % Carbohydrate reserve
+B_Htm1(ksv==1,1,4)= 411;  % Fruit and Flowers
+B_Htm1(ksv==1,1,5)= 7;    % Heartwood/Dead sapwood
+B_Htm1(ksv==1,1,6)= 0;    % Standing dead foliage
+B_Htm1(ksv==1,1,7)= 16;   % Aux
+B_Htm1(ksv==1,1,8)= 0;    % High vegetation
 %%%  
 B_Htm1(ksv==2,1,1)= 0;      
 B_Htm1(ksv==2,1,2)= 330;

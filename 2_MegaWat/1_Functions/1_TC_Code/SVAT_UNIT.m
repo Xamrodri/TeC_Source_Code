@@ -154,6 +154,7 @@ for i=1:length(Ccrown)
     %%% Litter resistance %%%%%%%
     [r_litter(i),alp_litter(i)]=Litter_Resistence(Ws,Ta,Pre,zatm,disp_h,zom,Sllit,BLit(i),In_Littertm1);
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
     %%%% Neutrel undercanopy resistence
     %[rap_H(i),rap_L(i),rb_H(i),rb_L(i)]=Undercanopy_Leaf_Resistence(Ws,Ta,Ta,hc_H(i),hc_L(i),...
     %    (LAI_H(i)+SAI_H(i)+LAIdead_H(i)),(LAI_L(i)+SAI_L(i)+LAIdead_L(i)),d_leaf_H(i),d_leaf_L(i),...

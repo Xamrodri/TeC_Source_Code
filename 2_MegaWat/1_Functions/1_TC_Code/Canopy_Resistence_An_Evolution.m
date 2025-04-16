@@ -113,6 +113,11 @@ if Fsun > 0
 else
     Ci_sun= 0; CiF_sun =0; An_sun=0; Rdark_sun=0; rc_sun =Inf; SIF_sun = 0; 
 end
+
+
+%% Debugger
+%disp(Fshd)
+
 %%%% SHADOWED FRACTION
 if Fshd > 0
     %Opt_CR = optimset('TolX',3);

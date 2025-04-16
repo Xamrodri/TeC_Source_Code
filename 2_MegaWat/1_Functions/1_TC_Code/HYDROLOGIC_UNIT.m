@@ -39,6 +39,8 @@ function[V,Vice,O,Oice,ZWT,OF,OS,OH,OL,Psi_s_H,Psi_s_L,Rd,Qi_out,WTR,...
 %%% OUTPUTS
 %%% INPUTS  /
 %%% Conversion to Asur --- Computation in the n-coordinate
+
+
 aTop= Asur*aTop/Ared; %% Area/Width for Asur accounting for rock content areal reduction (Ared)
 Pr=Pr/Asur; %% [mm/h] su Asur
 q_runon = q_runon/Asur; %% [mm/h] su Asur
@@ -199,6 +201,7 @@ PAR.dif = PARD;
 clear SAB1 SAB2 SAD1 SAD2 PARB PARD
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%% SVAT MANAGER
+
 [Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_L,rs_sunH,rs_sunL,rs_shdH,rs_shdL,r_litter,...
     An_L,An_H,Rdark_L,Rdark_H,Ci_sunH,Ci_sunL,Ci_shdH,Ci_shdL,rap_H,rap_L,ra,Rn,...
     H,QE,Qv,Lpho,T_H,T_L,EIn_H,EIn_L,EG,ESN,ESN_In,EWAT,EICE,ELitter,EIn_urb,EIn_rock,dw_SNO,...
@@ -233,6 +236,8 @@ clear SAB1 SAB2 SAD1 SAD2 PARB PARD
     Axyl_H,PsiL50_H,PsiL00_H,Kleaf_max_H,Cl_H,Kx_max_H,PsiX50_H,Cx_H,...
     Axyl_L,PsiL50_L,PsiL00_L,Kleaf_max_L,Cl_L,Kx_max_L,PsiX50_L,Cx_L,...
     OPT_min_SPD,OPT_VegSnow,OPT_SoilTemp,OPT_PlantHydr,Opt_CR,Opt_ST,Opt_ST2,OPT_STh,OPT_FR_SOIL,OPT_PH,parameterize_phase, hSTL, Albsno_method);
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% All of the variable over Asur (normal coordinates) %%%%%%%%%%%%%%%%%%%%%%%%
 %%% Pr_sno Pr_liq An_L An_H Rdark_H Rdark_L Rn H QE Qv T_H T_L EIn_H EIn_L
