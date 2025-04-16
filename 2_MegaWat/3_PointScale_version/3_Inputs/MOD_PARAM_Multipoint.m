@@ -164,12 +164,12 @@ albs   =     [0.153  0.115     0.13     0.13   0.13     0.13 ]; % Ask Achille??
 lans   =     [1.65   0.985     1.45     0.94   0.94     0.94 ];
 zoms   =     [0.38   0.081     0.15     0.016  0.016    0.016];
 
-Deb_Par.alb= albs(s);
-Deb_Par.e_sur =  0.94;
-Deb_Par.lan = lans(s);
-Deb_Par.rho = 1496;  % [kg/m^3]
-Deb_Par.cs = 948;   % [J/kg K]
-Deb_Par.zom = zoms(s);
+%Deb_Par.alb= albs(s);
+%Deb_Par.e_sur =  0.94;
+%Deb_Par.lan = lans(s);
+%Deb_Par.rho = 1496;  % [kg/m^3]
+%Deb_Par.cs = 948;   % [J/kg K]
+%Deb_Par.zom = zoms(s);
 
 dbThick=DEB_MAP(ij);%% [mm]
 
