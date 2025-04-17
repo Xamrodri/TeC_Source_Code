@@ -42,28 +42,34 @@ UTM_zone = 33; % for Italy
 % names of points
 names = string(POI.Name);
 
-%% Load DEM and geographical information
+%% Load DEM and extraction of matrices - Only DTM and VEG_CODE here
 %==========================================================================
 %{
 There are different dtm
         1) dtm_Cinca_Mid_250m.mat
         2) dtm_Tiber_250m.mat
         3) dtm_Velino_250m.mat
+DTM is not passed in the function below, but it is reopened inside
+run_Point_Pro.m
 %}
 %==========================================================================
 
 % Load preprocessed data
 dtm_file = 'dtm_Velino_250m.mat'; 
-load([folder_path,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+mm = load([folder_path,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % DEM and features
-DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
+DTM = mm.DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 num_cell=numel(DTM);
 
-% PIXELS 
+xllcorner = mm.xllcorner;
+yllcorner = mm.yllcorner;
+cellsize = mm.cellsize;
+VEG_CODE = mm.VEG_CODE; 
+%% PIXELS 
 % k = 10;
 for k = 1:height(POI)
 id_location = char(string(POI.Name(k))); %id
@@ -94,8 +100,8 @@ end
 ksv=reshape(VEG_CODE,num_cell,1);
 
 %% Surface elevation for vegetation
-% categories   [fir     larch    grass  shrub  BLever    BLdec   ]  
-zatm_surface = [18      18       2      2      18        18      ]; %Depend on vegetation
+% categories   [fir     larch    grass  shrub  BLever    BLdec   NoVeg]  
+zatm_surface = [18      18       2      2      18        18      2    ]; %Depend on vegetation
 zatm_hourly_on = 0;
 
 %% Loop for vegetation classification
@@ -126,13 +132,15 @@ for k = 1:height(POI)
         %          broad-leaved are not very common and in the Appennine
         
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        %POI.Ccrown(k) = {[0.1 0.1 0.8]};
-        POI.Ccrown(k) = {[1.0]};
+        POI.Ccrown(k) = {[0.1 0.1 0.8]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 1; 
 
-        %categories   [fir     larch    grass  shrub    BLever    BLdec]
-        %POI.II(k) =          {[0       0        0      1        1         1    ]>0}; 
-        POI.II(k) =          {[0       0        0      0        0         1    ]>0}; 
+        %categories    [fir     larch    grass  shrub    BLever    BLdec  NoVeg]
+        POI.II(k) =    {[0       0        0      1        1         1     0    ]>0}; 
+        
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
  
     case 2 % Grassland/pasture %
@@ -152,13 +160,16 @@ for k = 1:height(POI)
         %       1) A classification for Grassland/pasture
 
         POI.Cwat(k) = 0.1; POI.Curb(k) = 0.1; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        %POI.Ccrown(k) = {[0.7 0.1]};  
-        POI.Ccrown(k) = {[0.8]};  
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.Ccrown(k) = {[0.7 0.1]};  
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec]
-        %POI.II(k) =  {[0       0        1      1      0         0    ]>0};  
-        POI.II(k) =  {[0       0        0      1      0         0    ]>0};  
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 2; 
+        
+        %categories   [fir     larch    grass  shrub  BLever    BLdec   NoVeg]
+        POI.II(k) =  {[0       0        1      1      0         0       0    ]>0};  
+
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
 
     case 3 % Crops %
@@ -179,13 +190,16 @@ for k = 1:height(POI)
         %           are good choices for the region)
         % 
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        %POI.Ccrown(k) = {[0.5 0.5]};
-        POI.Ccrown(k) = {[1.0]};
+        POI.Ccrown(k) = {[0.5 0.5]};
+   
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 3; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec ]
-        %POI.II(k) =  {[0       0        1      1      0         0     ]>0};
-        POI.II(k) =  {[0       0        0      1      0         0     ]>0}; 
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
+        POI.II(k) =  {[0       0        1      1      0         0      0    ]>0};
+        
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
     
 
     case 4 % Evergreen needleaves %   
@@ -194,10 +208,13 @@ for k = 1:height(POI)
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
         POI.Ccrown(k) = {[1.0]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 4; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
-        POI.II(k) =          {[0       0        0      0      1         0      ]>0};  
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
+        POI.II(k) =  {[0       0        0      0      1         0      0    ]>0};  
     
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
 
     case 5 % Mediterranean shrublands %
@@ -208,14 +225,16 @@ for k = 1:height(POI)
         %       4)  Moors and heathland (>0.05%)
         
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.1; POI.Cbare(k) = 0.1;
-        %POI.Ccrown(k) = {[0.6 0.1 0.1]};
-        POI.Ccrown(k) = {[0.8]};
+        POI.Ccrown(k) = {[0.6 0.1 0.1]};
+   
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 5; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
-        %POI.II(k) =  {[0       0        0      1      1         1      ]>0};  
-        POI.II(k) =  {[0       0        0      0      0         1      ]>0};  
-
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
+        POI.II(k) =  {[0       0        0      1      1         1      0    ]>0};  
+          
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
     
 
     case 6 % Olives %
@@ -224,11 +243,15 @@ for k = 1:height(POI)
 
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
         POI.Ccrown(k) = {[1.0]};
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
-        POI.II(k) =  {[0       0        0      1      0         0      ]>0};  
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 6; 
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
+        POI.II(k) =  {[0       0        0      1      0         0      0    ]>0};  
     
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
     case 7 % Urban %
         %   Case 7 includes from CORINE:
@@ -243,11 +266,35 @@ for k = 1:height(POI)
 
         POI.Cwat(k) = 0; POI.Curb(k) = 0.8 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.1;
         POI.Ccrown(k) = {[0.1]};
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
-        POI.II(k) =  {[0       0        1      0      0         0      ]>0};  
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 7; 
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
+        POI.II(k) =  {[0       0        1      0      0         0      0    ]>0};  
         
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
+
+    %% CHECK THE NEED OF SETTING II AS 1 WHEN CCROCK = 1 
+    %======================================================================
+    %{
+    Problem is with these parameters defined in the MAIN_FRAME_Pro
+    % Vegetation Optical Parameter
+    [PFT_opt_H(i)]=Veg_Optical_Parameter(OPT_PROP_H(i));
+    [PFT_opt_L(i)]=Veg_Optical_Parameter(OPT_PROP_L(i));
+
+    [Stoich_H(i)]=Veg_Stoichiometric_Parameter(Nl_H(i));
+    [ParEx_H(i)]=Exudation_Parameter(0);
+    [Mpar_H(i)]=Vegetation_Management_Parameter;
+
+    [Stoich_L(i)]=Veg_Stoichiometric_Parameter(Nl_L(i));
+    [ParEx_L(i)]=Exudation_Parameter(0);
+    [Mpar_L(i)]=Vegetation_Management_Parameter;
+
+    %}
+    %======================================================================
+
 
     case 8 % Rock %
         %    Case 8 includes from CORINE:
@@ -256,11 +303,15 @@ for k = 1:height(POI)
 
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 1.0; POI.Cbare(k) = 0.0;
         POI.Ccrown(k) = {[0.0]};
+
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 8; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
-        POI.II(k) =  {[0       0        0      0      0         0      ]>0}; 
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg ]  
+        POI.II(k) =  {[0       0        1      0      0         0      0     ]>0}; 
 
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
     case 9 % Water %
         %    Case 9 includes from CORINE:
@@ -276,10 +327,13 @@ for k = 1:height(POI)
         POI.Cwat(k) = 1.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
         POI.Ccrown(k) = {[0.0]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 9; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
-        POI.II(k) =  {[0       0        0      0      0         0      ]>0};
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]  
+        POI.II(k) =  {[0       0        1      0      0         0      0    ]>0};
   
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
     case 10 % Bare soils %
         %    Case 10 includes from CORINE:
@@ -291,13 +345,16 @@ for k = 1:height(POI)
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.9;
         POI.Ccrown(k) = {[0.1]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        POI.VEG_CLASS(k) = 10; 
 
-        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
-        POI.II(k) =  {[0       0        0      1      0         0      ]>0};
-  
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]  
+        POI.II(k) =  {[0       0        1      0      0         0      0    ]>0};  
+
+        % cc_max
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     otherwise
-        disp('INDEX FOR SOIL VEGETATION PARAMETER INCONSISTENT')
+        disp('INDEX FOR VEGETATION PARAMETER INCONSISTENT')
         %return
 end
 
@@ -308,18 +365,15 @@ else
 POI.zatm(k) = 2;
 end
 
-%% cc_max
-POI.cc_max(k) = 1; 
 
 end
 
 
-
 %% Single point Launcher
-%run_Point_Pro(names(2), POI, ksv)
+%run_Point_Pro(names(100), POI, ksv)
 
 
 %% Parallel computing launch for the Model
-parfor k = 1:4
+parfor k = 1:10
 run_Point_Pro(names(k), POI, ksv)
 end

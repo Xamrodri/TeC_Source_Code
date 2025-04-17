@@ -20,6 +20,8 @@ Code explanation:
 %}
 %==========================================================================
 
+%% Debugger
+%Point = "VelinoCluster96";
 
 %% As a Function 
 function result=run_Point_Pro(Point, POI, ksv)
@@ -45,14 +47,11 @@ Outlet_names:
 %}
 %==========================================================================
 
-%Point = "VelinoCluster96";
-
 SITE = ["Velino"]; 
 FORCING = "ERA5Land";
 UTM_zone = 33; % for Italy
 DeltaGMT= 1; % for Italy
-outlet_names = ["Velino_OUT"];
-%outlet_name = char(outlet_names);
+
 
 %% Modelling period
 %==========================================================================
@@ -63,7 +62,7 @@ date_start =  ["01-Jan-2008 01:00:00"]; % Starting point of the simulation
 date_end =  ["30-Dec-2008 23:00:00"]; % Last timestep of the simulation
 
 %% MODEL PARAMETERS
-study_name = ["Pyrenees_pointscale", "Apennine_pointscale", "Apennine_pointscale"];
+
 % Time step for the model
 dt=3600; % [s]
 dth=1; % [h]
@@ -72,6 +71,7 @@ dth=1; % [h]
 % Hours or fraction before and after. Values obtained from the
 % Automatic_Radiation_Partition_I
 t_bef = 1.5; t_aft = -0.5;
+
 %% Pixel selection
 %==========================================================================
 % Depends on the point to be modelled
@@ -89,12 +89,6 @@ LOC = point_id;
 %==========================================================================
 output_daily = 1; 
 
-%% Load DEM  
-
-%Tmod = 0; % temperature modification above clean ice [°C];
-%Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
-%Z_min = 570; % lowest elevation for linear precipitation modification (min factor -> 0)
-%Z_max = 5000; % highest elevation for linear precipitation modification (max factor -> Pmod)
 
 %% Precipitation phase parametrization
 % 1 = 2-threshold, 
@@ -137,8 +131,8 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to 
 dtm_file = ["dtm_Velino_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)))
-
 dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE,'/',dtm_file);
+
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
@@ -189,7 +183,7 @@ end
 %% FOR LOOP for locations
 %Loc=1
 Names = string(POI.Name);
-loc = find(Point == Names)  
+loc = find(Point == Names);  
 
 %% Definitions of site
 %% Crowns
@@ -205,7 +199,7 @@ id_location = string(POI.Name(loc));
 cc_max = POI.cc_max(loc);
 
 %% Locations
-Zbas = POI.Zbas(loc)
+Zbas = POI.Zbas(loc);
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
 ij = POI.ij(loc);
@@ -482,8 +476,8 @@ end
 % PARAM_IC: Define parameter file
 % MAIN_FRAME: Contains the model
 %==========================================================================
-PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint.m');
-MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
+PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
+MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
 %% Post-compute calculations
 %==========================================================================
