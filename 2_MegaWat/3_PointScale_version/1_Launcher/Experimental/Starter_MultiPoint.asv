@@ -20,6 +20,9 @@ Code explanation:
 %% Clear all
 clc; clear all;
 
+%% Names of cacthment
+SITE = 'Velino'
+
 %% DIRECTORY
 root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/'
 folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
@@ -28,14 +31,16 @@ folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'
 folder_launcher = [root '1_Launcher/Experimental/']; % Put here the path of where you downloaded the repository
 addpath(genpath([folder_launcher])); % Add path to Ca_Data
 
-% Main file with points
+%% Main file with points 
+%==========================================================================
+% In this version, POI keeps all the data needed to run TC.
+%==========================================================================
 POI = readtable([root '3_Inputs/2_Apennine/Velino_MultiPoints.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
 % names of points
 names = string(POI.Name);
-SITE = 'Velino'
 
 %% Load DEM and geographical information
 %==========================================================================
@@ -46,16 +51,19 @@ There are different dtm
         3) dtm_Velino_250m.mat
 %}
 %==========================================================================
-dtm_file = "dtm_Velino_250m.mat"; 
-dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE,'/',dtm_file);
 
-load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+% Load preprocessed data
+dtm_file = 'dtm_Velino_250m.mat'; 
+load([folder_path,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+
+% DEM and features
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 num_cell=numel(DTM);
-%% PIXELS 
+
+% PIXELS 
 % k = 10;
 for k = 1:height(POI)
 id_location = char(string(POI.Name(k))); %id
@@ -78,14 +86,19 @@ POI.Zbas(k) = DTM(j,i); % Altitude
 end
 
 %% LAND COVER PARTITION
-%How corine classification behaves
+%==========================================================================
+%
+%==========================================================================
+
+%% Matrix
 ksv=reshape(VEG_CODE,num_cell,1);
 
-%% categories    [fir     larch    grass  shrub  BLever    BLdec   ]  
+%% Surface elevation for vegetation
+% categories   [fir     larch    grass  shrub  BLever    BLdec   ]  
 zatm_surface = [18      18       2      2      18        18      ]; %Depend on vegetation
 zatm_hourly_on = 0;
 
-%% Loop
+%% Loop for vegetation classification
 %k=98
 for k = 1:height(POI)
 %disp(k)
@@ -302,11 +315,11 @@ end
 
 
 
-%% Single point
-run_Point_Pro(names(3), POI)
+%% Single point Launcher
+run_Point_Pro(names(3), POI, ksv)
 
 
-%% Model
+%% Parallel computing launch for the Model
 parfor k = 1:4
-run_Point(names(k))
+run_Point_Pro(names(k), POI, ksv)
 end

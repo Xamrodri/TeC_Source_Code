@@ -5,19 +5,24 @@
 
 %% AUTHOR INFO AND STUDY SITE
 %==========================================================================
-% Created on Nov 25, 2024
-% Author: MAXIMILIANO RODRIGUEZ
-% Code originally from: ACHILLE JOUBERTON
-% Area of Study: Apennines - Tiber River
-% Region: Apennines
-% Code explanation: This code launches the Point Scale version of TC model.
-% Output variables are managed by the file OUTPUT_MANAGER_DIST_LABEL.
-% Some code and names still refers to previous versions of the code.
+%{
+Created on Nov 25, 2024
+Author: MAXIMILIANO RODRIGUEZ
+Code originally from: ACHILLE JOUBERTON
+Area of Study: Apennines - Tiber River
+
+Code explanation: 
+     This code launches the Point Scale version of TC model.
+     This function runs only one point. There is no for loop.
+     
+     
+
+%}
 %==========================================================================
 
 
 %% As a Function 
-function result=run_Point_Pro(Point, POI)
+function result=run_Point_Pro(Point, POI, ksv)
 
 
 %% Directories
@@ -115,7 +120,7 @@ outlocation = [folder_path,'3_PointScale_version/4_Outputs/'];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 
 % Saving initial conditions of the model
-out = strcat(outlocation,'INIT_COND_', SITE ,'_MultiPoint.mat'); % file path initial conditions
+out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
 
 %% Dependencies
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
@@ -225,7 +230,7 @@ x2=find(date_end == Date_all,1);
 %% Displaying modelling parameters
 disp(strcat("Site selected: ", SITE))
 disp(['Forcing selected: ' char(FORCING)])
-disp(['Running T&C for pixel: ' id_location])
+disp(['Running T&C for pixel: ' char(id_location)])
 disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)])
 
 %% Fetch time and do date handling
@@ -417,23 +422,6 @@ else
    Slo_top=Slo_top_S(ij);
 end
 
-%% LAND COVER
-%==========================================================================
-%{
-Classes in T&C:
-        1 Fir (evergr.)
-        2 Larch (decid.)
-        3 Grass C3
-        4 Shrub (decid.)
-        5 Broadleaf evergreen
-        6 Broadleaf deciduous
-        7 Rock
-%}
-%==========================================================================
-
-ksv=reshape(VEG_CODE,num_cell,1);
-imagesc(VEG_CODE)
-
 %% SOIL 
 %==========================================================================
 % Vector is divided by 100 to put the numbers within 0-1
@@ -466,8 +454,6 @@ else
     SNOWALB=reshape(SNOWALB,num_cell,1);
 end 
 
-% Debugger
-% disp(strcat('Before INIT_COND_V2 caller',num2str(size(Ca,2))))
 
 %% SAVING INITIAL CONDITIONS AND PARAMETERS 
 %==========================================================================
@@ -527,7 +513,7 @@ Param_t = rows2vars(Param_t);
 Param_t = renamevars(Param_t,{'OriginalVariableNames','Var1'},{'Parameter','Value'});
 
 % Exporting as .txt
-writetable(Param_t, strcat(outlocation,id_location,'_param.txt') )
+writetable(Param_t, strcat(outlocation, '3_Params/',id_location,'_param.txt') )
 
 % Here I manually choose the T&C outputs I want to save at each point.
 Outputs_t = table(Date,EICE,ESN,SND,SWE,...
@@ -537,7 +523,7 @@ Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET, ETen ,QE
 'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ETen','QE','ros'});
 
 %% Hourly output
-writetable(Outputs_t, strcat(outlocation,id_location,'_hourly_results.txt'))
+writetable(Outputs_t, strcat(outlocation, '1_Hourly/',id_location,'_hourly_results.txt'))
 
 %% Daily outputs
 % If daily outputs are activated
@@ -559,7 +545,7 @@ Outputs_d.ETen = Outputs_ds.ETen;
 Outputs_t = timetable2table(Outputs_d);
 
 % Exporting as .txt
-writetable(Outputs_t, strcat(outlocation,id_location,'_daily_results.txt'))
+writetable(Outputs_t, strcat(outlocation, '2_Daily/',id_location,'_daily_results.txt'))
 end 
 
 
