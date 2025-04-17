@@ -24,12 +24,12 @@ Code explanation:
 %Point = "VelinoCluster96";
 
 %% As a Function 
-function result=run_Point_Pro(Point, POI, ksv)
+function result=run_Point_Pro(root, Point, POI, ksv)
 
 
 %% Directories
-folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
-forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Extractions_Point/3_Radiation_Partition/'; % Put here the path of where you downloaded the repository
+folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
+forc_path = [root '7_Forcing/2_Extractions_Point/3_Radiation_Partition/']; % Put here the path of where you downloaded the repository
 
 
 %% Study site details

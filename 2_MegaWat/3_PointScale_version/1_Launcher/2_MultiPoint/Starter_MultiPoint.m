@@ -24,18 +24,25 @@ clc; clear all;
 SITE = 'Velino'
 
 %% DIRECTORY
-root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/'
-folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
+%==========================================================================
+%
+%==========================================================================
+%% Main roots
+%root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
+root = 'C:/Users/mrodrigu/Desktop/19_ISTA/' %Personal computer
+
+%% Subfolders
+path_model = [root '1_TC/3_Model_Source/2_MegaWat/']
 
 % Location of the launcher
-folder_launcher = [root '1_Launcher/Experimental/']; % Put here the path of where you downloaded the repository
+folder_launcher = [path_model '3_PointScale_version/1_Launcher/Experimental/']; % Put here the path of where you downloaded the repository
 addpath(genpath([folder_launcher])); % Add path to Ca_Data
 
 %% Main file with points 
 %==========================================================================
 % In this version, POI keeps all the data needed to run TC.
 %==========================================================================
-POI = readtable([root '3_Inputs/2_Apennine/Velino_MultiPoints.txt']); %import table with points info
+POI = readtable([path_model '3_PointScale_version/3_Inputs/2_Apennine/Velino_MultiPoints.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
@@ -56,7 +63,7 @@ run_Point_Pro.m
 
 % Load preprocessed data
 dtm_file = 'dtm_Velino_250m.mat'; 
-mm = load([folder_path,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+mm = load([path_model,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % DEM and features
 DTM = mm.DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -370,10 +377,10 @@ end
 
 
 %% Single point Launcher
-%run_Point_Pro(names(100), POI, ksv)
+%run_Point_Pro(root, names(100), POI, ksv)
 
 
 %% Parallel computing launch for the Model
-parfor k = 1:10
-run_Point_Pro(names(k), POI, ksv)
+parfor k = 1:3
+run_Point_Pro(root, names(k), POI, ksv)
 end
