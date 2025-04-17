@@ -16,9 +16,9 @@
 %==========================================================================
 
 
+%% As a Function 
+function result=run_Point_Pro(Point, POI)
 
-%% Clear all
-clc; clear all;
 
 %% Directories
 folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
@@ -40,7 +40,7 @@ Outlet_names:
 %}
 %==========================================================================
 
-Point = "VelinoCluster2";
+%Point = "VelinoCluster96";
 
 SITE = ["Velino"]; 
 FORCING = "ERA5Land";
@@ -140,8 +140,6 @@ DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 
-imagesc(PSAN)
-
 % Precipitation vertical gradient
 % Pmod_S = MASK;
 % rate = Pmod/(Z_max-Z_min);
@@ -181,16 +179,11 @@ else
     Afirn = DTM.*0 + 0.28;   
 end
 
-%% POIs
-POI = readtable(strcat(folder_path,'3_PointScale_version/3_Inputs/2_Apennine/Velino_MultiPoints.txt')); %import table with points info
-[POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
-
-Names = string(POI.Name);
 
 
 %% FOR LOOP for locations
 %Loc=1
-loc = find(Point == Names)  
+for loc = find(Point == Names)  
 
 %% Get location for POI
 %==========================================================================
@@ -217,8 +210,6 @@ ij = sub2ind(size(DTM),pixelX,pixelY); % Location
 Zbas = DTM(j,i); % Altitude
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
-
-
 
 %% FORCING
 %==========================================================================
@@ -366,41 +357,31 @@ num_cell=numel(DTM);
 %MASK = MASK.*0+1;
 MASKn=reshape(MASK,num_cell,1);
 
-
 if topo == 1
-    
-    Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_ShF.mat']); % ShF matrix created during pre-processing step
+    %load topography data and narrow down to period 
+    m = matfile(strcat(folder_path,'3_PointScale_version/2_Forcing/',SITE,'_ShF_',char(FORCING),'_2018.mat')); % ShF matrix created during pre-processing step
 
-    Par_time = Topo_data.Par_time;
-    Par_points = Topo_data.Par_points;
+    x1_top=find(date_start==m.Top_Date,1);
+    x2_top=find(date_end==m.Top_Date,1); 
 
-    %% Topography
-    %string(POI.Name(loc))
-    %% Debugging
-    Par_time_table=Par_time.(Point); %Table to use
-    Par_time_period = Par_time_table(Par_time_table.Time>=date_start & Par_time_table.Time<=date_end, :); %variables per period
-
-    %ShF
-    ShF = Par_time_period.ShF_S;
+    ShF = double(squeeze(m.ShF_S(ij,:)));
+    ShF = ShF(x1_top:x2_top)';
     
     rho_g = 0.35; %%% Spatial Albedo
-    zeta_S = Par_time_period.zeta_Sts;
-    h_S = Par_time_period.h_Sts;
-    %clear Par_time
-
-    Par_points_data = Par_points(Par_points.Name == string(POI.Name(loc)),:);
-    SvF = Par_points_data.SvF_S; % Sky view factor at pixel ij
-    Ct = Par_points_data.Ct_S;
-    Slo_top = Par_points_data.Slo_top_S; % Slope at pixel ij
-    Aspect = Par_points_data.Aspect; % Aspect at pixel ij
-    %clear Points
+    zeta_S = m.zeta_Sts(x1_top:x2_top,1);
+    h_S = m.h_Sts(x1_top:x2_top,1);
+    clear e1 e2 Top_Date zeta_Sts H_Sts ShF_S
+    SvF = m.SvF_S(ij,1); % Sky view factor at pixel ij
+    Ct = m.Ct_S(i,j);
+    Slo_top = m.Slo_top_S(ij,1); % Slope at pixel ij
+    Aspect = m.Aspect_S(ij,1); % Aspect at pixel ij
+    clear SvF_S Ct_S Aspect_S
 
     cos_fst = cos(atan(Slo_top)).*sin(h_S) + sin(atan(Slo_top)).*cos(h_S).*cos(zeta_S-Aspect*pi/180);
     cos_fst(cos_fst<0)=0;
 
-    %clear zeta_S 
-    
-    %% Radiative parameters
+    clear zeta_S 
+  
     SAB1(sin(h_S) <= 0.10)  =  0;
     SAB2(sin(h_S) <= 0.10)  =  0;
     SAD1(sin(h_S) <= 0.10)  =  0;
@@ -447,14 +428,16 @@ Classes in T&C:
 %==========================================================================
 
 ksv=reshape(VEG_CODE,num_cell,1);
+imagesc(VEG_CODE)
 
 %% LAND COVER PARTITION
 cc_max = 1; %% one vegetation types
+%disp(ksv(ij))
 switch ksv(ij)
     case 1
         % Fir - evergreen
-        Cwat = 1.0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [0.0];
+        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
+        Cbare = 0.0; Ccrown = [1.0];
         cc=length(Ccrown); %% Crown area
         II = [1 0 0 0 0 0]>0;  
     case 2
@@ -468,7 +451,7 @@ switch ksv(ij)
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
         Cbare = 0.0; Ccrown = [1.0];
         cc=length(Ccrown);%% Crown area
-        II = [1 0 0 0 0 0]>0;  
+        II = [0 0 1 0 0 0]>0;  
     case 4
         % Shrub dec.
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
@@ -547,9 +530,9 @@ end
 %load(out);
 %else
 if topo == 1
-INIT_COND_v3(num_cell,m_cell,n_cell,...
+INIT_COND_v2(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
-   MASKn,GLH,Ca,SNOWD,SNOWALB,out, II, ij);
+   MASKn,GLH,m.Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
 load(out);
 else 
 INIT_COND_v2(num_cell,m_cell,n_cell,...
@@ -631,7 +614,7 @@ writetable(Outputs_t, strcat(outlocation,id_location,'_daily_results.txt'))
 end 
 
 
-
+end 
 
 %% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================
@@ -646,3 +629,5 @@ imagesc(DEM);
 figure;
 imagesc(DEM_resampled);
 %}
+
+end

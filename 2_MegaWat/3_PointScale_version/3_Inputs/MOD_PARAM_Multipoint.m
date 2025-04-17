@@ -110,9 +110,9 @@ clear ix
 Kfc = 0.2; %% [mm/h]
 Phy = 10000; %% [kPa]
 
-% Function
-[Ofc,Oss_Lp,Owp_Lp,Ohy]=Soil_parametersII(ms,Osat,L,Pe,Ks_Zs,O33,nVG,alpVG,Kfc,1,1,Phy);
-clear Oss_Lp Owp_Lp
+% Function Soil_parametersII
+% Output variables [Ofc,Oss_Lp,Owp_Lp,Ohy]=Soil_parametersII
+[Ofc,~,~,Ohy]=Soil_parametersII(ms,Osat,L,Pe,Ks_Zs,O33,nVG,alpVG,Kfc,1,1,Phy);
 Ofc(Ks_Zs<0.2)=Osat(Ks_Zs<0.2);
 Oice = 0;
 
@@ -195,12 +195,12 @@ ZR95_L =ZR95_L(II); ZR50_L =ZR50_L(II); ZRmax_L =ZRmax_L(II);
 
 % If element ij is rock, then:
 if ksv(ij) == 7 
-    ZR95_H = [0];
-    ZR95_L = [0]; 
-    ZR50_H = [NaN];
-    ZR50_L = [NaN];
-    ZRmax_H = [NaN];
-    ZRmax_L = [NaN];
+    ZR95_H = 0;
+    ZR95_L = 0; 
+    ZR50_H = NaN;
+    ZR50_L = NaN;
+    ZRmax_H = NaN;
+    ZRmax_L = NaN;
 end
 
 %%  VEGETATION SECTION
@@ -374,12 +374,6 @@ OPT_PROP_L  =  [0 0 13 2 0 0];
 OPT_PROP_H = OPT_PROP_H(II);
 OPT_PROP_L = OPT_PROP_L(II);
 
-for i=1:cc
-    %%%%%%%% Vegetation Optical Parameter
-    [PFT_opt_H(i)]=Veg_Optical_Parameter(OPT_PROP_H(i));
-    [PFT_opt_L(i)]=Veg_Optical_Parameter(OPT_PROP_L(i));
-end
-
 %categories    [fir    larch   grass    shrub  BLever   BLdec] 
 OM_H  =        [1      1       NaN      NaN    1        1    ]; % Within canopy clumping factor [-]
 OM_L  =        [NaN    NaN     1        1      NaN      NaN  ]; % Within canopy clumping factor [-]
@@ -452,11 +446,7 @@ LDay_cr_H = LDay_cr_H(II);  Klf_H = Klf_H(II);
 fab_H = fab_H(II); fbe_H = fbe_H(II); ff_r_H = ff_r_H(II);
 
 
-for i=1:cc
-    [Stoich_H(i)]=Veg_Stoichiometric_Parameter(Nl_H(i));
-    [ParEx_H(i)]=Exudation_Parameter(0);
-    [Mpar_H(i)]=Vegetation_Management_Parameter;
-end
+
 
 %% Low Vegetation 
 %categories   [fir     larch    grass  shrub    BLever    BLdec]  
@@ -510,11 +500,6 @@ Mf_L= Mf_L(II);  Wm_L= Wm_L(II);  eps_ac_L = eps_ac_L(II);
 LDay_cr_L = LDay_cr_L(II);  Klf_L = Klf_L(II);
 fab_L = fab_L(II); fbe_L = fbe_L(II); ff_r_L = ff_r_L(II);
 
-for i=1:cc
-    [Stoich_L(i)]=Veg_Stoichiometric_Parameter(Nl_L(i));
-    [ParEx_L(i)]=Exudation_Parameter(0);
-    [Mpar_L(i)]=Vegetation_Management_Parameter;
-end
 
 %% INITIAL CONDITIONS
 %==========================================================================
@@ -523,10 +508,10 @@ end
 
 L_day=zeros(NNd,1);
 for j=2:24:NN
-    [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
+    [~,~,~,~,~,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
 end
 Lmax_day = max(L_day);
-clear('h_S','delta_S','zeta_S','T_sunrise','T_sunset','L_day')
+clear('L_day')
 
 if OPT_SoilBiogeochemistry == 1
     %%%%%

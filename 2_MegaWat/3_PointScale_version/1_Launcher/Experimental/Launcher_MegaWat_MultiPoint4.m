@@ -15,6 +15,10 @@
 % Some code and names still refers to previous versions of the code.
 %==========================================================================
 
+%% As a Function 
+function[]=run_Point(Point)
+
+%Point = 'VelinoCluster11'
 
 
 %% Clear all
@@ -24,41 +28,40 @@ clc; clear all;
 folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
 forc_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/7_Forcing/2_Extractions_Point/3_Radiation_Partition/'; % Put here the path of where you downloaded the repository
 
+%% Catchment selection
+sel_basin = 2; % ID for catchment selection for variable SITE
+
+%% Pixel selection and time
+%==========================================================================
+% Depends on the point to be modelled
+% Select for which pixel to run the point-scale version of T&C
+% 1: AWS_OnGlacier
+% 2: Pluvio
+%==========================================================================
+sel_forc = 1;  % selection of forcing
 
 %% Study site details
 %==========================================================================
 %{
-Sites:
-   Cinca_Mid
-   Tiber
-   Velino
-Outlet_names:
-    "Cinca_Mid_OUT"
-    "Apennine_out",
-    "Monte_Terminillo"
-    "Velino_OUT"
+Sites
+1) "Cinca_Mid"
+2) "Tiber"
+3) "Velino"
+
 %}
 %==========================================================================
-
-Point = "VelinoCluster2";
-
-SITE = ["Velino"]; 
+SITE = 'Velino';
 FORCING = "ERA5Land";
 UTM_zone = 33; % for Italy
 DeltaGMT= 1; % for Italy
-outlet_names = ["Velino_OUT"];
-%outlet_name = char(outlet_names);
 
 %% Modelling period
-%==========================================================================
-% Set
-%==========================================================================
-
-date_start =  ["01-Jan-2008 01:00:00"]; % Starting point of the simulation
-date_end =  ["30-Dec-2008 23:00:00"]; % Last timestep of the simulation
+%For some reason  "01-Jan-2008 00:00:00" does not work. Only  "01-Jan-2008 01:00:00"
+date_start =  "01-Jan-2008 01:00:00"; % Starting point of the simulation
+date_end  =  "30-Dec-2008 23:00:00"; % Last timestep of the simulation
 
 %% MODEL PARAMETERS
-study_name = ["Pyrenees_pointscale", "Apennine_pointscale", "Apennine_pointscale"];
+%study_name = ["Pyrenees_pointscale", "Apennine_pointscale", "Apennine_pointscale", "Apennine_pointscale"];
 % Time step for the model
 dt=3600; % [s]
 dth=1; % [h]
@@ -67,15 +70,6 @@ dth=1; % [h]
 % Hours or fraction before and after. Values obtained from the
 % Automatic_Radiation_Partition_I
 t_bef = 1.5; t_aft = -0.5;
-%% Pixel selection
-%==========================================================================
-% Depends on the point to be modelled
-% Select for which pixel to run the point-scale version of T&C
-% 1: AWS_OnGlacier
-% 2: Pluvio
-%==========================================================================
-point_id = 3;     
-LOC = point_id;
 
 %% Data storing  
 %==========================================================================
@@ -125,11 +119,14 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to 
 
 %% Load DEM and geographical information
 %==========================================================================
-% Different dtm
-% "dtm_Tiber_250m.mat"
-% "dtm_Cinca_Mid_250m.mat"
+%{
+There are different dtm
+        1) dtm_Cinca_Mid_250m.mat
+        2) dtm_Tiber_250m.mat
+        3) dtm_Velino_250m.mat
+%}
 %==========================================================================
-dtm_file = ["dtm_Velino_250m.mat"]; 
+dtm_file = "dtm_Velino_250m.mat"; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)))
 
@@ -139,8 +136,6 @@ DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
-
-imagesc(PSAN)
 
 % Precipitation vertical gradient
 % Pmod_S = MASK;
@@ -181,16 +176,60 @@ else
     Afirn = DTM.*0 + 0.28;   
 end
 
+%% Topography for parfor
+% load is not possible inside the parfor
+
+Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',SITE,'_ShF.mat']); % ShF matrix created during pre-processing step
+
+Par_time = Topo_data.Par_time;
+Par_points = Topo_data.Par_points;
+
+%DEM
+num_cell=numel(DTM);
+
+%MASK = MASK.*0+1;
+MASKn=reshape(MASK,num_cell,1);
+
+%% Forcing (for parfor)
+% load is not possible inside the parfor
+forc_file = strcat(forc_path,'Forcing_ERA5_Land_',SITE,'_2008_corr_all.mat'); % Put here the path of where you downloaded the repository
+load(forc_file); % Load forcing table for the current POI
+
+%% Soil parameters (It must be outside the loop)
+PSAN=reshape(PSAN,num_cell,1)/100;
+PCLA=reshape(PCLA,num_cell,1)/100; 
+PORG=reshape(PORG,num_cell,1)/100;
+
+ms=10 ; %% 11 ; 
+SOIL_TH=reshape(SOIL_TH,num_cell,1);
+ms_max = 10; %% Number of soil layers
+
+%% GLACIERS
+%%% DEBRIS
+% INIT_COND_v2 has md_max parameter
+% Do not delete this code
+DEB_MAP=reshape(DEB_MAP,num_cell,1);
+md_max = 10; %% % Number of debris layers
+
+%% SNOW
+%%% Initial snow depth
+SNOWD=reshape(SNOWD,num_cell,1);
+
+
+% Initial snow albedo
+if ~exist('SNOWALB','var')
+    SNOWALB = SNOWD;
+    SNOWALB(SNOWD>0) = 0.6;
+else 
+    SNOWALB=reshape(SNOWALB,num_cell,1);
+end 
+
+% Debugger
+% disp(strcat('Before INIT_COND_V2 caller',num2str(size(Ca,2))))
+
 %% POIs
 POI = readtable(strcat(folder_path,'3_PointScale_version/3_Inputs/2_Apennine/Velino_MultiPoints.txt')); %import table with points info
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
-
-Names = string(POI.Name);
-
-
-%% FOR LOOP for locations
-%Loc=1
-loc = find(Point == Names)  
 
 %% Get location for POI
 %==========================================================================
@@ -203,31 +242,308 @@ Consider that in matlab the cell (1,1) in the the upper left corner and
 the (n,m) cell is the the bottom right corner. 
 %}
 %==========================================================================
-id_location = char(string(POI.Name(loc))); %id
-y_coord = POI.UTM_Y(loc);
-x_coord = POI.UTM_X(loc);
+
+
+%k = 10;
+for k = 1:height(POI)
+id_location = char(string(POI.Name(k))); %id
+
+y_coord = POI.UTM_Y(k);
+x_coord = POI.UTM_X(k);
 
 pixelX = floor((x_coord - xllcorner) / cellsize) + 1;
 pixelY = floor((y_coord - yllcorner) / cellsize) + 1;
 
 %ij = POI.idx(loc);
-ij = sub2ind(size(DTM),pixelX,pixelY); % Location
-[i, j] = ind2sub(size(DTM), ij); % Location
+ij = sub2ind(size(DTM),pixelY, pixelX); % Location
+[j, i] = ind2sub(size(DTM), ij); % Location
 
-Zbas = DTM(j,i); % Altitude
+POI.ij(k) = ij;
+POI.i(k) = i;
+POI.j(k) = j;
+
+POI.Zbas(k) = DTM(j,i); % Altitude
+end
+
+%% categories    [fir     larch    grass  shrub  BLever    BLdec   ]  
+zatm_surface = [18      18       2      2      18        18      ]; %Depend on vegetation
+zatm_hourly_on = 0;
+
+%% LAND COVER
+%==========================================================================
+%{
+Classes in T&C:
+        1 Fir (evergr.)
+        2 Larch (decid.)
+        3 Grass C3
+        4 Shrub (decid.)
+        5 Broadleaf evergreen
+        6 Broadleaf deciduous
+        7 Rock
+%}
+%==========================================================================
+
+ksv=reshape(VEG_CODE,num_cell,1);
+
+%% LAND COVER PARTITION
+%How corine classification behaves
+k=98
+for k = 1:height(POI)
+disp(k)
+    switch ksv(POI.ij(k))
+
+    case 1 % Decidious Broad-leaved forest %
+        %   Case 1 includes from CORINE: 
+        %       1) Broad-leaved forest (32.5%)
+        %       2) Mixed forest (1.2%)
+        %
+        %   From CORINE website:
+        %       1) deciduous and evergreen broad-leaved tree species listed under 
+        %          the “applicable for” section with >75% cover
+        %       2) sporadically occurring <25 ha patches of
+        %          shrubs and dwarf shrubs;
+        %          herbaceous vegetation (grasses and herbs);
+        %          mosses and lichens;
+        %          denuded spots.
+        %       3) optionally sporadically occurring patches of coniferous trees
+        %          not exceeding 25 % share of the tree covered area;
+        %       4) palm trees;
+        %
+        %   From Simone:
+        %       1) Broad-leaved forest assumed to be mostly decidious. Evergreen 
+        %          broad-leaved are not very common and in the Appennine
+        
+        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.1 0.1 0.8]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub    BLever    BLdec]
+        POI.II(k) =          {[0       0        0      1        1         1    ]>0}; 
+
+ 
+    case 2 % Grassland/pasture %
+        %    Case 2 includes from CORINE:              
+        %       1) Pastures (1.3%)       
+        %       2) Green urban areas (0.1%)
+        %       3) Inland marshes (>0.05%)
+
+        %     It also includes, but not in Tiber basin:
+        %       1) Peat bogs
+        %       2) Salt marshes
+        %       3) Salines
+        %       4) Intertaidal flats
+
+        %
+        %     From Simone
+        %       1) A classification for Grassland/pasture
+
+        POI.Cwat(k) = 0.1; POI.Curb(k) = 0.1; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.7 0.1]};         
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec]
+        POI.II(k) =  {[0       0        1      1      0         0    ]>0};  
+    
+
+    case 3 % Crops %
+        %   Case 3 includes from CORINE:
+        %       1)  Non-irrigated arable land (25.4%)
+        %       2)  Land principally occupied by agriculture with significant
+        %           areas of natural vegetation. (8.8%)
+        %       3)  Complex cultivation patterns (7%)
+        %       4)  Fruit trees and berry plantations (1.2%)
+        %       5)  Permanently irrigated land (0.8%)
+        %       6)  Vineyards (0.5%) 
+        %       7)  Annual crops associated with permanent crops (0.1%)
+        %       8)  Rice fields
+        %       9)  Agro-forestry areas (0%)
+        %
+        %       From Simone: 
+        %       1)  Crops (Choose one crop, wheat and sunflowers 
+        %           are good choices for the region)
+        % 
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.5 0.5]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec ]
+        POI.II(k) =  {[0       0        1      1      0         0     ]>0};  
+    
+
+    case 4 % Evergreen needleaves %   
+        %    Case 4 includes from CORINE:
+        %      1) Coniferous forest (1%)
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[1.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
+        POI.II(k) =          {[0       0        0      0      1         0      ]>0};  
+    
+
+
+    case 5 % Mediterranean shrublands %
+        %    Case 5 includes from CORINE:
+        %       1)  Transitional woodland-shrub (5%)
+        %       2)  Natural grasslands (4.3%)
+        %       3)  Sclerophyllous vegetation (0.4%)
+        %       4)  Moors and heathland (>0.05%)
+        
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.1; POI.Cbare(k) = 0.1;
+        POI.Ccrown(k) = {[0.6 0.1 0.1]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
+        POI.II(k) =  {[0       0        0      1      1         1      ]>0};  
+    
+
+    case 6 % Olives %
+        %    Case 6 includes from CORINE:
+        %       1) Olive groves (4%)
+
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[1.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
+        POI.II(k) =  {[0       0        0      1      0         0      ]>0};  
+    
+
+    case 7 % Urban %
+        %   Case 7 includes from CORINE:
+        %         1) Discontinuous urban fabric (3%)
+        %         2) Industrial or commercial units (0.7%)
+        %         3) Continuous urban fabric (0.6%)
+        %         4) Sport and leisure facilities (0.1%)
+        %         5) Road and rail networks and associated land (0.1%)
+        %         6) Construction sites (0.1%)
+        %         7) Port areas (>0.05%)   
+        %         8) Airports (0.1%)
+
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.8 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.1;
+        POI.Ccrown(k) = {[0.1]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]
+        POI.II(k) =  {[0       0        1      0      0         0      ]>0};  
+        
+
+    case 8 % Rock %
+        %    Case 8 includes from CORINE:
+        %        1) Bare rocks (0.2%)
+        %        2) Glaciers and perpetual snow (0%)
+
+        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 1.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
+        POI.II(k) =  {[0       0        0      0      0         0      ]>0}; 
+
+
+    case 9 % Water %
+        %    Case 9 includes from CORINE:
+        %        1) Water bodies (0.3%)
+        %        2) Water courses (0.2%)
+
+        %     It also includes, but not in Tiber basin:
+        %       1) Coastal lagoons
+        %       2) Estuaries
+        %       3) Sea and Ocean
+
+
+        POI.Cwat(k) = 1.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
+        POI.II(k) =  {[0       0        0      0      0         0      ]>0};
+  
+
+    case 10 % Bare soils %
+        %    Case 10 includes from CORINE:
+        %        1) Mineral extraction sites (0.2%)
+        %        2) Burnt areas (0.1%)
+        %        3) Beaches - dunes - sands (>0.05%)
+        %        4) Sparsely vegetated areas (0.7%)
+        
+        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.9;
+        POI.Ccrown(k) = {[0.1]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+
+        %categories   [fir     larch    grass  shrub  BLever    BLdec  ]  
+        POI.II(k) =  {[0       0        0      1      0         0      ]>0};
+  
+
+    otherwise
+        disp('INDEX FOR SOIL VEGETATION PARAMETER INCONSISTENT')
+        %return
+end
+
+% Defining zatm in each point
+if ~isempty(zatm_surface(cell2mat(POI.II(k))>0))
+POI.zatm(k) = max(zatm_surface(cell2mat(POI.II(k))>0)); %choose correct atmospheric reference height
+else
+POI.zatm(k) = 2;
+end
+
+
+
+end
+
+%% Initial conditions
+cc_max = 3;
+
+INIT_COND_v3(num_cell,m_cell,n_cell,...
+   cc_max,ms_max,md_max,...
+   MASKn,GLH,Ca,SNOWD,SNOWALB,out, cell2mat(POI.II), POI.ij);
+
+load(out);
+
+%e_relN_Htm1(POI.ij(35),:)
+
+
+%% Creation of variables for parfor
+timeDifference = hours(datetime(date_end)-datetime(date_start))+1;
+Datam = zeros(timeDifference,4);
+
+%% Fetch time and do date handling
+Date = (datetime(date_start):hours(1):datetime(date_end))';
+[YE,MO,DA,HO,MI,SE] = datevec(Date);
+Datam(1:timeDifference,:) = [YE MO DA HO]; 
+
+%clear YE MO DA HO MI SE
+
+pos = find(Point == string(POI.Name))
+
+%% FOR LOOP for locations
+%loc=1;
+for loc = pos  
+
+%% Crowns
+cc = POI.NCrown(loc); 
+II = cell2mat(POI.II(loc));
+Cwat = POI.Cwat(loc); 
+Curb = POI.Curb(loc); 
+Crock = POI.Crock(loc);
+Cbare = POI.Cbare(loc);
+Ccrown = cell2mat(POI.Ccrown(loc));
+zatm = POI.zatm(loc);
+id_location = string(POI.Name(loc));
+
+%% Locations
+Zbas = POI.Zbas(loc)
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
-
-
+ij = POI.ij(loc);
 
 %% FORCING
 %==========================================================================
 % ERA5
 %==========================================================================
-forc_file = strcat(forc_path,'Forcing_ERA5_Land_',SITE,'_2008_corr_all.mat'); % Put here the path of where you downloaded the repository
-load(forc_file); % Load forcing table for the current POI
 
-forc = forc_f.(Point);
+fieldNames = fieldnames(forc_f);  % Get all field names as cell array
+forc = forc_f.(string(POI.Name(loc))); % Table of 
 
 Date_all=forc.Date; 
 
@@ -239,14 +555,10 @@ x2=find(date_end == Date_all,1);
 %% Displaying modelling parameters
 disp(strcat("Site selected: ", SITE))
 disp(['Forcing selected: ' char(FORCING)])
-disp(['Running T&C for pixel: ' id_location])
+disp(['Running T&C for pixel: ' char(id_location)])
 disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)])
 
-%% Fetch time and do date handling
-Date = Date_all(x1:x2);
-[YE,MO,DA,HO,MI,SE] = datevec(Date);
-Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
-clear YE MO DA HO MI SE
+
 
 %% Carbon data
 %==========================================================================
@@ -261,7 +573,7 @@ d2 = find(formattedDate_CO2 == Date(end));
 %d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);
 %d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
 Ca=Ca_all(d1:d2); 
-clear d1 d2
+%clear d1 d2
 
 Oa= 210000; % Intercellular Partial Pressure Oxygen [umolO2/mol]
 
@@ -283,6 +595,10 @@ FORCINGS:
 
 CALCULATIONS:
     Relative Humidity [-]
+
+NOTE:
+Forcings must be put in the model as double. If Ta is as single then it
+crashes. 
 %}
 %==========================================================================
 
@@ -292,18 +608,14 @@ NN= height(forcing);%%% time Step
 
 % Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
-zatm_surface = [18 18 2 2 18 18];
-zatm_hourly_on = 0;
+
+
 
 %% Precipitation
-
 % Precipitation from ERA5Land
 Pr=double(forcing.Total_Precipitation_HH);
 Pr(isnan(Pr))=0;
 Pr(Pr<0.01)=0;
-
-%Precipitation from stations
-
 
 %% Air pressure
 % Air Pressure in mbar based on the PDF for variables and parameters of TC
@@ -327,7 +639,7 @@ U=double(forcing.RH/100);
 % Latm=forcing.LW_rad_downward_HH; % Latm:Incoming long wave radiation [W m-2]
 % N=ones(NN,1); % cloud cover [-]
 % N = forcing.LW_rad_downward_HH;
-N = double(forcing.N);
+N = forcing.N;
 
 %% Radiation partition
 SAD1=double(forcing.SAD1); SAD2=double(forcing.SAD2); 
@@ -361,23 +673,12 @@ Pre_Ding_d = nanmean(Pre(1:24));
 ea_Ding_d = nanmean(ea(1:24));
 
 %% RADIATION AND TOPOGRAPHY
-num_cell=numel(DTM);
-
-%MASK = MASK.*0+1;
-MASKn=reshape(MASK,num_cell,1);
-
 
 if topo == 1
     
-    Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_ShF.mat']); % ShF matrix created during pre-processing step
-
-    Par_time = Topo_data.Par_time;
-    Par_points = Topo_data.Par_points;
-
     %% Topography
-    %string(POI.Name(loc))
-    %% Debugging
-    Par_time_table=Par_time.(Point); %Table to use
+
+    Par_time_table=Par_time.(string(POI.Name(loc))); %Table to use
     Par_time_period = Par_time_table(Par_time_table.Time>=date_start & Par_time_table.Time<=date_end, :); %variables per period
 
     %ShF
@@ -432,138 +733,36 @@ else
    Slo_top=Slo_top_S(ij);
 end
 
-%% LAND COVER
-%==========================================================================
-%{
-Classes in T&C:
-        1 Fir (evergr.)
-        2 Larch (decid.)
-        3 Grass C3
-        4 Shrub (decid.)
-        5 Broadleaf evergreen
-        6 Broadleaf deciduous
-        7 Rock
-%}
-%==========================================================================
-
-ksv=reshape(VEG_CODE,num_cell,1);
-
-%% LAND COVER PARTITION
-cc_max = 1; %% one vegetation types
-switch ksv(ij)
-    case 1
-        % Fir - evergreen
-        Cwat = 1.0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [0.0];
-        cc=length(Ccrown); %% Crown area
-        II = [1 0 0 0 0 0]>0;  
-    case 2
-        % Larch - deciduous
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];  
-        cc=length(Ccrown);%% Crown area
-        II = [0 1 0 0 0 0]>0;  
-    case 3
-        % Grass C3
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [1 0 0 0 0 0]>0;  
-    case 4
-        % Shrub dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.1; Ccrown = [0.9];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 1 0 0]>0;  
-    case 5
-        % broadleaf evergreen vegetation dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 0 1 0]>0;  
-    case 6
-        % broadleaf deciduous vegetation dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 0 0 1]>0;  
-    case 7
-        % Rock or Glaciers
-        Cwat = 0; Curb = 0.0 ; Crock = 1.0;
-        Cbare = 0.0; Ccrown = [0.0];
-        cc=length(Ccrown);%% Crown area
-        II = [ 0 0 0 1 0 0]>0;  
-
-  
-    otherwise
-        disp('INDEX FOR SOIL VEGETATION PARAMETER INCONSISTENT')
-        return
-end
-
-zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
 
 %% SOIL 
 %==========================================================================
 % Vector is divided by 100 to put the numbers within 0-1
 % Original PSAN, PCLA and PORG come with values between 0-100, g/100g
 %==========================================================================
-PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
-PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
-PORG=reshape(PORG,num_cell,1)/100; Porg= PORG(ij); % Soil organic content at pixel ij
-
-ms=10 ; %% 11 ; 
-SOIL_TH=reshape(SOIL_TH,num_cell,1);
-ms_max = 10; %% Number of soil layers
-
-%% GLACIERS
-%%% DEBRIS
-% INIT_COND_v2 has md_max parameter
-% Do not delete this code
-DEB_MAP=reshape(DEB_MAP,num_cell,1);
-md_max = 10; %% % Number of debris layers
-
-%% SNOW
-%%% Initial snow depth
-SNOWD=reshape(SNOWD,num_cell,1);
-
-% Initial snow albedo
-if ~exist('SNOWALB','var')
-    SNOWALB = SNOWD;
-    SNOWALB(SNOWD>0) = 0.6;
-else 
-    SNOWALB=reshape(SNOWALB,num_cell,1);
-end 
-
-% Debugger
-% disp(strcat('Before INIT_COND_V2 caller',num2str(size(Ca,2))))
+Psan = PSAN(ij); % Soil sand content at pixel ij
+Pcla = PCLA(ij); % Soil clay content at pixel ij
+Porg= PORG(ij); % Soil organic content at pixel ij
 
 %% SAVING INITIAL CONDITIONS AND PARAMETERS 
 %==========================================================================
 % In MultiPoint analysis INIT_COND_Tiber_MultiPoint.mat is created.
 % This can cause problems with the initial conditions. Specially with Ca.
+% INIT_COND_v2 depends on the Land Cover. Here it changes the initial
+% condition 
 %==========================================================================
 % (run this only once in MultiPoint model!)
 %if exist(out, 'file') == 2
 %load(out);
 %else
-if topo == 1
-INIT_COND_v3(num_cell,m_cell,n_cell,...
-   cc_max,ms_max,md_max,...
-   MASKn,GLH,Ca,SNOWD,SNOWALB,out, II, ij);
-load(out);
-else 
-INIT_COND_v2(num_cell,m_cell,n_cell,...
-   cc_max,ms_max,md_max,...
-   MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
-load(out);
-end
-%end
+
+
 
 %% RUN MODEL
 %==========================================================================
 % PARAM_IC: Define parameter file
 % MAIN_FRAME: Contains the model
 %==========================================================================
+
 PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint.m');
 MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
 
@@ -573,7 +772,7 @@ MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this li
 %==========================================================================
 % post-compute sublimation from ESN
 SSN = ESN.*(Ts<0);
-ET(ET < 0) = 0; 
+%ET(ET < 0) = 0; 
 
 %% Output manager
 %==========================================================================
@@ -631,7 +830,7 @@ writetable(Outputs_t, strcat(outlocation,id_location,'_daily_results.txt'))
 end 
 
 
-
+end 
 
 %% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================

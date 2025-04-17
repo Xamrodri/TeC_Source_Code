@@ -16,9 +16,9 @@
 %==========================================================================
 
 
+%% As a Function 
+function result=run_Point_Pro(Point, POI)
 
-%% Clear all
-clc; clear all;
 
 %% Directories
 folder_path = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/'; % Put here the path of where you downloaded the repository
@@ -40,7 +40,7 @@ Outlet_names:
 %}
 %==========================================================================
 
-Point = "VelinoCluster2";
+%Point = "VelinoCluster96";
 
 SITE = ["Velino"]; 
 FORCING = "ERA5Land";
@@ -140,8 +140,6 @@ DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 
-imagesc(PSAN)
-
 % Precipitation vertical gradient
 % Pmod_S = MASK;
 % rate = Pmod/(Z_max-Z_min);
@@ -181,43 +179,31 @@ else
     Afirn = DTM.*0 + 0.28;   
 end
 
-%% POIs
-POI = readtable(strcat(folder_path,'3_PointScale_version/3_Inputs/2_Apennine/Velino_MultiPoints.txt')); %import table with points info
-[POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
-
-Names = string(POI.Name);
 
 
 %% FOR LOOP for locations
 %Loc=1
+Names = string(POI.Name);
 loc = find(Point == Names)  
 
-%% Get location for POI
-%==========================================================================
-%{
-yllcorner and xllcorner represent the bottom corner of the original DEM
-before flipup it which was set in the preparation file. 
-DTM is flipped from the preparation file
-Check: imagesc(DTM)
-Consider that in matlab the cell (1,1) in the the upper left corner and
-the (n,m) cell is the the bottom right corner. 
-%}
-%==========================================================================
-id_location = char(string(POI.Name(loc))); %id
-y_coord = POI.UTM_Y(loc);
-x_coord = POI.UTM_X(loc);
+%% Definitions of site
+%% Crowns
+cc = POI.NCrown(loc); 
+II = cell2mat(POI.II(loc));
+Cwat = POI.Cwat(loc); 
+Curb = POI.Curb(loc); 
+Crock = POI.Crock(loc);
+Cbare = POI.Cbare(loc);
+Ccrown = cell2mat(POI.Ccrown(loc));
+zatm = POI.zatm(loc);
+id_location = string(POI.Name(loc));
+cc_max = POI.cc_max(loc);
 
-pixelX = floor((x_coord - xllcorner) / cellsize) + 1;
-pixelY = floor((y_coord - yllcorner) / cellsize) + 1;
-
-%ij = POI.idx(loc);
-ij = sub2ind(size(DTM),pixelX,pixelY); % Location
-[i, j] = ind2sub(size(DTM), ij); % Location
-
-Zbas = DTM(j,i); % Altitude
+%% Locations
+Zbas = POI.Zbas(loc)
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
-
+ij = POI.ij(loc);
 
 
 %% FORCING
@@ -366,9 +352,8 @@ num_cell=numel(DTM);
 %MASK = MASK.*0+1;
 MASKn=reshape(MASK,num_cell,1);
 
-
 if topo == 1
-    
+    %load topography data and narrow down to period 
     Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_ShF.mat']); % ShF matrix created during pre-processing step
 
     Par_time = Topo_data.Par_time;
@@ -447,60 +432,7 @@ Classes in T&C:
 %==========================================================================
 
 ksv=reshape(VEG_CODE,num_cell,1);
-
-%% LAND COVER PARTITION
-cc_max = 1; %% one vegetation types
-switch ksv(ij)
-    case 1
-        % Fir - evergreen
-        Cwat = 1.0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [0.0];
-        cc=length(Ccrown); %% Crown area
-        II = [1 0 0 0 0 0]>0;  
-    case 2
-        % Larch - deciduous
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];  
-        cc=length(Ccrown);%% Crown area
-        II = [0 1 0 0 0 0]>0;  
-    case 3
-        % Grass C3
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [1 0 0 0 0 0]>0;  
-    case 4
-        % Shrub dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.1; Ccrown = [0.9];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 1 0 0]>0;  
-    case 5
-        % broadleaf evergreen vegetation dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 0 1 0]>0;  
-    case 6
-        % broadleaf deciduous vegetation dec.
-        Cwat = 0; Curb = 0.0 ; Crock = 0.0;
-        Cbare = 0.0; Ccrown = [1.0];
-        cc=length(Ccrown);%% Crown area
-        II = [0 0 0 0 0 1]>0;  
-    case 7
-        % Rock or Glaciers
-        Cwat = 0; Curb = 0.0 ; Crock = 1.0;
-        Cbare = 0.0; Ccrown = [0.0];
-        cc=length(Ccrown);%% Crown area
-        II = [ 0 0 0 1 0 0]>0;  
-
-  
-    otherwise
-        disp('INDEX FOR SOIL VEGETATION PARAMETER INCONSISTENT')
-        return
-end
-
-zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
+imagesc(VEG_CODE)
 
 %% SOIL 
 %==========================================================================
@@ -646,3 +578,5 @@ imagesc(DEM);
 figure;
 imagesc(DEM_resampled);
 %}
+
+end
