@@ -307,7 +307,7 @@ CcrownFIX = Ccrown;
 q_runon=zeros(NN,1); %%[mm/h]
 Qi_in=zeros(NN,ms); %%[mm/h]
 %%%%%%%%%%%%%%%%%%%%%%%%%
-tic ;
+
 CK1=zeros(NN,1);  CK2=zeros(NN,1);
 %profile on
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -368,8 +368,11 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i=2:NN    
     %%%%Displaying iteration in the command window    
-    if  (mod(i,1000) == 0) || (i == 2)
-        disp('Iter:'); disp(i);
+    if  i == 2
+        %disp('Iter:'); disp(i);
+        if i == 2 | i == NN/2
+        disp(['Temporal run, in ' char(string(i))])
+        end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     pdind = [max(1,i-24):i-1]; %% previous day indexes
@@ -711,14 +714,7 @@ end  %End of iteration
 %==========================================================================
 % CHECKS
 %==========================================================================
-%close(bau)
-Computational_Time =toc;
-%profile off
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp('COMPUTATIONAL TIME [h] ')
-disp(Computational_Time/3600)
-disp(' COMPUTATIONAL TIME [ms/cycle] ')
-disp(1000*Computational_Time/NN)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %PROF1 = profile('info');
 %profile('status')

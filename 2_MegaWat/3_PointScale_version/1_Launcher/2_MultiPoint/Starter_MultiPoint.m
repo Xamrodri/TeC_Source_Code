@@ -30,6 +30,14 @@ SITE = 'Velino'
 %% Main roots
 %root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
 root = 'C:/Users/mrodrigu/Desktop/19_ISTA/' %Personal computer
+folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
+
+
+%% Dependencies
+addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
+addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 %% Subfolders
 path_model = [root '1_TC/3_Model_Source/2_MegaWat/']
@@ -377,10 +385,37 @@ end
 
 
 %% Single point Launcher
-%run_Point_Pro(root, names(100), POI, ksv)
+run_Point_Pro(root, names(100), POI, ksv)
 
+
+%% Workers - Not needed for the cluster
+% Specify the desired number of workers
+numWorkers = 4; % Example: Set to 4 workers
+
+% Create a parallel pool with the specified number of workers
+poolobj = gcp('nocreate'); % Check if a pool already exists
+if isempty(poolobj)
+    parpool(numWorkers); % Create a new pool if one doesn't exist
+elseif poolobj.NumWorkers ~= numWorkers
+    % If a pool exists with a different size, delete it and create a new one
+    delete(poolobj);
+    parpool(numWorkers);
+end
+
+%% Computational time
+%Time counter
+tic;
 
 %% Parallel computing launch for the Model
-parfor k = 1:3
-run_Point_Pro(root, names(k), POI, ksv)
+parfor k = 98:99  % 3
+    try
+        run_Point_Pro(root, names(k), POI, ksv)
+    catch ME
+        warning('Error occurred on worker %d: %s', k, ME.message);       
+    end
 end
+%% Computational time
+Computational_Time =toc;
+disp('COMPUTATIONAL TIME PARFOR [h] ')
+disp(Computational_Time/3600)
+

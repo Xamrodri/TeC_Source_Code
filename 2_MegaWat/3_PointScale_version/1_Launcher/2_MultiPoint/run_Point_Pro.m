@@ -21,7 +21,8 @@ Code explanation:
 %==========================================================================
 
 %% Debugger
-%Point = "VelinoCluster96";
+%Point = "VelinoCluster99";
+
 
 %% As a Function 
 function result=run_Point_Pro(root, Point, POI, ksv)
@@ -58,8 +59,8 @@ DeltaGMT= 1; % for Italy
 % Set
 %==========================================================================
 
-date_start =  ["01-Jan-2008 01:00:00"]; % Starting point of the simulation
-date_end =  ["30-Dec-2008 23:00:00"]; % Last timestep of the simulation
+date_start =  ["01-Jan-2000 01:00:00"]; % Starting point of the simulation
+date_end =  ["30-Dec-2010 23:00:00"]; % Last timestep of the simulation
 
 %% MODEL PARAMETERS
 
@@ -116,11 +117,7 @@ if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation))
 % Saving initial conditions of the model
 out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
 
-%% Dependencies
-addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
-addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
+
 
 %% Load DEM and geographical information
 %==========================================================================
@@ -209,10 +206,29 @@ ij = POI.ij(loc);
 %==========================================================================
 % ERA5
 %==========================================================================
-forc_file = strcat(forc_path,'Forcing_ERA5_Land_',SITE,'_2008_corr_all.mat'); % Put here the path of where you downloaded the repository
+
+% Years needed
+years_forc = year(date_start):year(date_end);
+forc_opened = struct(); 
+
+%% Extraction of forcing data
+for yy = years_forc
+
+forc_file= [forc_path 'Forcing_ERA5_Land_' char(SITE) '_' char(string(yy)) '_corr_all.mat']; % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
 
-forc = forc_f.(Point);
+fieldName = ['year_', char(string(yy))];
+forc_opened.(fieldName) = forc_f.(Point);
+
+end
+
+%% Combination of data into a single table
+% First, extract all the tables from the struct into a cell array
+forc_Array = struct2cell(forc_opened);
+
+% Now, use vertcat to combine all the tables in the cell array
+forc = vertcat(forc_Array{:});
+%forc = forc_f.(Point);
 
 Date_all=forc.Date; 
 
