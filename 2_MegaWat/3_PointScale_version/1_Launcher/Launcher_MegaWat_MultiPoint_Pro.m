@@ -40,7 +40,7 @@ Outlet_names:
 %}
 %==========================================================================
 
-Point = "VelinoCluster2";
+Point = "VelinoCluster95";
 
 SITE = ["Velino"]; 
 FORCING = "ERA5Land";
@@ -139,8 +139,6 @@ DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
-
-imagesc(PSAN)
 
 % Precipitation vertical gradient
 % Pmod_S = MASK;
@@ -292,7 +290,7 @@ NN= height(forcing);%%% time Step
 
 % Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
-zatm_surface = [18 18 2 2 18 18];
+zatm_surface = [18 18 2 2 18 18 2];
 zatm_hourly_on = 0;
 
 %% Precipitation
@@ -447,16 +445,17 @@ Classes in T&C:
 %==========================================================================
 
 ksv=reshape(VEG_CODE,num_cell,1);
+imagesc(VEG_CODE)
 
 %% LAND COVER PARTITION
 cc_max = 1; %% one vegetation types
 switch ksv(ij)
     case 1
         % Fir - evergreen
-        Cwat = 1.0; Curb = 0.0 ; Crock = 0.0;
+        Cwat = 0.0; Curb = 0.0 ; Crock = 1.0;
         Cbare = 0.0; Ccrown = [0.0];
         cc=length(Ccrown); %% Crown area
-        II = [1 0 0 0 0 0]>0;  
+        II = [1 0 0 0 0 0 0]>0;  
     case 2
         % Larch - deciduous
         Cwat = 0; Curb = 0.0 ; Crock = 0.0;
@@ -564,8 +563,8 @@ end
 % PARAM_IC: Define parameter file
 % MAIN_FRAME: Contains the model
 %==========================================================================
-PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint.m');
-MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
+PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
+MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
 %% Post-compute calculations
 %==========================================================================

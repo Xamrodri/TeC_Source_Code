@@ -10,24 +10,31 @@
 %% Debugger
 %disp(strcat('Initial MAIN_FRAME:',num2str(size(Ca,2))))
 
+%% Variables
+%==========================================================================
+%{
+Variables:
+    j: time dt = 1 day 
+    i: time dt = 1h
+    ms: soil layer
+    cc: Crown Area number
+    NN: time step
+%}
+%==========================================================================
 
-%%% j time dt = 1 day 
-%%% i time dt = 1h
-%%% ms soil layer
-%%% cc Crown Area number
-%%% NN time step
 dtd = 1; %%Time step [day]
 dth = dt/3600; %% Time step [hour]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-V=zeros(NN,ms); 
-O=zeros(NN,ms);
-Qi_out=zeros(NN,ms); % Outgoing Lateral subsurface flow
-WTR=zeros(NN,ms); % Water flow due to water table rising
-POT=zeros(NN,ms); % Soil water potential
-Tdp=zeros(NN,ms); % Soil Temperature of the layer
+V=zeros(NN,ms);        % Volume of water stored in the soil layer
+O=zeros(NN,ms);        % Soil moisture
+Qi_out=zeros(NN,ms);   % Outgoing Lateral subsurface flow
+WTR=zeros(NN,ms);      % Water flow due to water table rising
+POT=zeros(NN,ms);      % Soil water potential
+Tdp=zeros(NN,ms);      % Soil Temperature of the layer
 %Sdp=zeros(NN,ms);
 Vice=zeros(NN,ms);
-Oice=zeros(NN,ms);
+Oice=zeros(NN,ms);     % Water content that is frozen
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 OF=zeros(NN,1); OS=zeros(NN,1);
@@ -115,8 +122,8 @@ SIF_H=zeros(NN,cc_max);SIF_L=zeros(NN,cc_max);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Variables for Carbon processing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-NCP = 8;               % Number of Carbon Pool
-NNd = ceil(NN/24)+1;   % Daily time step number
+NCP = 8;                   % Number of Carbon Pool
+NNd = ceil(NN/24);         % Daily time step number
 
 LAI_L=zeros(NNd,cc_max);   % Leaf area index - low vegetation
 B_L=zeros(NNd,cc_max,NCP); % Carbon pool biomass
@@ -276,15 +283,11 @@ for i=1:cc
     %%%%%%%% Vegetation Optical Parameter
     [PFT_opt_H(i)]=Veg_Optical_Parameter(OPT_PROP_H(i));
     [PFT_opt_L(i)]=Veg_Optical_Parameter(OPT_PROP_L(i));
-end
 
-for i=1:cc
     [Stoich_H(i)]=Veg_Stoichiometric_Parameter(Nl_H(i));
     [ParEx_H(i)]=Exudation_Parameter(0);
     [Mpar_H(i)]=Vegetation_Management_Parameter;
-end
 
-for i=1:cc
     [Stoich_L(i)]=Veg_Stoichiometric_Parameter(Nl_L(i));
     [ParEx_L(i)]=Exudation_Parameter(0);
     [Mpar_L(i)]=Vegetation_Management_Parameter;
@@ -363,25 +366,32 @@ end
 %% Debugger
 %disp(strcat('MAIN_FRAME, Before iter:',num2str(size(Ca,2))))
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%% Iterations for each time step
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Iterations for each time step
+%==========================================================================
+% The iterations begin at hour 1. 
+% In hour 0 of the first iteration the codes does not run the for loop
+%==========================================================================
 for i=2:NN    
-    %%%%Displaying iteration in the command window    
-    if  i == 2
-        %disp('Iter:'); disp(i);
-        if i == 2 | i == NN/2
-        disp(['Temporal run, in ' char(string(i))])
-        end
-    end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    pdind = [max(1,i-24):i-1]; %% previous day indexes
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%% Model calculations
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    if (Datam(i,4)==1) % Condition on date
+    %% Displaying iteration in the command window    
+    if  i == 2
+    disp(['Starting iterations'])
+    end
+    if  i == NN/2
+    disp(['Half way'])
+    end
+    
+    %% previous day indexes
+    pdind = [max(1,i-24):i-1];
+    
+    %% Model calculations
+    %======================================================================
+    % Condition to initiate the new day. 
+    % The new day is defined when Datam(i,4)==0.
+    % Forcing go from hour 0 to hour 23.
+    %======================================================================
+    if (Datam(i,4)==0) 
+        
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         j=j+1; [jDay(j)]= JULIAN_DAY(Datam(i,:));
         [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)] = SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
@@ -435,16 +445,19 @@ for i=2:NN
             %RexmyI(j,:)=0.0;
             Bam=NaN; Bem=NaN;
         end %%% End Biogeochemical module 
-        
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%%%%%%% Calculations per Crown areas 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-        %%% projected area n-coordinate
-        for cc=1:length(Ccrown)
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%% High vegetation for Crown areas
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+        %% CALCULATIONS PER CROWN AREAS 
+        %==================================================================
+        % 1) High vegetation
+        % 2) Low vegetation
+        %==================================================================
+        for cc=1:length(Ccrown)           
+            
+
+
+            %% High vegetation for Crown areas  
+            %==============================================================
             if (ZR95_H(cc) > 0) || (ZRmax_H(cc) > 0)
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -461,6 +474,8 @@ for i=2:NN
                     ParEx_H(cc),ExEM,Bam,Bem,Mpar_H(cc),TBio_Ht(j-1,cc),OPT_EnvLimitGrowth,OPT_VCA,OPT_VD,OPT_SoilBiogeochemistry);
                 %%%%%%%%%%%%%%%%%% End VEGGIE_UNIT %%%%%%%%%%%%%%%%%%%%%%%%
 
+
+               
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%% Plant_Export
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -470,6 +485,8 @@ for i=2:NN
                     Nreserve_H(j,cc),Preserve_H(j,cc),Kreserve_H(j,cc),rNc_H(j,cc),rPc_H(j,cc),rKc_H(j,cc),ManIH(cc),OPT_SoilBiogeochemistry);
                 %%%%%%%%%%%%%%%% End Plant_Export %%%%%%%%%%%%%%%%%%%%%%%%%
                 
+
+
                 %%%%%%%%%%%%%%%%%%%%%% Change in height SAI and Ccrown
                 SAI_H(j,cc) =SAI_H(j-1,cc);
                 if aSE_H(cc) == 2
@@ -480,21 +497,28 @@ for i=2:NN
                     %%%%
                 else
                     hc_H(j,cc)= hc_H(j-1,cc); %%%[m]
+                    
+                    
                     if OPT_VCA == 1
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         %%%%%%%%%% Vegetation_Structural_Attributes
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        
                         [Ccrown_t(j,cc),hc_H(j,cc),SAI_H(j,cc),BA_H(j,cc),Tden_H(j,cc),AgePl_H(j,cc),TBio_Ht(j,cc)]=Vegetation_Structural_Attributes(dtd,...
                             Ccrown_t(j-1,cc),B_H(j,cc,:),fab_H(cc),Tden_H(j-1,cc),AgePl_H(j-1,cc),OPT_ALLOME);
-                        %%%% End of Vegetation_Structural_Attributes
-
+                        
+                        %% End of Vegetation_Structural_Attributes
+                        % Here if Ccrown_t = 0 it multiplies by zero 
+                        % parameters Nreserve_H, Preserve_H, Kreserve_H
                         Ccrown(cc) = CcrownFIX(cc)*Ccrown_t(j,cc);
                         B_H(j,cc,:)= B_H(j,cc,:)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                         Nreserve_H(j,cc)=Nreserve_H(j,cc)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                         Preserve_H(j,cc)=Preserve_H(j,cc)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                         Kreserve_H(j,cc)=Kreserve_H(j,cc)*Ccrown_t(j-1,cc)/Ccrown_t(j,cc);
                     end
+
                 end
+
                 if OPT_DROOT == 1 
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     %%%%%%%%% Root_Depth_Dynamics %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -504,7 +528,10 @@ for i=2:NN
                     %%%%%%%%%%%% End Root_Depth_Dynamics
                 end
                 ZR95_Ht(j,cc)=ZR95_H(cc); 
-                
+             
+
+            
+
             else
                 %%% variables are set zero
                 LAI_H(j,cc)=0;B_H(j,cc,:)=0;NPP_H(j,cc)=0;ANPP_H(j,cc)=0;Rg_H(j,cc)=0;RA_H(j,cc)=0;Rms_H(j,cc)=0;
@@ -518,12 +545,15 @@ for i=2:NN
                 TexC_H(j,cc)=0;TexN_H(j,cc)=0;TexP_H(j,cc)=0;TexK_H(j,cc)=0;TNIT_H(j,cc)=0;TPHO_H(j,cc)=0;TPOT_H(j,cc)=0;
                 ISOIL_H(j,cc,:)=0; NuLit_H(j,cc,:)=0;
             
+            %% Debugger
+            %disp([num2str(size(LAI_H,1)) '-' num2str(Datam(i,:))])
             end
             
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%%%%%% Low vegetation for Crown areas
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+                       
+            %% Low vegetation for Crown areas
+            %==============================================================
+            
             %%% ZR95_L: Root depth 95 percentile - low vegetation
             %%% ZR_max_L: Maximum root depth - low vegetation
             if (ZR95_L(cc) > 0) || (ZRmax_L(cc) > 0)
@@ -607,10 +637,13 @@ for i=2:NN
             Check_Land_Cover_Fractions(Crock,Curb,Cwat,Cbare,Ccrown);
         end
     end %End of iteration  
+    
 
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%% Oil Palm option
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    %% Oil Palm option
+    %======================================================================
+    %
+    %======================================================================
     if OPT_VCA == 1
         if((OPT_ALLOME == 1)&& (ZR95_L(2))>0) %%% Ad hoc solution for oil palm
             Ccrown_t(j,2) = 1-Ccrown_t(j,1);  % understory of Oil Palm
@@ -644,6 +677,7 @@ for i=2:NN
     % Debugging
     % disp(size(Ca))
     
+
     %% HYDROLOGIC UNIT
     %======================================================================
     %
@@ -740,7 +774,7 @@ disp(Ck);
 disp(mean(DQ));
 % T_H, T_L  EG, EIn_urb, EIn_rock, [mm/h]
 
-%% Evaporation check
+%% Evaporation calculation
 %==========================================================================
 % QE: Latent heat [W m-2]
 % Laten: Latent heat of vaporization in [J kg-1]
@@ -765,7 +799,7 @@ Laten= 1000*(2501.3 - 2.361*(Ta));
 ETen = (QE)*1000*3600./(reshape(Laten,size(QE))*1000);
 
 % Evaporation from model components
-ET =  sum(T_H+EIn_H,2) + sum(T_L+EIn_L,2) +  EG +  ELitter + ESN + ESN_In + EWAT +  EICE+ EIn_urb + EIn_rock ;
+ET =  sum(T_H + EIn_H, 2) + sum(T_L + EIn_L, 2)  +  ELitter + ESN + ESN_In + EWAT +  EICE+ EIn_urb + EIn_rock +  EG ;
 
 %% Carbon balance check
 %==========================================================================

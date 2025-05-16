@@ -21,7 +21,10 @@ Code explanation:
 clc; clear all;
 
 %% Names of cacthment
-SITE = 'Velino'
+SITE = 'Velino';
+
+%Name of the folder to save results and not overwrite previous runs
+run_folder = 'Run_5';
 
 %% DIRECTORY
 %==========================================================================
@@ -29,9 +32,8 @@ SITE = 'Velino'
 %==========================================================================
 %% Main roots
 %root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
-root = 'C:/Users/mrodrigu/Desktop/19_ISTA/' %Personal computer
+root = 'C:/Users/mrodrigu/Desktop/19_ISTA/'; %Personal computer
 folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
-
 
 %% Dependencies
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
@@ -40,7 +42,7 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/2_Forcing'])); % Where is lo
 addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 %% Subfolders
-path_model = [root '1_TC/3_Model_Source/2_MegaWat/']
+path_model = [root '1_TC/3_Model_Source/2_MegaWat/'];
 
 % Location of the launcher
 folder_launcher = [path_model '3_PointScale_version/1_Launcher/Experimental/']; % Put here the path of where you downloaded the repository
@@ -279,14 +281,15 @@ for k = 1:height(POI)
         %         7) Port areas (>0.05%)   
         %         8) Airports (0.1%)
 
-        POI.Cwat(k) = 0; POI.Curb(k) = 0.8 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.1;
-        POI.Ccrown(k) = {[0.1]};
+        POI.Cwat(k) = 0.0; POI.Curb(k) = 1.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        POI.Ccrown(k) = {[0.0]};
 
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
         POI.VEG_CLASS(k) = 7; 
-
+        
+        %%CHECK  WHY IS NEEDED TO SET THE VEGETATION PARAMTERS
         %categories   [fir     larch    grass  shrub  BLever    BLdec  NoVeg]
-        POI.II(k) =  {[0       0        1      0      0         0      0    ]>0};  
+        POI.II(k) =  {[1       0        0      0      0         0      0    ]>0};  
         
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
@@ -380,16 +383,16 @@ else
 POI.zatm(k) = 2;
 end
 
-
 end
 
 
 %% Single point Launcher
-run_Point_Pro(root, names(100), POI, ksv)
+run_Point_Pro(root, run_folder, names(101), POI, ksv);
 
 
 %% Workers - Not needed for the cluster
 % Specify the desired number of workers
+%{
 numWorkers = 4; % Example: Set to 4 workers
 
 % Create a parallel pool with the specified number of workers
@@ -402,12 +405,13 @@ elseif poolobj.NumWorkers ~= numWorkers
     parpool(numWorkers);
 end
 
+
 %% Computational time
 %Time counter
 tic;
 
 %% Parallel computing launch for the Model
-parfor k = 98:99  % 3
+parfor k = 1:length(names)  % 3
     try
         run_Point_Pro(root, names(k), POI, ksv)
     catch ME
@@ -419,3 +423,4 @@ Computational_Time =toc;
 disp('COMPUTATIONAL TIME PARFOR [h] ')
 disp(Computational_Time/3600)
 
+%}

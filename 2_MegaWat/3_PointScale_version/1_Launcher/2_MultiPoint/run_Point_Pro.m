@@ -21,11 +21,11 @@ Code explanation:
 %==========================================================================
 
 %% Debugger
-%Point = "VelinoCluster99";
+%Point = "VelinoCluster95";
 
 
 %% As a Function 
-function result=run_Point_Pro(root, Point, POI, ksv)
+function result=run_Point_Pro(root, run_folder, Point, POI, ksv)
 
 
 %% Directories
@@ -59,8 +59,8 @@ DeltaGMT= 1; % for Italy
 % Set
 %==========================================================================
 
-date_start =  ["01-Jan-2000 01:00:00"]; % Starting point of the simulation
-date_end =  ["30-Dec-2010 23:00:00"]; % Last timestep of the simulation
+date_start =  ["01-Jan-2000 00:00:00"]; % Starting point of the simulation
+date_end =  ["31-Dec-2000 23:00:00"]; % Last timestep of the simulation
 
 %% MODEL PARAMETERS
 
@@ -111,8 +111,16 @@ hSTL = 0.003; %m
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 %% Create the directory where model outputs will be stored
-outlocation = [folder_path,'3_PointScale_version/4_Outputs/'];
-if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
+outlocation = [folder_path,'3_PointScale_version/4_Outputs/' run_folder '/'];
+
+if ~exist(outlocation, 'dir'); 
+mkdir(outlocation); 
+    mkdir([outlocation '1_Hourly/']); 
+    mkdir([outlocation '2_Daily/']); 
+    mkdir([outlocation '3_Params/']); 
+    mkdir([outlocation '4_INIT_COND/']); 
+addpath(genpath(outlocation)); 
+end
 
 % Saving initial conditions of the model
 out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
@@ -127,7 +135,7 @@ out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'
 %==========================================================================
 dtm_file = ["dtm_Velino_250m.mat"]; 
 res = 250; % simulation resolution [m]
-disp(strcat('Model resolution: ',num2str(res)))
+disp(strcat('Model resolution: ',num2str(res)));
 dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE,'/',dtm_file);
 
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
@@ -154,8 +162,8 @@ topo = 1;
 fn_alb_elev = strcat(SITE, '_Albedo_vs_elev.mat');
 
 if exist(fn_alb_elev,'file')>0
-disp('Using measured glacier albedo')
-load([SITE '_Albedo_vs_elev'])
+disp('Using measured glacier albedo');
+load([SITE '_Albedo_vs_elev']);
 
 Afirn = DTM.*0 + 0.28;
 dem_inc = DTM <= Alb_el_tt{1,2};
@@ -238,10 +246,10 @@ x2=find(date_end == Date_all,1);
 
 
 %% Displaying modelling parameters
-disp(strcat("Site selected: ", SITE))
-disp(['Forcing selected: ' char(FORCING)])
-disp(['Running T&C for pixel: ' char(id_location)])
-disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)])
+disp(strcat("Site selected: ", SITE));
+disp(['Forcing selected: ' char(FORCING)]);
+disp(['Running T&C for pixel: ' char(id_location)]);
+disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)]);
 
 %% Fetch time and do date handling
 Date = Date_all(x1:x2);
@@ -344,11 +352,11 @@ alpha = 0; % switch for albedo
 
 %% Vapor pressure - Dew Point temperature
 %esat/ea/Ds/Tdew
-esat=double(forc.es);   % Vapour pressure at saturation (Pa)
-ea=double(forc.ea);     % Vapour pressure (Pa)
-Ds= esat - ea;  % Vapor Pressure Deficit (Pa)
-Ds(Ds<0)=0; 
-Tdew= double(forc.Dew_Point_Temp);
+esat = double(forc.es);   % Vapour pressure at saturation (Pa)
+ea = double(forc.ea);     % Vapour pressure (Pa)
+Ds = esat - ea;  % Vapor Pressure Deficit (Pa)
+Ds(Ds<0) = 0; 
+Tdew = double(forc.Dew_Point_Temp);
 
 %a=17.27; b=237.3;
 %clear a b xr;
@@ -437,9 +445,16 @@ end
 % Vector is divided by 100 to put the numbers within 0-1
 % Original PSAN, PCLA and PORG come with values between 0-100, g/100g
 %==========================================================================
+%imagesc(PSAN)
+%imagesc(PCLA)
+
 PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
 PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
 PORG=reshape(PORG,num_cell,1)/100; Porg= PORG(ij); % Soil organic content at pixel ij
+
+%Psan = 0.244
+%Pcla = 0.334
+%Porg = 0.0608
 
 ms=10 ; %% 11 ; 
 SOIL_TH=reshape(SOIL_TH,num_cell,1);
@@ -495,6 +510,7 @@ end
 PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
+
 %% Post-compute calculations
 %==========================================================================
 % Negative evapotranspiration (ET) is dew
@@ -526,11 +542,22 @@ Param_t = renamevars(Param_t,{'OriginalVariableNames','Var1'},{'Parameter','Valu
 writetable(Param_t, strcat(outlocation, '3_Params/',id_location,'_param.txt') )
 
 % Here I manually choose the T&C outputs I want to save at each point.
-Outputs_t = table(Date,EICE,ESN,SND,SWE,...
-Ta,Ws,U,N,SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno,ALB,Smelt,Imelt,SSN,ICE,ET, ETen ,QE,ros,'VariableNames',{ ...
-'Date','EICE','ESN','SND','SWE',...
-'Ta','Ws','U','N','Rsw',...
-'Pre','Pr','Pr_sno','Albedo','Smelt','Imelt','SSN','ICE','ET','ETen','QE','ros'});
+Outputs_t = table(Date, ...
+    EICE,ESN,SND,SWE,...
+    Ta,Ws,U,N, ...
+    SAD1+SAD2+SAB1+SAB2,Pre,Pr,Pr_sno, ...
+    ALB,Smelt,Imelt,SSN, ...
+    ICE,ET, ETen ,QE, ...
+    ros, NDVI, T_H, T_L, ...
+    O, FROCK, ...
+'VariableNames',{'Date', ...
+    'EICE','ESN','SND','SWE',...
+    'Ta','Ws','U','N', ...
+    'Rsw', 'Pre','Pr','Pr_sno', ...
+    'Albedo','Smelt','Imelt','SSN', ...
+    'ICE','ET','ETen','QE', ...
+    'ros', 'NDVI', 'T_H', 'T_L', ...
+    'O_mois','FROCK'});
 
 %% Hourly output
 writetable(Outputs_t, strcat(outlocation, '1_Hourly/',id_location,'_hourly_results.txt'))
@@ -542,22 +569,35 @@ if output_daily == 1
 
 Outputs_tt = table2timetable(Outputs_t); 
 
-Outputs_ds = retime(Outputs_tt,'daily',@nansum);
-Outputs_dm = retime(Outputs_tt,'daily',@nanmean);
-
+%% Mean of variables
+Outputs_dm = retime(Outputs_tt,'daily',@nanmean); % For average variables
+% Initial matrix set based on averages
 Outputs_d = Outputs_dm; 
 
+%% Some variables must be summed
+Outputs_ds = retime(Outputs_tt,'daily',@nansum); % For sum variables
+
+% Changing variables that must be summed in Outputs_d
 Outputs_d.Pr = Outputs_ds.Pr;
 Outputs_d.Pr_sno = Outputs_ds.Pr_sno;
 Outputs_d.ET = Outputs_ds.ET;
 Outputs_d.ETen = Outputs_ds.ETen;
+Outputs_d.T_H = Outputs_ds.T_H;
+Outputs_d.T_L = Outputs_ds.T_L;
+
+%% Adding daily outputs
+Outputs_d.LAI_H = LAI_H; % Leaf area index
+Outputs_d.LAI_L = LAI_L;
+
+Outputs_d.NPP_H = NPP_H; % Net primary production
+Outputs_d.NPP_L = NPP_L;
 
 Outputs_t = timetable2table(Outputs_d);
 
 % Exporting as .txt
 writetable(Outputs_t, strcat(outlocation, '2_Daily/',id_location,'_daily_results.txt'))
-end 
 
+end 
 
 
 
