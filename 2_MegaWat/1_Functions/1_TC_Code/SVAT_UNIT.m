@@ -494,6 +494,8 @@ else
                 Lpho;Vavail;Vavail_plant_H;Vavail_plant_L;WATtm1;ICEtm1;OPT_SoilTemp
                 }
             %}
+            %% DEBUGGER
+            %save(strcat('C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/Run_8/5_Env/','Check','.mat'))
 
             [Ts]=fzero(@Surface_Temperature,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
                 Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...

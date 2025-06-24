@@ -25,7 +25,7 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(root, run_folder, Point, POI, ksv)
+function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end)
 
 
 %% Directories
@@ -37,7 +37,7 @@ forc_path = [root '7_Forcing/2_Extractions_Point/3_Radiation_Partition/']; % Put
 %==========================================================================
 %{
 Sites:
-   Cinca_Mid
+   Cinca_Mido
    Tiber
    Velino
 Outlet_names:
@@ -53,16 +53,10 @@ FORCING = "ERA5Land";
 UTM_zone = 33; % for Italy
 DeltaGMT= 1; % for Italy
 
-
-%% Modelling period
-%==========================================================================
-% Set
-%==========================================================================
-
-date_start =  ["01-Jan-2000 00:00:00"]; % Starting point of the simulation
-date_end =  ["31-Dec-2000 23:00:00"]; % Last timestep of the simulation
-
 %% MODEL PARAMETERS
+%==========================================================================
+%
+%==========================================================================
 
 % Time step for the model
 dt=3600; % [s]
@@ -72,6 +66,7 @@ dth=1; % [h]
 % Hours or fraction before and after. Values obtained from the
 % Automatic_Radiation_Partition_I
 t_bef = 1.5; t_aft = -0.5;
+
 
 %% Pixel selection
 %==========================================================================
@@ -110,22 +105,9 @@ hSTL = 0.003; %m
 % Albedo scheme choice
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
-%% Create the directory where model outputs will be stored
-outlocation = [folder_path,'3_PointScale_version/4_Outputs/' run_folder '/'];
-
-if ~exist(outlocation, 'dir'); 
-mkdir(outlocation); 
-    mkdir([outlocation '1_Hourly/']); 
-    mkdir([outlocation '2_Daily/']); 
-    mkdir([outlocation '3_Params/']); 
-    mkdir([outlocation '4_INIT_COND/']); 
-addpath(genpath(outlocation)); 
-end
-
+%% Initial condition
 % Saving initial conditions of the model
 out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
-
-
 
 %% Load DEM and geographical information
 %==========================================================================
@@ -301,7 +283,10 @@ NN= height(forcing);%%% time Step
 
 % Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
-zatm_surface = [18 18 2 2 18 18];
+
+%categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
+zatm_surface = [18          18        2         2          2        18            18         NaN  ];
+
 zatm_hourly_on = 0;
 
 %% Precipitation
@@ -502,6 +487,9 @@ load(out);
 end
 %end
 
+%% Debugger
+%disp(Nreserve)
+
 %% RUN MODEL
 %==========================================================================
 % PARAM_IC: Define parameter file
@@ -509,7 +497,6 @@ end
 %==========================================================================
 PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
-
 
 %% Post-compute calculations
 %==========================================================================
@@ -560,7 +547,7 @@ Outputs_t = table(Date, ...
     'O_mois','FROCK'});
 
 %% Hourly output
-writetable(Outputs_t, strcat(outlocation, '1_Hourly/',id_location,'_hourly_results.txt'))
+%writetable(Outputs_t, strcat(outlocation, '1_Hourly/',id_location,'_hourly_results.txt'))
 
 %% Daily outputs
 % If daily outputs are activated
@@ -586,11 +573,13 @@ Outputs_d.T_H = Outputs_ds.T_H;
 Outputs_d.T_L = Outputs_ds.T_L;
 
 %% Adding daily outputs
-Outputs_d.LAI_H = LAI_H; % Leaf area index
-Outputs_d.LAI_L = LAI_L;
+Outputs_d.LAI_H = sum(LAI_H.*Ccrown,2); % Leaf area index
+Outputs_d.LAI_L = sum(LAI_L.*Ccrown,2);
+Outputs_d.LAI = Outputs_d.LAI_H+Outputs_d.LAI_L;
 
-Outputs_d.NPP_H = NPP_H; % Net primary production
-Outputs_d.NPP_L = NPP_L;
+Outputs_d.NPP_H = sum(NPP_H.*Ccrown,2); % Net primary production
+Outputs_d.NPP_L = sum(NPP_L.*Ccrown,2);
+Outputs_d.NPP = Outputs_d.NPP_H + Outputs_d.NPP_L;
 
 Outputs_t = timetable2table(Outputs_d);
 
@@ -599,7 +588,12 @@ writetable(Outputs_t, strcat(outlocation, '2_Daily/',id_location,'_daily_results
 
 end 
 
-
+%% Save of the environment
+% Here only for one point - For the snow station. More points can be
+% defined
+if strcmp(POI{POI.Name == Point,'Feature'}{1}, 'Snow_station')
+save(strcat(outlocation, '5_Env/Env_',id_location,'.mat'))
+end
 
 %% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================

@@ -199,8 +199,6 @@ ISOIL_L=zeros(NNd,cc_max,18);
 ManIH = zeros(cc_max,1);
 ManIL = zeros(cc_max,1);
 
-
-
 AgrHarNut =  zeros(NNd,3);
 
 %%%%%%%%%%%%%%%%%
