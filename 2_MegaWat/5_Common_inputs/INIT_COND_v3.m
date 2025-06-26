@@ -376,11 +376,11 @@ if ~isempty(find(II_vect(k,:)))
 % not assign any parameter of vegetation to that pixel and the next lines
 % are skipped. 
 
-%% AgeL: Leaf Age [days] 
+%% AgeL: Leaf Age [days] (FROM REFERENCE)
 % OLD categories   [fir    larch   grass  shrub  BLever    BLdec  NoVeg]
-% categories   [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-AgeL_class_H = [979         220       0         0          0        305           0          NaN];
-AgeL_class_L = [0           0         0         0          0        0             0          NaN];
+% categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
+AgeL_class_H = [979         0         0          0        0           0         0          0        305          80          0          NaN];
+AgeL_class_L = [0           0         0          0        0           0         160        644      0            89          0          NaN];
 
 AgeL_Htm1(ij_vect(k),1:length(valid)) = AgeL_class_H(valid);
 AgeL_Ltm1(ij_vect(k),1:length(valid)) = AgeL_class_L(valid);
@@ -392,10 +392,10 @@ AgeL_Ltm1(ij_vect(k),1:length(valid)) = AgeL_class_L(valid);
 %AgeL_Htm1(ksv==5,1)=305; 
 %AgeL_Htm1(ksv==6,1)=0; 
 
-%% AgeDL: Dead leaf Age [days]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-AgeDL_class_H = [0           0         0         0          0        0             0          NaN  ]; 
-AgeDL_class_L = [0           0         0         0          0        0             0          NaN  ]; 
+%% AgeDL: Dead leaf Age [days] (NO REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
+AgeDL_class_H = [0           0         0          0        0            0         0          0        0           0           0          NaN  ]; 
+AgeDL_class_L = [0           0         0          0        0            0         0          0        0           0           0          NaN  ]; 
 
 AgeDL_Htm1(ij_vect(k),1:length(valid)) = AgeDL_class_H(valid);
 AgeDL_Ltm1(ij_vect(k),1:length(valid)) = AgeDL_class_L(valid);
@@ -409,10 +409,10 @@ AgeDL_Ltm1(ij_vect(k),1:length(valid)) = AgeDL_class_L(valid);
 %AgeDL_Htm1(ksv==5,1)=0; 
 %AgeDL_Htm1(ksv==6,1)=0; 
 
-%% AgePl: Age of the forest stand or plantation [days]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-AgePl_class_H = [0           0         0         0          0        0             0          NaN  ]; 
-AgePl_class_L = [0           0         0         0          0        0             0          NaN  ]; 
+%% AgePl: Age of the forest stand or plantation [days] (NO REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+AgePl_class_H = [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
+AgePl_class_L = [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
 
 AgePl_Htm1(ij_vect(k),1:length(valid)) = AgePl_class_H(valid);
 AgePl_Ltm1(ij_vect(k),1:length(valid)) = AgePl_class_L(valid);
@@ -424,10 +424,10 @@ AgePl_Ltm1(ij_vect(k),1:length(valid)) = AgePl_class_L(valid);
 %AgePl_Htm1(ksv==5,1)=0;
 %AgePl_Htm1(ksv==6,1)=0;
 
-%% Bfac_week: Plant stress factor integrated at the weekly scale [0-1]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Bfac_class_H =  [0           0         0         0          0        0             0          NaN  ]; 
-Bfac_class_L =  [0           0         0         0          0        0             0          NaN  ]; 
+%% Bfac_week: Plant stress factor integrated at the weekly scale [0-1] (NO REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Bfac_class_H =  [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
+Bfac_class_L =  [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
 
 Bfac_weekHtm1(ij_vect(k),1:length(valid)) = Bfac_class_H(valid);
 Bfac_weekLtm1(ij_vect(k),1:length(valid)) = Bfac_class_L(valid);
@@ -439,10 +439,10 @@ Bfac_weekLtm1(ij_vect(k),1:length(valid)) = Bfac_class_L(valid);
 %Bfac_weekHtm1(ksv==5,1)=0;
 %Bfac_weekHtm1(ksv==6,1)=0;
 
-%% Ci_sun: CO2 sunlit leaf internal concentration [umolCO2/mol]
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Citm1_class_H =  [Ca(1)       Ca(1)     0         0          0        Ca(1)         Ca(1)      NaN  ]; 
-Citm1_class_L =  [0           0         Ca(1)     Ca(1)      Ca(1)    0             0          NaN  ]; 
+%% Ci_sun: CO2 sunlit leaf internal concentration [umolCO2/mol] (NO REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Citm1_class_H =  [Ca(1)       0         0          0        0           0         0          0        Ca(1)        Ca(1)      Ca(1)      NaN  ]; 
+Citm1_class_L =  [0           Ca(1)     Ca(1)      Ca(1)    Ca(1)       Ca(1)     Ca(1)      Ca(1)    0            0          0          NaN  ]; 
 
 Citm1_sunH(ij_vect(k),1:length(valid)) = Citm1_class_H(valid);
 Citm1_sunL(ij_vect(k),1:length(valid)) = Citm1_class_L(valid);
@@ -454,7 +454,7 @@ Citm1_sunL(ij_vect(k),1:length(valid)) = Citm1_class_L(valid);
 %Citm1_sunH(ksv==5,1)=Ca(1);  
 %Citm1_sunH(ksv==6,1)=Ca(1);  
 
-%% Ci_shd:  CO2 sunlit leaf internal concentration [umolCO2/mol]
+%% Ci_shd:  CO2 sunlit leaf internal concentration [umolCO2/mol] (NO REFERENCE)
 Citm1_shdH(ij_vect(k),1:length(valid)) = Citm1_class_H(valid);
 Citm1_shdL(ij_vect(k),1:length(valid)) = Citm1_class_L(valid);
 
@@ -465,10 +465,10 @@ Citm1_shdL(ij_vect(k),1:length(valid)) = Citm1_class_L(valid);
 %Citm1_shdH(ksv==5,1)=Ca(1); 
 %Citm1_shdH(ksv==6,1)=Ca(1); 
 
-%% dflo:  Days from leaf onset [days]
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-dflo_class_H =   [1           1         0         0          0        1             1          NaN  ]; 
-dflo_class_L =   [0           0         0         0          0        0             0          NaN  ]; 
+%% dflo:  Days from leaf onset [days] (FROM REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+dflo_class_H =   [1           0         0          0        0           0         0          0        1            102        0          NaN  ]; 
+dflo_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
 
 dflo_Htm1(ij_vect(k),1:length(valid)) = dflo_class_H(valid);
 dflo_Ltm1(ij_vect(k),1:length(valid)) = dflo_class_L(valid);
@@ -481,10 +481,10 @@ dflo_Ltm1(ij_vect(k),1:length(valid)) = dflo_class_L(valid);
 %dflo_Htm1(ksv==6,1)=1;   
 
 
-% e_rel: Relative Efficiency of the photosynthesis apparatus due to Age/Day-length
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-e_rel_class_H =  [1           1         0         0          0        1             1          NaN  ]; 
-e_rel_class_L =  [0           0         1         1          1        0             0          NaN  ]; 
+%% e_rel: Relative Efficiency of the photosynthesis apparatus due to Age/Day-length (FROM REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+e_rel_class_H =  [1           0         0           0       0           0         0          0        1            1          1          NaN  ]; 
+e_rel_class_L =  [0           1         1           1       1           1         1          1        0            1          1          NaN  ]; 
 
 e_rel_Htm1(ij_vect(k),1:length(valid)) = e_rel_class_H(valid);
 e_rel_Ltm1(ij_vect(k),1:length(valid)) = e_rel_class_L(valid);
@@ -497,10 +497,10 @@ e_rel_Ltm1(ij_vect(k),1:length(valid)) = e_rel_class_L(valid);
 %e_rel_Htm1(ksv==6,1)=1;   
 
 
-% e_relN:       Relative Efficiency of the photosynthesis apparatus due to N Limitations
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-e_relN_class_H =  [1           1         0         0          0        1             1          NaN  ]; 
-e_relN_class_L =  [0           0         1         1          1        0             0          NaN  ]; 
+%% e_relN:       Relative Efficiency of the photosynthesis apparatus due to N Limitations (NO REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+e_relN_class_H =  [1           0         0          0        0           0         0          0        1            0          1          NaN  ]; 
+e_relN_class_L =  [0           1         1          1        1           1         1          1        0            0          0          NaN  ]; 
 
 e_relN_Htm1(ij_vect(k),1:length(valid)) = e_relN_class_H(valid);
 e_relN_Ltm1(ij_vect(k),1:length(valid)) = e_relN_class_L(valid);
@@ -513,10 +513,10 @@ e_relN_Ltm1(ij_vect(k),1:length(valid)) = e_relN_class_L(valid);
 %e_relN_Htm1(ksv==6,1)=1;   
 
 
-%% FNC: Nitrogen Stress Factor for vegetation [0-1]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-FNC_class_H =   [1           1         0         0          0        1             1          NaN  ];
-FNC_class_L =   [0           0         1         1          1        0             0          NaN  ];
+%% FNC: Nitrogen Stress Factor for vegetation [0-1] (FROM REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+FNC_class_H =   [1           1         1          1        1           0         1          0        1            1          1          NaN  ];
+FNC_class_L =   [0           1         1          1        1           1         1          1        0            1          1          NaN  ];
 
 FNC_Htm1(ij_vect(k),1:length(valid)) = FNC_class_H(valid);
 FNC_Ltm1(ij_vect(k),1:length(valid)) = FNC_class_L(valid);
@@ -528,10 +528,10 @@ FNC_Ltm1(ij_vect(k),1:length(valid)) = FNC_class_L(valid);
 %FNC_Htm1(ksv==5,1)=1; 
 %FNC_Htm1(ksv==6,1)=1; 
 
-%% hc: Vegetation Height [m]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-hc_class_H =    [10          10        0         0          0        15            15         NaN  ]; 
-hc_class_L =    [0           0         0.1       0.1        0.5      0             0          NaN  ]; 
+%% hc: Vegetation Height [m] (FROM REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R      grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+hc_class_H =    [10          0         0          0        0            0         0          0.0      15           13.5       22         NaN  ]; 
+hc_class_L =    [0           0.15      0.15       0.15     0.15         0.1       0.15       0.5      0            0.1        0          NaN  ]; 
 
 hc_Htm1(ij_vect(k), 1:length(valid)) = hc_class_H(valid);
 hc_Ltm1(ij_vect(k), 1:length(valid)) = hc_class_L(valid);
@@ -543,10 +543,10 @@ hc_Ltm1(ij_vect(k), 1:length(valid)) = hc_class_L(valid);
 %hc_Htm1(ksv==5,1)=15; 
 %hc_Htm1(ksv==6,1)=15;         
 
-%% Kreserve: Mobile Reserve of Potassium in vegetation [gK/m2 PFT]
-% categories         [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Kreserve_class_H =   [1000        1000      1000      1000       1000     1000          1000       NaN  ]; 
-Kreserve_class_L =   [1000        1000      1000      1000       1000     1000          1000       NaN  ]; 
+%% Kreserve: Mobile Reserve of Potassium in vegetation [gK/m2 PFT] (FROM REFERENCE)
+% categories         [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Kreserve_class_H =   [1000        0         0          0        0           1000      1000       1000     1000         1000       1000       NaN  ]; 
+Kreserve_class_L =   [1000        1000      1000       1000     1000        1000      1000       1000     1000         1000       1000       NaN  ]; 
 
 Kreserve_Htm1(ij_vect(k),1:length(valid)) = Kreserve_class_H(valid);
 Kreserve_Ltm1(ij_vect(k),1:length(valid)) = Kreserve_class_L(valid);
@@ -558,10 +558,10 @@ Kreserve_Ltm1(ij_vect(k),1:length(valid)) = Kreserve_class_L(valid);
 %Kreserve_Htm1(ksv==5,1)=1000; 
 %Kreserve_Htm1(ksv==6,1)=1000; 
 
-%% LAI: Leaf area index [-]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-LAI_class_H =   [3           2         0         0          0        2             0          NaN  ]; 
-LAI_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% LAI: Leaf area index [-] (NO REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+LAI_class_H =   [3           0         0          0        0           0         0          0        2            0          0          NaN  ]; 
+LAI_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 LAI_Htm1(ij_vect(k),1:length(valid)) = LAI_class_H(valid);
 LAI_Ltm1(ij_vect(k),1:length(valid)) = LAI_class_L(valid);
@@ -573,10 +573,10 @@ LAI_Ltm1(ij_vect(k),1:length(valid)) = LAI_class_L(valid);
 %LAI_Htm1(ksv==5,1)=2;
 %LAI_Htm1(ksv==6,1)=0;
 
-%% NBLeaf: New Leaf Biomass [gC/m2 day]
-% categories       [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NBLeaf_class_H =   [0           0         0         0          0        0             0          NaN  ]; 
-NBLeaf_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% NBLeaf: New Leaf Biomass [gC/m2 day] (NO REFERENCE)
+% categories       [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NBLeaf_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
+NBLeaf_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 NBLeaf_Htm1(ij_vect(k),1:length(valid)) = NBLeaf_class_H(valid);
 NBLeaf_Ltm1(ij_vect(k),1:length(valid)) = NBLeaf_class_L(valid);
@@ -588,10 +588,10 @@ NBLeaf_Ltm1(ij_vect(k),1:length(valid)) = NBLeaf_class_L(valid);
 %NBLeaf_Htm1(ksv==5,1)=0; 
 %NBLeaf_Htm1(ksv==6,1)=0; 
 
-%% NBLI: Integral of New Leaf Biomass over 30 days [gC/m2 day]
-% categories       [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NBLI_class_H =     [0           0         0         0          0        0             0          NaN  ]; 
-NBLI_class_L =     [0           0         0         0          0        0             0          NaN  ];
+%% NBLI: Integral of New Leaf Biomass over 30 days [gC/m2 day] (NO REFERENCE)
+% categories       [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NBLI_class_H =     [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
+NBLI_class_L =     [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 NBLI_Htm1(ij_vect(k),1:length(valid)) = NBLI_class_H(valid);
 NBLI_Ltm1(ij_vect(k),1:length(valid)) = NBLI_class_L(valid);
@@ -603,10 +603,10 @@ NBLI_Ltm1(ij_vect(k),1:length(valid)) = NBLI_class_L(valid);
 %NBLI_Htm1(ksv==5,1)=0;     
 %NBLI_Htm1(ksv==6,1)=0;     
 
-%% NPP:  Net Primary Production [gC/m2 PFT day]
-% categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NPP_class_H =   [0           0         0         0          0        0             0          NaN  ]; 
-NPP_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% NPP:  Net Primary Production [gC/m2 PFT day] (NO REFERENCE)
+% categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NPP_class_H =   [0           0         0          0         0          0         0          0        0            0          0          NaN  ]; 
+NPP_class_L =   [0           0         0          0         0          0         0          0        0            0          0          NaN  ];
 
 NPP_Htm1(ij_vect(k),1:length(valid)) = NPP_class_H(valid);
 NPP_Ltm1(ij_vect(k),1:length(valid)) = NPP_class_L(valid);
@@ -618,10 +618,10 @@ NPP_Ltm1(ij_vect(k),1:length(valid)) = NPP_class_L(valid);
 %NPP_Htm1(ksv==5,1)=0;    
 %NPP_Htm1(ksv==6,1)=0;    
 
-%% NPII: Integral of Net Primary Production over 7 days [gC/m2 PFT day]
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NPPI_class_H =   [0           0         0         0          0        0             0          NaN  ]; 
-NPPI_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% NPII: Integral of Net Primary Production over 7 days [gC/m2 PFT day] (NO REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NPPI_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ]; 
+NPPI_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 NPPI_Htm1(ij_vect(k),1:length(valid)) = NPPI_class_H(valid);
 NPPI_Ltm1(ij_vect(k),1:length(valid)) = NPPI_class_L(valid);
@@ -633,10 +633,10 @@ NPPI_Ltm1(ij_vect(k),1:length(valid)) = NPPI_class_L(valid);
 %NPPI_Htm1(ksv==5,1)=0;
 %NPPI_Htm1(ksv==6,1)=0;
 
-%% Nreserve: Mobile Reserve of Nitrogen in vegetation [gN/m2 PFT]
-% categories        [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Nreserve_class_H =  [1000        1000      0         0          0        1000          1000       NaN  ];
-Nreserve_class_L =  [0           0        1000       1000       1000     0             0          NaN  ];
+%% Nreserve: Mobile Reserve of Nitrogen in vegetation [gN/m2 PFT] (FROM REFERENCE)
+% categories        [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R      grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Nreserve_class_H =  [1000        0         0          0        0            0         0          0        1000         1000       1000       NaN  ];
+Nreserve_class_L =  [0           1000      1000       1000     1000         1000       1000       1000     0           1000       0          NaN  ];
 
 Nreserve_Htm1(ij_vect(k),1:length(valid)) = Nreserve_class_H(valid);
 Nreserve_Ltm1(ij_vect(k),1:length(valid)) = Nreserve_class_L(valid);
@@ -648,10 +648,10 @@ Nreserve_Ltm1(ij_vect(k),1:length(valid)) = Nreserve_class_L(valid);
 %Nreserve_Htm1(ksv==5,1)=1000; 
 %Nreserve_Htm1(ksv==6,1)=1000; 
 
-%% PHE: Phenology State [#]
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-PHE_S_class_H =   [1           1         0         0          0        1             1          NaN  ];
-PHE_S_class_L =   [0           0         1         1          1        0             0          NaN  ];
+%% PHE: Phenology State [#] (FROM REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+PHE_S_class_H =   [1           0         0          0        0           0         0          0        1            3          1          NaN  ];
+PHE_S_class_L =   [0           1         1          1        1           1         1          1        0            3          0          NaN  ];
 
 PHE_S_Htm1(ij_vect(k),1:length(valid)) = PHE_S_class_H(valid);
 PHE_S_Ltm1(ij_vect(k),1:length(valid)) = PHE_S_class_L(valid);
@@ -663,10 +663,10 @@ PHE_S_Ltm1(ij_vect(k),1:length(valid)) = PHE_S_class_L(valid);
 %PHE_S_Htm1(ksv==5,1)=1;
 %PHE_S_Htm1(ksv==6,1)=1;
 
-%% Preserve: Mobile Reserve of Phosporus in vegetation [gP/m2 PFT]
-% categories        [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Preserve_class_H =  [1000        1000      0         0          0        1000          1000       NaN  ];
-Preserve_class_L =  [0           0         1000      1000       1000     0             0          NaN  ];
+%% Preserve: Mobile Reserve of Phosporus in vegetation [gP/m2 PFT] (FROM REFERENCE)
+% categories        [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Preserve_class_H =  [1000        0         0          0        0           0         0          0        1000         1000       1000       NaN  ];
+Preserve_class_L =  [0           1000      1000       1000     1000        1000      1000       1000     0            1000       0          NaN  ];
 
 Preserve_Htm1(ij_vect(k),1:length(valid)) = Preserve_class_H(valid);
 Preserve_Ltm1(ij_vect(k),1:length(valid)) = Preserve_class_L(valid);
@@ -678,10 +678,10 @@ Preserve_Ltm1(ij_vect(k),1:length(valid)) = Preserve_class_L(valid);
 %Preserve_Htm1(ksv==5,1)=1000;
 %Preserve_Htm1(ksv==6,1)=1000;
 
-%% Psi_x:        Soil water potential in the stem xylem [MPa]
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Psi_x_class_H =   [0           0         0         0          0        0             0          NaN  ];
-Psi_x_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% Psi_x:        Soil water potential in the stem xylem [MPa] (NO REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Psi_x_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
+Psi_x_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 Psi_x_Htm1(ij_vect(k),1:length(valid)) = Psi_x_class_H(valid);
 Psi_x_Ltm1(ij_vect(k),1:length(valid)) = Psi_x_class_L(valid);
@@ -693,10 +693,10 @@ Psi_x_Ltm1(ij_vect(k),1:length(valid)) = Psi_x_class_L(valid);
 %Psi_x_Htm1(ksv==5,1)=0; 
 %Psi_x_Htm1(ksv==6,1)=0; 
 
-%% Psi_l:        Leaf water potential in the leaves [MPa]
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Psi_l_class_H =   [0           0         0         0          0        0             0          NaN  ];
-Psi_l_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% Psi_l:        Leaf water potential in the leaves [MPa] (NO REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Psi_l_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
+Psi_l_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 Psi_l_Htm1(ij_vect(k),1:length(valid)) = Psi_l_class_H(valid);
 Psi_l_Ltm1(ij_vect(k),1:length(valid)) = Psi_l_class_L(valid);
@@ -708,10 +708,10 @@ Psi_l_Ltm1(ij_vect(k),1:length(valid)) = Psi_l_class_L(valid);
 %Psi_l_Htm1(ksv==5,1)=0;    
 %Psi_l_Htm1(ksv==6,1)=0;    
 
-%% SAI: Stem area index [-]
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-SAI_class_H =     [0.1         0.1       0         0          0        0.1           0.2        NaN  ];
-SAI_class_L =     [0           0         0.01      0.01       0.01     0             0          NaN  ];
+%% SAI: Stem area index [-] (FROM REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+SAI_class_H =     [0.1         0         0          0        0            0         0          0        0.1         0.2        0.2        NaN  ];
+SAI_class_L =     [0           0.001     0.001      0.001    0.001        0.01      0.01       0.01     0           0.001      0          NaN  ];
 
 SAI_Htm1(ij_vect(k),1:length(valid)) = SAI_class_H(valid);
 SAI_Ltm1(ij_vect(k),1:length(valid)) = SAI_class_L(valid);
@@ -723,10 +723,10 @@ SAI_Ltm1(ij_vect(k),1:length(valid)) = SAI_class_L(valid);
 %SAI_Htm1(ksv==5,1)=0.1;
 %SAI_Htm1(ksv==6,1)=0.2;
 
-%% TBio: Total standing biomass temporally variable [ton DM / ha ]
-% categories      [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-TBio_class_H =    [1           1         0         0          0        1             1          NaN  ];
-TBio_class_L =    [0           0         1         1          1        0             0          NaN  ];
+%% TBio: Total standing biomass temporally variable [ton DM / ha ] (FROM REFERENCE)
+% categories      [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
+TBio_class_H =    [1           0         0          0        0           0         0          0        1            200         1          NaN  ];
+TBio_class_L =    [0           1         1          1        1           1         1          1        0            1           0          NaN  ];
 
 TBio_Htm1(ij_vect(k),1:length(valid)) = TBio_class_H(valid);
 TBio_Ltm1(ij_vect(k),1:length(valid)) = TBio_class_L(valid);
@@ -738,10 +738,10 @@ TBio_Ltm1(ij_vect(k),1:length(valid)) = TBio_class_L(valid);
 %TBio_Htm1(ksv==5,1)=1; 
 %TBio_Htm1(ksv==6,1)=1; 
 
-%% Tden: Tree density, High vegetation [n*ind/ ha]
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Tden_class_H =   [0           0         0         0          0        0             0          NaN  ];
-Tden_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% Tden: Tree density, High vegetation [n*ind/ ha] (NO REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Tden_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
+Tden_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 Tden_Htm1(ij_vect(k),1:length(valid)) = Tden_class_H(valid);
 Tden_Ltm1(ij_vect(k),1:length(valid)) = Tden_class_L(valid);
@@ -753,10 +753,10 @@ Tden_Ltm1(ij_vect(k),1:length(valid)) = Tden_class_L(valid);
 %Tden_Htm1(ksv==5,1)=0; 
 %Tden_Htm1(ksv==6,1)=0; 
 
-%% Vx:           Water Volume in the xylem [mm m2 ground/m2 PFT]
-% categories   [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Vx_class_H =   [0           0         0         0          0        0             0          NaN  ];
-Vx_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% Vx:           Water Volume in the xylem [mm m2 ground/m2 PFT] (FROM REFERENCE)
+% categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Vx_class_H =   [0           0         0          0        0           0         0          0        0            10         1          NaN  ];
+Vx_class_L =   [0           0         0          0        0           0         0          0        0            10         1          NaN  ];
 
 Vx_Htm1(ij_vect(k),1:length(valid)) = Vx_class_H(valid);
 Vx_Ltm1(ij_vect(k),1:length(valid)) = Vx_class_L(valid);
@@ -768,10 +768,10 @@ Vx_Ltm1(ij_vect(k),1:length(valid)) = Vx_class_L(valid);
 %Vx_Htm1(ksv==5,1)=0;          
 %Vx_Htm1(ksv==6,1)=0;          
 
-%% Vl:           Water Volume in the leaves [mm m2 ground/m2 PFT]
-% categories   [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-Vl_class_H =   [0           0         0         0          0        0             0          NaN  ];
-Vl_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% Vl:           Water Volume in the leaves [mm m2 ground/m2 PFT] (FROM REFERENCE)
+% categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+Vl_class_H =   [0           0         0          0        0          0         0          0        0            10         1          NaN  ];
+Vl_class_L =   [0           1         1          1        1          0         0          0        0            1          1          NaN  ];
 
 Vl_Htm1(ij_vect(k),1:length(valid)) = Vl_class_H(valid);
 Vl_Ltm1(ij_vect(k),1:length(valid)) = Vl_class_L(valid);
@@ -783,10 +783,10 @@ Vl_Ltm1(ij_vect(k),1:length(valid)) = Vl_class_L(valid);
 %Vl_Htm1(ksv==5,1)=0;
 %Vl_Htm1(ksv==6,1)=0;
 
-%% NupI:         Integrated Nitrogen|Phosphorous|Potassium uptake over 365 days [gX/m2 PFT day]
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NupI_class_H =   [0           0         0         0          0        0             0          NaN  ];
-NupI_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% NupI:         Integrated Nitrogen|Phosphorous|Potassium uptake over 365 days [gX/m2 PFT day] (FROM REFERENCE)
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NupI_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
+NupI_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 NupI_Htm1(ij_vect(k),1:length(valid),1) = NupI_class_H(valid);
 NupI_Ltm1(ij_vect(k),1:length(valid),1) = NupI_class_L(valid);
@@ -806,10 +806,10 @@ NupI_Ltm1(ij_vect(k),1:length(valid),3) = NupI_class_L(valid);
 %NupI_Htm1(ksv==5,1,1)= 0; NupI_Htm1(ksv==5,1,2)= 0; NupI_Htm1(ksv==5,1,3)= 0;
 %NupI_Htm1(ksv==6,1,1)= 0; NupI_Htm1(ksv==6,1,2)= 0; NupI_Htm1(ksv==6,1,3)= 0;
 
-%% NupLit:       Nitrogen|Phosphorous|Potassium content in the litter [gN/m2 PFT]
-% categories       [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-NupLit_class_H =   [0           0         0         0          0        0             0          NaN  ];
-NupLit_class_L =   [0           0         0         0          0        0             0          NaN  ];
+%% NupLit:       Nitrogen|Phosphorous|Potassium content in the litter [gN/m2 PFT] (NO REFERENCE)
+% categories       [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R      grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+NupLit_class_H =   [0           0         0          0        0            0         0          0        0            0          0          NaN  ];
+NupLit_class_L =   [0           0         0          0        0            0         0          0        0            0          0          NaN  ];
 
 NupLit_Htm1(ij_vect(k),1:length(valid),1) = NupLit_class_H(valid);
 NupLit_Ltm1(ij_vect(k),1:length(valid),1) = NupLit_class_L(valid);
@@ -827,11 +827,11 @@ NupLit_Ltm1(ij_vect(k),1:length(valid),3) = NupLit_class_L(valid);
 %NupLit_Htm1(ksv==5,1,1)= 0; NupLit_Htm1(ksv==5,1,2)= 0; NupLit_Htm1(ksv==5,1,3)= 0; 
 %NupLit_Htm1(ksv==6,1,1)= 0; NupLit_Htm1(ksv==6,1,2)= 0; NupLit_Htm1(ksv==6,1,3)= 0; 
 
-%% PARI:         Smoothed average of PAR radiation over 30 days (1); 45 days (2); 
+%% PARI:         Smoothed average of PAR radiation over 30 days (1); 45 days (2); (NO REFERENCE)
 %               (3) 10 days average of the difference of (2) and (1) [W/m2] 
-% categories     [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-PARI_class_H =   [0           0         0         0          0        0             0          NaN  ];
-PARI_class_L =   [0           0         0         0          0        0             0          NaN  ];
+% categories     [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
+PARI_class_H =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
+PARI_class_L =   [0           0         0          0        0           0         0          0        0            0          0          NaN  ];
 
 PARI_Htm1(ij_vect(k),1:length(valid),1) = PARI_class_H(valid);
 PARI_Ltm1(ij_vect(k),1:length(valid),1) = PARI_class_L(valid);

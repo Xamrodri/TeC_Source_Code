@@ -284,8 +284,8 @@ NN= height(forcing);%%% time Step
 % Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
 
-%categories    [fir_high    larch     grass_A   grass_B    shrub    BLever_high   BLdec_high NoVeg]  
-zatm_surface = [18          18        2         2          2        18            18         NaN  ];
+%categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
+zatm_surface = [18          2         2          2        2           2         2          2        18           18          18         NaN  ];
 
 zatm_hourly_on = 0;
 
