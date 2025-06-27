@@ -4,6 +4,10 @@
 
 PARAMETER FILE TEMPLATE FOR T&C 
 
+This code uses TT_par defined in the Starter_MultiPoint.m
+TT_par is the table with the model parameters. It is started in
+Starter_MultiPoint.m and sent to the function in run_Point_Por.m
+
 %}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -163,9 +167,10 @@ end
 %==========================================================================
 
 %categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B     shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-albs   =     [0.153       0.13      0.13       0.13     0.13        0.13      0.13       0.13   0.13         0.13       0.13       NaN  ]; % Ask Achille??
-lans   =     [1.65        1.45      1.45       1.45     1.45        1.45      1.45       1.45   0.94         0.94       0.94       NaN  ];
-zoms   =     [0.38        0.15      0.15       0.15     0.15        0.15      0.15       0.15   0.016        0.016      0.016      NaN  ];
+albs = table2array(TT_par(strcmp(TT_par.Parameters,'albs'),II));
+lans = table2array(TT_par(strcmp(TT_par.Parameters,'lans'),II));
+zoms = table2array(TT_par(strcmp(TT_par.Parameters,'zoms'),II));
+
 
 %Deb_Par.alb= albs(s);
 %Deb_Par.e_sur =  0.94;
@@ -218,35 +223,20 @@ Classes in T&C:
 %}  
 %==========================================================================
 
-%%  ROOT PARAMETER 
+%%  ROOT PARAMETER
 
-%categories  [fir_high    Crops_WB  Crops_WB   Crops_S  Crops_R    grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-ExEM   =     [1.0         0.0       0.0        0.0      0.0        0.0      0.0        0.0    0.0          0.0        0.0        NaN  ]; % Fraction of ectomychorrizae per area  [-]
-% Selection based on II
-ExEM = ExEM(II);
+ExEM = table2array(TT_par(strcmp(TT_par.Parameters,'ExEM'),II));
 
 CASE_ROOT= 1;  % Type of Root Profile
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-ZR95_H   =   [800         0.0       0.0        0.0      0.0         0.0      0.0        0.0    1000         1200       1500       NaN]; % Root depth 95 percentile, high vegetation [mm]
-ZR95_L   =   [0           950       900        900      500         250      250        1000   0            250        0          NaN]; % Root depth 95 percentile, low vegetation [mm]
-ZR50_H   =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN]; % Root depth 50 percentile, high vegetation [mm]
-ZR50_L   =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN]; % Root depth 50 percentile, low vegetation [mm]
-ZRmax_H  =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN]; % Maximum root depth, high vegetation [mm]
-ZRmax_L  =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN]; % Maximum root depth, low vegetation [mm]
 
 % Selection based on II
-ZR95_H =ZR95_H(II); ZR50_H =ZR50_H(II); ZRmax_H =ZRmax_H(II);
-ZR95_L =ZR95_L(II); ZR50_L =ZR50_L(II); ZRmax_L =ZRmax_L(II);
+ZR95_H = table2array(TT_par(strcmp(TT_par.Parameters,'ZR95_H'),II));
+ZR95_L = table2array(TT_par(strcmp(TT_par.Parameters,'ZR95_L'),II));
+ZR50_H = table2array(TT_par(strcmp(TT_par.Parameters,'ZR50_H'),II));
+ZR50_L = table2array(TT_par(strcmp(TT_par.Parameters,'ZR50_L'),II));
+ZRmax_H = table2array(TT_par(strcmp(TT_par.Parameters,'ZRmax_H'),II));
+ZRmax_L = table2array(TT_par(strcmp(TT_par.Parameters,'ZRmax_L'),II));
 
-% If element ij is rock, then:
-%if ksv(ij) == 7 
-%    ZR95_H = 0;
-%    ZR95_L = 0; 
-%    ZR50_H = NaN;
-%    ZR50_L = NaN;
-%    ZRmax_H = NaN;
-%    ZRmax_L = NaN;
-%end
 
 %% INTERCEPTION PARAMETERS 
 
@@ -259,124 +249,80 @@ gcI=3.7;       % Interception parameter [1/mm]
 KcI=0.06;      % Interception drainage rate coefficient [mm] - Mahfouf and Jacquemin 1989
 Sp_SN_In= 5.9; % Specific interception of rainfall for unit leaf area. Average of high vegetation [mm/LAI]
 
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-Sp_LAI_H_In= [0.1         0.2       0.2        0.2      0.2         0.2      0.2        0.2    0.2          0.15       0.15       NaN]; % Specific interception of rainfall for unit leaf area, high vegetation [mm/LAI]
-Sp_LAI_L_In= [0.2         0.2       0.2        0.2      0.2         0.2      0.2        0.2    0.2          0.10       0.2        NaN]; % Specific interception of rainfall for unit leaf area, low vegetation [mm/LAI]
-
-% Selection based on II
-Sp_LAI_H_In =Sp_LAI_H_In(II);
-Sp_LAI_L_In =Sp_LAI_L_In(II);
+Sp_LAI_H_In = table2array(TT_par(strcmp(TT_par.Parameters,'Sp_LAI_H_In'),II));
+Sp_LAI_L_In = table2array(TT_par(strcmp(TT_par.Parameters,'Sp_LAI_L_In'),II));
 
 %% Leaf Dimension
-
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high   BLdec_low  BLdec_high NoVeg]    
-d_leaf_H =   [0.25        NaN       NaN        NaN      NaN         3.5       3.5        0.0    5             2.0        4          NaN  ]; % Leaf characteristic dimension, high vegetation [cm]
-d_leaf_L =   [0.8         5.0       5.0        5.0      5.0         0.8       0.8        0.7    2             0.8        2          NaN  ]; % Leaf characteristic dimension, low vegetation [cm]
-
-% Selection based on II
-d_leaf_H = d_leaf_H(II);
-d_leaf_L =d_leaf_L(II);
+d_leaf_H = table2array(TT_par(strcmp(TT_par.Parameters,'d_leaf_H'),II));
+d_leaf_L = table2array(TT_par(strcmp(TT_par.Parameters,'d_leaf_L'),II));
 
 %% Veg Biochemical parameter
+KnitH = table2array(TT_par(strcmp(TT_par.Parameters,'KnitH'),II));
+KnitL = table2array(TT_par(strcmp(TT_par.Parameters,'KnitL'),II));
 
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-KnitH      = [0.35        0.2       0.2        0.2      0.2         0.2       0.2        0.0    0.35         0.40       0.25       NaN  ]; % Canopy Nitrogen Decay coefficient, high vegetation [-]
-KnitL      = [0.5         0.15      0.15       0.15     0.15        0.15      0.15       0.15   NaN          0.15       NaN        NaN  ]; % Canopy Nitrogen Decay coefficient, low vegetation [-]
-
-mSl_H      = [0           0.0       0.0        0.0      0.0         0.0       0.0        0.0    0            0.0        0.0        NaN  ]; % Linear coefficient of increasing specific leaf area with LAI, high vegetation [m2 PFT /gC] 
-mSl_L      = [0           0.0       0.0        0.0      0.0         0.0       0.0        0.0    NaN          0.0        NaN        NaN  ]; % Linear coefficient of increasing specific leaf area with LAI, low vegetation  [m2 LAI/gC * m2 PFT / m2 LAI]  0.0 - 0.004  Brod. Dec. Tree
-
-% Selection based on II
-KnitH =KnitH(II); 
-KnitL =KnitL(II);
-mSl_H =mSl_H(II); 
-mSl_L =mSl_L(II);
+mSl_H = table2array(TT_par(strcmp(TT_par.Parameters,'mSl_H'),II));
+mSl_L = table2array(TT_par(strcmp(TT_par.Parameters,'mSl_L'),II));
 
 %%  Photosynthesis Parameter
-
 % High vegetation
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-FI_H   =     [0.081       0.081     0.081      0.081    0.081      0.081    0.081      0.081  0.081        0.081      0.081      NaN  ]; % Intrinsec quantum Efficiency [umolCO2/umolPhotons]
-Do_H   =     [1000        1000      1000       1000     1000       1000     1000       1000   800          1000       1000       NaN  ]; % Empirical coefficient for the role of vapor pressure in the biochemical model of photosynthesis [Pa] 
-a1_H   =     [7           7         7          7        7          7        7          7      7            7          6          NaN  ]; % WUE parameter [-]  
-go_H   =     [0.01        0.01      0.01       0.01     0.01       0.01     0.01       0.01   0.01         0.01       0.01       NaN  ]; % minimum Stomatal Conductance [mol / s m^2] 
-CT_H   =     [3           4         4          4        4          3        3          3      3            3          3          NaN  ]; % Photosyntesis pathway - Typology for Plants --> C3 or C4 
-DSE_H  =     [0.649       0.649     0.649      0.649    0.649      0.649    0.649      0.649  0.649        0.649      0.649      NaN  ]; % Activation Energy - Plant Dependent [kJ/mol] 
-Ha_H   =     [78          72        72         72       72         72       72         72     72           76         76         NaN  ]; % Entropy factor - Plant Dependent [kJ / mol K]  
-gmes_H =     [Inf         Inf       Inf        Inf      Inf        Inf      Inf        Inf    Inf          Inf        Inf        NaN  ]; % Mesophyll conductance [mol CO2 / s m^2 ];  
-rjv_H  =     [1.9         1.97      1.97       1.97     1.97       1.97     1.97       2.1    2.0          2.1        2.4        NaN  ]; % Ratio Jmax - Vmax  [umol electrons / umolCO2 ]
-
-% Selection based on II
-FI_H=FI_H(II); Do_H=Do_H(II); a1_H=a1_H(II); go_H=go_H(II);
-CT_H=CT_H(II); DSE_H=DSE_H(II); Ha_H=Ha_H(II); gmes_H=gmes_H(II);
-rjv_H=rjv_H(II);
+FI_H = table2array(TT_par(strcmp(TT_par.Parameters,'FI_H'),II));
+Do_H = table2array(TT_par(strcmp(TT_par.Parameters,'Do_H'),II));
+a1_H = table2array(TT_par(strcmp(TT_par.Parameters,'a1_H'),II));
+go_H = table2array(TT_par(strcmp(TT_par.Parameters,'go_H'),II));
+CT_H = table2array(TT_par(strcmp(TT_par.Parameters,'CT_H'),II));
+DSE_H = table2array(TT_par(strcmp(TT_par.Parameters,'DSE_H'),II));
+Ha_H = table2array(TT_par(strcmp(TT_par.Parameters,'Ha_H'),II));
+gmes_H = table2array(TT_par(strcmp(TT_par.Parameters,'gmes_H'),II));
+rjv_H = table2array(TT_par(strcmp(TT_par.Parameters,'rjv_H'),II));
 
 % Low vegetation
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high   BLdec_low   BLdec_high NoVeg]  
-FI_L   =     [0.081       0.081     0.081      0.081    0.081       0.081     0.081      0.081  NaN           0.081       NaN        NaN  ]; % Intrinsec quantum Efficiency [umolCO2/umolPhotons]
-Do_L   =     [2000        1000      1000       1000     1000        1000      1000       1000   NaN           1000        NaN        NaN  ]; % [Pa] 
-a1_L   =     [7           8         7          7        7.5         7         6          5      NaN           8           NaN        NaN  ]; % [-] WUE parameter 
-go_L   =     [0.01        0.01      0.01       0.01     0.01        0.01      0.01       0.01   NaN           0.01        NaN        NaN  ]; % [mol / s m^2] minimum Stomatal Conductance
-CT_L   =     [3           3         3          3        3           3         3          3      NaN           3           NaN        NaN  ]; %--> 'CT' == 3  'CT' ==  4  %% Photosyntesis Typology for Plants
-DSE_L  =     [0.66        0.649     0.649      0.649    0.649       0.649     0.656      0.649  NaN           0.649       NaN        NaN  ]; % [kJ/mol] Activation Energy - Plant Dependent
-Ha_L   =     [48          72        72         72       72          72        55         72     NaN           56          NaN        NaN  ]; % [kJ / mol K]  entropy factor - Plant Dependent
-gmes_L =     [NaN         Inf       Inf        Inf      Inf         Inf       Inf        Inf    NaN           Inf         NaN        NaN  ]; % [mol CO2 / s m^2 ];  mesophyll conductance
-rjv_L  =     [2.6         2.4       2.4        2.4      2.4         1.9       2.4        2.0    NaN           2.2         NaN        NaN  ]; % Ratio Jmax - Vmax  [umol electrons / umolCO2 ]
+FI_L = table2array(TT_par(strcmp(TT_par.Parameters,'FI_L'),II));
+Do_L = table2array(TT_par(strcmp(TT_par.Parameters,'Do_L'),II));
+a1_L = table2array(TT_par(strcmp(TT_par.Parameters,'a1_L'),II));
+go_L = table2array(TT_par(strcmp(TT_par.Parameters,'go_L'),II));
+CT_L = table2array(TT_par(strcmp(TT_par.Parameters,'CT_L'),II));
+DSE_L = table2array(TT_par(strcmp(TT_par.Parameters,'DSE_L'),II));
+Ha_L = table2array(TT_par(strcmp(TT_par.Parameters,'Ha_L'),II));
+gmes_L = table2array(TT_par(strcmp(TT_par.Parameters,'gmes_L'),II));
+rjv_L = table2array(TT_par(strcmp(TT_par.Parameters,'rjv_L'),II));
 
-% Selection based on II
-FI_L=FI_L(II); Do_L=Do_L(II); a1_L=a1_L(II); go_L=go_L(II);
-CT_L=CT_L(II); DSE_L=DSE_L(II); Ha_L=Ha_L(II); gmes_L=gmes_L(II);
-rjv_L=rjv_L(II);
-
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-Vmax_H  =    [45          0.0       0.0        0.0      0.0         0.0      0.0        0.0    32           44         62         NaN  ]; % Maximum Rubisco Capacity [umol CO2 /m2 s]  
-Vmax_L  =    [0           105       105        105      115          64       62         52     0           85         0          NaN  ]; % Maximum Rubisco Capacity [umol CO2 /m2 s]
-
-% Selection based on II
-Vmax_H  =   Vmax_H(II); Vmax_L =Vmax_L(II);
-
+Vmax_H = table2array(TT_par(strcmp(TT_par.Parameters,'Vmax_H'),II));
+Vmax_L = table2array(TT_par(strcmp(TT_par.Parameters,'Vmax_L'),II));
 
 %% Hydraulic Parameters
 %categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-Psi_sto_00_H = [-0.5        -0.5      -0.5       -0.5     -0.5        -0.5      -0.5       -1.8   -1.0         -0.5       -0.8       NaN  ]; % Water Potential at 2% loss conductivity [MPa] 
-Psi_sto_50_H = [-2.5        -2.0      -2.0       -2.0     -2.0        -2.0      -2.0       -3.5   -2.8         -3.2       -2.5       NaN  ]; % Water Potential at 50% loss conductivity [MPa]  
+Psi_sto_00_H = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_00_H'),II));
+Psi_sto_50_H = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_50_H'),II));
 
 % Leaf
-PsiL00_H     = [-1          -2.5      -2.5       -2.5     -2.7        -2.7      -2.7      -1.3    -1.2         -1.5       -1.2       NaN  ]; % Water Potential at 2% loss conductivity [MPa] 
-PsiL50_H     = [-3.2        -3.5      -3.5       -3.5     -5.6        -5.6      -5.6      -4.5    -4.0         -5.2       -3.5       NaN  ]; % Water Potential at 50% loss conductivity [MPa]  
-Kleaf_max_H  = [10           5         5          5        5           5         5.0       20      10           10         10        NaN  ]; % Leaf maximum hydraulic conductivity [mmolH20 m^2 leaf s /MPa]
-Cl_H         = [1200        1200       1200       1200     1200        1200      1200      1200    1200         1200       1200      NaN  ]; % Leaf capacitance [mmolH20 / m^2 leaf MPa] [500 - 3000]
+PsiL00_H = table2array(TT_par(strcmp(TT_par.Parameters,'PsiL00_H'),II));
+PsiL50_H = table2array(TT_par(strcmp(TT_par.Parameters,'PsiL50_H'),II));
+Kleaf_max_H = table2array(TT_par(strcmp(TT_par.Parameters,'Kleaf_max_H'),II));
+Cl_H = table2array(TT_par(strcmp(TT_par.Parameters,'Cl_H'),II));
 
 % Xylem
-Axyl_H       = [15          15         15         15       15          15        15        6.0     15           15         15        NaN  ]; % [cm^2 stem /m^2 PFT]
-Kx_max_H     = [80000       80000      80000      80000    80000       80000     80000     80000   80000        80000      80000     NaN  ]; % Xylem Conductivity specific for water. 5550-555550 [mmolH20 /m s MPa]  
-PsiX50_H     = [-5          -5        -3.5       -3.5     -3.5        -3.5      -3.5      -6.5    -6           -7         -5.5       NaN  ]; % Water Potential at 50% loss conductivity [MPa]
-Cx_H         = [150         150        150        150      150         150       150       80      150          150        150       NaN  ]; % [kg / m^3 sapwood MPa]
+Axyl_H= table2array(TT_par(strcmp(TT_par.Parameters,'Axyl_H'),II));
+Kx_max_H = table2array(TT_par(strcmp(TT_par.Parameters,'Kx_max_H'),II));
+PsiX50_H = table2array(TT_par(strcmp(TT_par.Parameters,'PsiX50_H'),II));
+Cx_H = table2array(TT_par(strcmp(TT_par.Parameters,'Cx_H'),II));
 
 % Stomata
-Psi_sto_00_L = [-0.8        -0.7      -0.7       -0.7     -0.5        -0.5      -0.5       -0.7    NaN         -0.8        NaN       NaN  ]; % Water Potential at 2% loss conductivity  [MPa]  
-Psi_sto_50_L = [-3.0        -2.9      -2.9       -1.1     -2.5        -2.5      -3.0       -5.5    NaN         -3.0        NaN       NaN  ]; % Water Potential at 50% loss conductivity [MPa]  
+Psi_sto_00_L = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_00_L'),II));
+Psi_sto_50_L = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_50_L'),II));
 
 % Leaf
 %categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A    grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-PsiL00_L     = [-1.1        -1.2      -1.2       -1.2     -1.2        -0.9      -0.5       -1.4      NaN          -1.1       NaN        NaN  ]; % Water Potential at 2% loss conductivity [MPa]  
-PsiL50_L     = [-4.0        -3.5      -3.5       -1.5     -3.5        -3.0      -3.0       -7.0      NaN          -4.0       NaN        NaN  ]; % Water Potential at 50% loss conductivity [MPa]  
-Kleaf_max_L  = [ 5.0         5.0       5.0        5.0      5.0         5.0       5.0        10.0     NaN           5         NaN        NaN  ]; % [mmolH20 m^2 leaf s /MPa]
-Cl_L         = [1200         1200      1200       1200     1200        1200      1200       1200     NaN           1200      NaN        NaN  ]; % Leaf capacitance [mmolH20 / m^2 leaf MPa] [500 - 3000]
+PsiL00_L = table2array(TT_par(strcmp(TT_par.Parameters,'PsiL00_L'),II));
+PsiL50_L = table2array(TT_par(strcmp(TT_par.Parameters,'PsiL50_L'),II));
+Kleaf_max_L = table2array(TT_par(strcmp(TT_par.Parameters,'Kleaf_max_L'),II));
+Cl_L = table2array(TT_par(strcmp(TT_par.Parameters,'Cl_L'),II));
 
 % Xylem
-Axyl_L       = [0.0         0.0        0.0        0.0      0.0         0.0        0.0        6.0     NaN           0.0       NaN        NaN  ]; % Xylem area over PFT area [cm^2 stem /m^2 PFT]
-Kx_max_L     = [80000       80000      80000      80000    80000       80000      80000      80000   NaN           80000     NaN        NaN  ]; % Xylem Conductivity specific for water;5550-555550 [mmolH20 /m s MPa]  
-PsiX50_L     = [-4.5       -4.5       -4.5       -4.5     -4.5        -4.5       -4.5       -9.0     NaN          -4.5       NaN        NaN  ]; % Water Potential at 50% loss conductivity[MPa] 
-Cx_L         = [150         150        150        150      150         150        150        80      NaN           150       NaN        NaN  ]; % Steam capacitance low vegetation [kg / m^3 sapwood MPa]
+Axyl_L = table2array(TT_par(strcmp(TT_par.Parameters,'Axyl_L'),II));
+Kx_max_L = table2array(TT_par(strcmp(TT_par.Parameters,'Kx_max_L'),II));
+PsiX50_L = table2array(TT_par(strcmp(TT_par.Parameters,'PsiX50_L'),II));
+Cx_L = table2array(TT_par(strcmp(TT_par.Parameters,'Cx_L'),II));
 
-% Selection based on II
-Psi_sto_50_H =Psi_sto_50_H(II);  Psi_sto_00_H =Psi_sto_00_H(II);
-PsiL00_H = PsiL00_H(II); PsiL50_H=PsiL50_H(II);  Kleaf_max_H=Kleaf_max_H(II);
-Cl_H=Cl_H(II); Axyl_H=Axyl_H(II); Kx_max_H=Kx_max_H(II); PsiX50_H=PsiX50_H(II); Cx_H=Cx_H(II);
-Psi_sto_50_L =Psi_sto_50_L(II);  Psi_sto_00_L =Psi_sto_00_L(II);
-PsiL00_L = PsiL00_L(II); PsiL50_L=PsiL50_L(II);  Kleaf_max_L=Kleaf_max_L(II);
-Cl_L=Cl_L(II); Axyl_L=Axyl_L(II); Kx_max_L=Kx_max_L(II); PsiX50_L=PsiX50_L(II); Cx_L=Cx_L(II);
 
 %% Root Parameters (Function)
 [RfH_Zs,RfL_Zs]=Root_Fraction_General(Zs,CASE_ROOT,ZR95_H,ZR50_H,ZR95_L,ZR50_L,ZRmax_H,ZRmax_L);
@@ -384,34 +330,23 @@ Cl_L=Cl_L(II); Axyl_L=Axyl_L(II); Kx_max_L=Kx_max_L(II); PsiX50_L=PsiX50_L(II); 
 %% Growth Parameters
 % High vegetation
 %categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A   grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-PsiG50_H   =   [-0.5       -0.45      -0.45      -0.45    -0.45     -0.45     -0.45      -1.4    NaN          -0.5       -0.8        NaN  ]; % Water potential at 50% impairment of growth and allocation control [MPa]
-PsiG99_H   =   [-2.5       -1.2       -1.2       -1.2     -1.2      -1.2      -1.2       -1.2    NaN          -3.2       -2.5        NaN  ]; % Water potential at 90% impairment of growth and allocation control [MPa]
-gcoef_H    =   [ 3.5        3.5        3.5        3.5      3.5       3.5       3.5        3.5    NaN           4.5        4.5        NaN  ]; % Parameter for maximum growth in perfect conditions, related to Env. controls of growth [gC/m2 day]
+PsiG50_H = table2array(TT_par(strcmp(TT_par.Parameters,'PsiG50_H'),II));
+PsiG99_H = table2array(TT_par(strcmp(TT_par.Parameters,'PsiG99_H'),II));
+gcoef_H = table2array(TT_par(strcmp(TT_par.Parameters,'gcoef_H'),II));
 
 % Low vegetation
-PsiG50_L   =   [-1.45      -1.2       -1.2       -1.2     -1.2      -2.5       -3.0       -1.4   NaN          -1.45       NaN        NaN  ]; % Water potential at 50% impairment of growth and allocation control [MPa]
-PsiG99_L   =   [-4.0       -3.5       -3.5       -1.5     -3.5      -3.0       -4.0       -5.5   NaN          -4.0        NaN        NaN  ]; % Water potential at 90% impairment of growth and allocation control [MPa]
-gcoef_L    =   [3.5         3.5        3.5        3.5      3.5       3.5        3.5        3.5   NaN           3.5        NaN        NaN  ]; % Parameter for maximum growth in perfect conditions, related to Env. controls of growth[gC/m2 day]
+PsiG50_L = table2array(TT_par(strcmp(TT_par.Parameters,'PsiG50_L'),II));
+PsiG99_L = table2array(TT_par(strcmp(TT_par.Parameters,'PsiG99_L'),II));
+gcoef_L = table2array(TT_par(strcmp(TT_par.Parameters,'gcoef_L'),II));
 
-% Selection based on II
-PsiG50_H=PsiG50_H(II); PsiG99_H=PsiG99_H(II); gcoef_H=gcoef_H(II);
-PsiG50_L=PsiG50_L(II); PsiG99_L=PsiG99_L(II); gcoef_L=gcoef_L(II);
 
 %% Vegetation Optical Parameter
-%categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-OPT_PROP_H  =  [2           0.0       0.0        0.0      0.0         0.0       0.0        0.0    5            7          7          NaN  ];   % =PFT_Class for "Veg_Optical_Parameter"-function
-OPT_PROP_L  =  [0           16        16         16       16          13        13         1      0            13         0          NaN  ];
+OPT_PROP_H = table2array(TT_par(strcmp(TT_par.Parameters,'OPT_PROP_H'),II));
+OPT_PROP_L = table2array(TT_par(strcmp(TT_par.Parameters,'OPT_PROP_L'),II));
 
-% Selection based on II
-OPT_PROP_H = OPT_PROP_H(II);
-OPT_PROP_L = OPT_PROP_L(II);
+OM_H = table2array(TT_par(strcmp(TT_par.Parameters,'OM_H'),II));
+OM_L = table2array(TT_par(strcmp(TT_par.Parameters,'OM_L'),II));
 
-%categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A   grass_B    shrub  BLever_high   BLdec_low  BLdec_high NoVeg]  
-OM_H  =        [1           1         1          1        1          1         1          1      1             1          1          NaN  ]; % Within canopy clumping factor [-]
-OM_L  =        [1           1         1          1        1          1         1          1      NaN           1          NaN        NaN  ]; % Within canopy clumping factor [-]
-
-% Selection based on II
-OM_H=OM_H(II); OM_L=OM_L(II);
 
 %% Specific leaf area of litter
 Sllit = 2 ; % Litter Specific Leaf area [m2 Litter / kg DM]
@@ -420,28 +355,27 @@ Sllit = 2 ; % Litter Specific Leaf area [m2 Litter / kg DM]
 %BLever: broadleaf evergreen vegetation dec;
 %BLdec: broadleaf deciduous vegetation dec
 
-%categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-aSE_H    =    [0           1         1          1        1           1        1          1        0            1          1          NaN  ]; % Allocation to reserve carbohydrate Values: 1 for Seasonal Plant and 0 for Evergreen
-Sl_H     =    [0.014       0.016     0.016      0.016    0.016       0.016    0.016      0.015    0.016        0.016      0.017      NaN  ]; % Specific leaf area of  biomass [m^2 /gC]. Values: 0.05 -0.005
-Nl_H     =    [42          30        30         30       30          30       30         30       40           28         28         NaN  ]; % Leaf Nitrogen Concentration [kgC/kgN ] 
-r_H      =    [0.062       0.030     0.030      0.030    0.030       0.030    0.030      0.030    0.045        0.032      0.032      NaN  ]; % respiration rate at 10° [gC/gN d ]. Values: [0.066 -0.011]
-gR_H     =    [0.25        0.25      0.25       0.25     0.25        0.25     0.25       0.25     0.25         0.25       0.25       NaN  ]; % Growth respiration  [] -- [Rg/(GPP-Rm)] [0.22 - 0.28]
-Tcold_H  =    [-20         7         7          7        7           7        7          7        3            6.5        0.0        NaN  ]; % Cold Leaf Shed [°C]
-age_cr_H =    [900         150       150        150      150         150      150        150      365          180        150        NaN  ]; % Critical Leaf Age [day]
-Trr_H    =    [0.25        3.5       3.5        3.5      3.5         3.5      3.5        3.5      0.5          5.5        5          NaN  ]; % Translocation rate [gC /m^2 d]
-LtR_H    =    [0.8         0.8       0.8        0.8      0.8         1.0      1.0        1.0      1.0          0.6        0.5        NaN  ]; % Leaf to Root ratio maximum
-eps_ac_H =    [0.20        1.0       1.0        1.0      1.0         1.0      1.0        1.0      0.5          1          1.0        NaN  ]; % Allocation to reserve parameter [0-1]
-fab_H    =    [0.74        0.74      0.74       0.74     0.74        0.74     0.74       0.74     0.74         0.74       0.74       NaN  ]; % fraction above-ground sapwood and reserve
-ff_r_H   =    [0.1         0.1       0.1        0.1      0.1         0.1      0.1        0.1      0.1          0.1        0.1        NaN  ]; % Reference allocation to Fruit and reproduction
-Wm_H     =    [0           0         0          0        0           1/16425  1/16425    0.0      0.0          0          0.0        NaN  ]; % wood turnover coefficient [1/d]
+aSE_H = table2array(TT_par(strcmp(TT_par.Parameters,'aSE_H'),II));
+Sl_H = table2array(TT_par(strcmp(TT_par.Parameters,'Sl_H'),II));
+Nl_H = table2array(TT_par(strcmp(TT_par.Parameters,'Nl_H'),II));
+r_H = table2array(TT_par(strcmp(TT_par.Parameters,'r_H'),II));
+gR_H = table2array(TT_par(strcmp(TT_par.Parameters,'gR_H'),II));
+Tcold_H = table2array(TT_par(strcmp(TT_par.Parameters,'Tcold_H'),II));
+age_cr_H = table2array(TT_par(strcmp(TT_par.Parameters,'age_cr_H'),II));
+Trr_H = table2array(TT_par(strcmp(TT_par.Parameters,'Trr_H'),II));
+LtR_H = table2array(TT_par(strcmp(TT_par.Parameters,'LtR_H'),II));
+eps_ac_H = table2array(TT_par(strcmp(TT_par.Parameters,'eps_ac_H'),II));
+fab_H = table2array(TT_par(strcmp(TT_par.Parameters,'fab_H'),II));
+ff_r_H = table2array(TT_par(strcmp(TT_par.Parameters,'ff_r_H'),II));
+Wm_H = table2array(TT_par(strcmp(TT_par.Parameters,'Wm_H'),II));
 
-%categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-dd_max_H = 1./[150         365       365        365      365         365      45         365    200          100        100        NaN  ]; % Death maximum for drought [1/d] 
-dc_C_H   = 1./[4.9         182       182        182      182         182      182        182    365          10.2       11         NaN  ]; % Factor of increasing mortality for cold
-drn_H    = 1./[900         1095      1095       1095     1095        1095     1095       1095   550          800        1200       NaN  ]; % Turnover root  [1/d]
-dsn_H    = 1./[1000        365       365        365      365         365      365        365    800          500        800        NaN  ]; % Normal transfer rate sapwood [1/d]
-Mf_H     = 1./[80          50        50         50       50          50       50         0      80           50         80         NaN  ]; % Fruit maturation turnover [1/d]
-Klf_H    = 1./[40          15        15         15       15          15       15         15     30           28         28         NaN  ]; % Dead Leaves fall turnover [1/d]
+
+dd_max_H = table2array(TT_par(strcmp(TT_par.Parameters,'dd_max_H'),II));
+dc_C_H = table2array(TT_par(strcmp(TT_par.Parameters,'dc_C_H'),II));
+drn_H = table2array(TT_par(strcmp(TT_par.Parameters,'drn_H'),II));
+dsn_H = table2array(TT_par(strcmp(TT_par.Parameters,'dsn_H'),II));
+Mf_H = table2array(TT_par(strcmp(TT_par.Parameters,'Mf_H'),II));
+Klf_H = table2array(TT_par(strcmp(TT_par.Parameters,'Klf_H'),II));
 
 %% check Mf_H in shrub for 1/0
 
@@ -454,32 +388,16 @@ fbe_H = 1-fab_H; %% fraction below-ground sapwood and reserve
 % [Stoich_H(6)]=Veg_Stoichiometric_Parameter(Nl_H(6));
 
 %% Phenology 
-%categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
-Bfac_lo_H =   [0.99        0.95      0.95       0.95     0.95        0.95     0.95       0.95   0.95         0.99       0.95       NaN  ]; % Leaf Onset Water Stress
-Bfac_ls_H =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN  ]; % Not-used 
-Tlo_H     =   [4.5         12.9      12.9       12.9     12.9        12.9     12.9       12.9   5.5          8.8        2.0        NaN  ]; % Mean Temperature for Leaf onset
-Tls_H     =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN  ]; % Not-used 
-PAR_th_H  =   [NaN         NaN       NaN        NaN      NaN         NaN      NaN        NaN    NaN          NaN        NaN        NaN  ]; % Light Phenology Threshold 
-dmg_H     =   [30          35        35         35       35          35       35         35     45           30         30         NaN  ]; % Day of Max Growth
-LAI_min_H =   [0.001       0.01      0.01       0.01     0.01        0.01     0.01       0.01   0.001        0.05       0.01       NaN  ];
-mjDay_H   =   [220         180       180        180      180         180      180        180    250          180        250        NaN  ]; % Maximum Julian day for leaf onset
-LDay_min_H =  [14.05       12.58     12.58      12.58    12.58       11.0     11.0       11.0   12.1         11.3       12.8       NaN  ]; % Minimum Day duration for leaf onset
-LDay_cr_H =   [9.45        12.3      12.3       12.3     12.3        12.3     12.3       12.3   11.8         11.3       10.8       NaN  ]; % Threshold for senescence day light [h]
-
-% Selection based on II
-Sl_H =Sl_H(II); Nl_H=Nl_H(II);
-r_H=r_H(II); gR_H=gR_H(II); aSE_H=aSE_H(II); dd_max_H=dd_max_H(II);
-dc_C_H=dc_C_H(II); Tcold_H=Tcold_H(II); drn_H=drn_H(II);
-dsn_H=dsn_H(II);  age_cr_H=age_cr_H(II);
-Bfac_lo_H=Bfac_lo_H(II); Bfac_ls_H=Bfac_ls_H(II);
-Tlo_H = Tlo_H(II);  Tls_H=Tls_H(II);
-dmg_H = dmg_H(II); LAI_min_H=LAI_min_H(II);
-Trr_H = Trr_H(II);  mjDay_H=mjDay_H(II);
-LDay_min_H= LDay_min_H(II); LtR_H =LtR_H(II);
-Mf_H= Mf_H(II);  Wm_H= Wm_H(II);  eps_ac_H = eps_ac_H(II);
-LDay_cr_H = LDay_cr_H(II);  Klf_H = Klf_H(II);
-fab_H = fab_H(II); fbe_H = fbe_H(II); ff_r_H = ff_r_H(II);
-
+Bfac_lo_H = table2array(TT_par(strcmp(TT_par.Parameters,'Bfac_lo_H'),II));
+Bfac_ls_H = table2array(TT_par(strcmp(TT_par.Parameters,'Bfac_ls_H'),II));
+Tlo_H = table2array(TT_par(strcmp(TT_par.Parameters,'Tlo_H'),II));
+Tls_H = table2array(TT_par(strcmp(TT_par.Parameters,'Tls_H'),II));
+PAR_th_H = table2array(TT_par(strcmp(TT_par.Parameters,'PAR_th_H'),II));
+dmg_H = table2array(TT_par(strcmp(TT_par.Parameters,'dmg_H'),II));
+LAI_min_H = table2array(TT_par(strcmp(TT_par.Parameters,'LAI_min_H'),II));
+mjDay_H  = table2array(TT_par(strcmp(TT_par.Parameters,'mjDay_H'),II));
+LDay_min_H  = table2array(TT_par(strcmp(TT_par.Parameters,'LDay_min_H'),II));
+LDay_cr_H = table2array(TT_par(strcmp(TT_par.Parameters,'LDay_cr_H'),II));
 
 
 %% Low Vegetation 
@@ -491,57 +409,42 @@ fab_H = fab_H(II); fbe_H = fbe_H(II); ff_r_H = ff_r_H(II);
 % Note that sunflower and rapeseed are not decidious plants, nor evergreen,
 % not grasses.
 %--------------------------------------------------------------------------
-%categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-aSE_L   =     [2           1         1          1        1           2         2          0        NaN          2          NaN        NaN  ]; % Allocation to reserve carbohydrate -- 1 Seasonal Plant --  0 Evergreen -- 2 Grass species -
-Sl_L    =     [0.028       0.032     0.038      0.030    0.042       0.022     0.023      0.016    NaN          0.026      NaN        NaN  ]; % Specific leaf area of  biomass [m^2 /gC] 0.05 -0.005
-Nl_L    =     [23          16        16         20       16          23        23         40       NaN          23         NaN        NaN  ]; % Leaf Nitrogen Concentration [kgC/kgN ]
-r_L     =     [0.055       0.025     0.025      0.025    0.025       0.060     0.060      0.036    NaN          0.045      NaN        NaN  ]; % Respiration rate at 10° [gC/gN d ]  [0.066 -0.011]
-gR_L    =     [0.25        0.25      0.25       0.25     0.25        0.25      0.25       0.25     NaN          0.025      NaN        NaN  ]; % Growth respiration  [] -- [Rg/(GPP-Rm)] [0.22 - 0.28]
-Tcold_L =     [0.0         0.0       0.0        0.0      0.0        -2.0       1.0        1.0      NaN          0          NaN        NaN  ]; % Cold Leaf Shed [°C] 
 
-%categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high   BLdec_low  BLdec_high NoVeg]  
-dd_max_L = 1./[360         50        50         50       50          20        45         365       NaN          30         NaN        NaN  ]; % Death maximum for drought [1/d]
-dc_C_L   = 1./[52          52        52         52       52          52        52         182       NaN          60.83      NaN        NaN  ]; % Factor of increasing mortality for cold
-drn_L    = 1./[570         365       365        365      365         550       450        900       NaN          750        NaN        NaN  ]; % turnover root  [1/d]
-dsn_L    = 1./[365         365       365        365      1E10        365       365        600       NaN          365        NaN        NaN  ]; % normal transfer rate sapwood [1/d]
-Mf_L     = 1./[NaN         365       365        365      1E10        50        50         50        NaN          50         NaN        NaN  ]; % Fruit maturation turnover [1/d]
-Klf_L    = 1./[NaN         20        20         20       20          40        50         50        NaN          30         NaN        NaN  ]; % Dead Leaves fall turnover [1/d]
+aSE_L = table2array(TT_par(strcmp(TT_par.Parameters,'aSE_L'),II));
+Sl_L = table2array(TT_par(strcmp(TT_par.Parameters,'Sl_L'),II));
+Nl_L = table2array(TT_par(strcmp(TT_par.Parameters,'Nl_L'),II));
+r_L = table2array(TT_par(strcmp(TT_par.Parameters,'r_L'),II));
+gR_L = table2array(TT_par(strcmp(TT_par.Parameters,'gR_L'),II));
+Tcold_L = table2array(TT_par(strcmp(TT_par.Parameters,'Tcold_L'),II));
 
-age_cr_L =    [180         110       85         90       80          180       180        730       NaN          250        NaN        NaN  ]; % [day] Critical Leaf Age
-Trr_L    =    [4.0         8.5       6.5        3.5      6.5         2.0       3.5        0.4       NaN          1.0        NaN        NaN  ]; % Translocation rate [gC /m^2 d]
-LtR_L    =    [0.8         1.0       1.1        1.0      1.1         0.45      0.35       0.5       NaN          0.5        NaN        NaN  ]; % Leaf to Root ratio maximum
-Wm_L     =    [NaN         0.0       0.0        0.0      0.0         0.0       0.0        0.0       NaN          0.0        NaN        NaN  ] ;% wood turnover coefficient [1/d]
-eps_ac_L =    [0.5         0.2       0.2        0.2      0.2         1.0       0.2        0.6       NaN          1.0        NaN        NaN  ]; % Allocation to reserve parameter [0-1]
-fab_L    =    [NaN         1.0       1.0        1.0      1.0         0.0       0.0        0.75      NaN          0.0        NaN        NaN  ]; % fraction above-ground sapwood and reserve
-fbe_L    = 1-fab_L;                           % fraction below-ground sapwood and reserve
-ff_r_L   =    [NaN         0.5       0.5        0.2      0.5         0.1       0.1        0.1       NaN          0.1        NaN        NaN  ]; % Reference allocation to Fruit and reproduction
+dd_max_L = table2array(TT_par(strcmp(TT_par.Parameters,'dd_max_L'),II));
+dc_C_L = table2array(TT_par(strcmp(TT_par.Parameters,'dc_C_L'),II));
+drn_L = table2array(TT_par(strcmp(TT_par.Parameters,'drn_L'),II));
+dsn_L = table2array(TT_par(strcmp(TT_par.Parameters,'dsn_L'),II));
+Mf_L = table2array(TT_par(strcmp(TT_par.Parameters,'Mf_L'),II));
+Klf_L = table2array(TT_par(strcmp(TT_par.Parameters,'Klf_L'),II));
+
+age_cr_L = table2array(TT_par(strcmp(TT_par.Parameters,'age_cr_L'),II));
+Trr_L = table2array(TT_par(strcmp(TT_par.Parameters,'Trr_L'),II));
+LtR_L = table2array(TT_par(strcmp(TT_par.Parameters,'LtR_L'),II));
+Wm_L = table2array(TT_par(strcmp(TT_par.Parameters,'Wm_L'),II));
+eps_ac_L = table2array(TT_par(strcmp(TT_par.Parameters,'eps_ac_L'),II));
+fab_L = table2array(TT_par(strcmp(TT_par.Parameters,'fab_L'),II));
+ff_r_L = table2array(TT_par(strcmp(TT_par.Parameters,'ff_r_L'),II));
+fbe_L    = 1-fab_L;  % fraction below-ground sapwood and reserve
 
 % Phenology 
 %categories   [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high   BLdec_low  BLdec_high NoVeg]  
-Bfac_lo_L  =  [0.99        0.99      0.99        0.99    0.99        0.99       0.99       0.99      NaN         0.99       NaN        NaN  ]; % Leaf Onset Water Stress
-Bfac_ls_L  =  [NaN         NaN       NaN         NaN     NaN         0.15       NaN        NaN       NaN         NaN        NaN        NaN  ] ;% 
-Tlo_L      =  [6.0         6.0       5.0         12.0    5.5         1.0       -1.0        11.0      NaN         2.0        NaN        NaN  ]; % Mean Temperature for Leaf onset
-Tls_L      =  [NaN         NaN       NaN         NaN     NaN         NaN        NaN        NaN       NaN         NaN        NaN        NaN  ]; % Not-used 
-PAR_th_L   =  [NaN         NaN       NaN         NaN     NaN         NaN        NaN        NaN       NaN         NaN        NaN        NaN  ]; % Light Phenology Threshold 
-dmg_L      =  [25          70        45          40      50          15         20         15        NaN         20         NaN        NaN  ]; % Day of Max Growth
-LAI_min_L  =  [0.1         0.01      0.01        0.01    0.01        0.05       0.1        0.001     NaN         0.1        NaN        NaN  ];
-mjDay_L    =  [220         200       200         367     200         250        250        210       NaN         366        NaN        NaN  ]; % Maximum Julian day for leaf onset
-LDay_min_L =  [NaN         11        11          10.5    11.0        12         12.2       12.1      NaN         9.0        NaN        NaN  ]; % Minimum Day duration for leaf onset
-LDay_cr_L  =  [12.5        11.2      11.2        10.5    11.4        10.2       11.2       10.2      NaN         9.0        NaN        NaN  ]; % Threshold for senescence day light [h]
-
-% Selection of parameters
-Sl_L =Sl_L(II); Nl_L=Nl_L(II);
-r_L=r_L(II); gR_L=gR_L(II); aSE_L=aSE_L(II); dd_max_L=dd_max_L(II);
-dc_C_L=dc_C_L(II); Tcold_L=Tcold_L(II); drn_L=drn_L(II);
-dsn_L=dsn_L(II);  age_cr_L=age_cr_L(II);
-Bfac_lo_L=Bfac_lo_L(II); Bfac_ls_L=Bfac_ls_L(II);
-Tlo_L = Tlo_L(II);  Tls_L=Tls_L(II);
-dmg_L = dmg_L(II); LAI_min_L=LAI_min_L(II);
-Trr_L = Trr_L(II);  mjDay_L=mjDay_L(II);
-LDay_min_L= LDay_min_L(II); LtR_L =LtR_L(II);
-Mf_L= Mf_L(II);  Wm_L= Wm_L(II);  eps_ac_L = eps_ac_L(II);
-LDay_cr_L = LDay_cr_L(II);  Klf_L = Klf_L(II);
-fab_L = fab_L(II); fbe_L = fbe_L(II); ff_r_L = ff_r_L(II);
+Bfac_lo_L = table2array(TT_par(strcmp(TT_par.Parameters,'Bfac_lo_L'),II));
+Bfac_ls_L = table2array(TT_par(strcmp(TT_par.Parameters,'Bfac_ls_L'),II));
+Tlo_L = table2array(TT_par(strcmp(TT_par.Parameters,'Tlo_L'),II));
+Tls_L = table2array(TT_par(strcmp(TT_par.Parameters,'Tls_L'),II));
+PAR_th_L = table2array(TT_par(strcmp(TT_par.Parameters,'PAR_th_L'),II));
+dmg_L = table2array(TT_par(strcmp(TT_par.Parameters,'dmg_L'),II));
+LAI_min_L = table2array(TT_par(strcmp(TT_par.Parameters,'LAI_min_L'),II));
+mjDay_L = table2array(TT_par(strcmp(TT_par.Parameters,'mjDay_L'),II));
+LDay_min_L = table2array(TT_par(strcmp(TT_par.Parameters,'LDay_min_L'),II));
+LDay_cr_L = table2array(TT_par(strcmp(TT_par.Parameters,'LDay_cr_L'),II));
 
 
 %% INITIAL CONDITIONS

@@ -25,7 +25,7 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end)
+function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface)
 
 
 %% Directories
@@ -175,13 +175,13 @@ loc = find(Point == Names);
 %% Definitions of site
 %% Crowns
 cc = POI.NCrown(loc); 
-II = cell2mat(POI.II(loc));
+II = POI.II{loc};
 Cwat = POI.Cwat(loc); 
 Curb = POI.Curb(loc); 
 Crock = POI.Crock(loc);
 Cbare = POI.Cbare(loc);
 Ccrown = cell2mat(POI.Ccrown(loc));
-zatm = POI.zatm(loc);
+zatm = max(table2array(POI.zatm{loc}));
 id_location = string(POI.Name(loc));
 cc_max = POI.cc_max(loc);
 
@@ -283,10 +283,6 @@ NN= height(forcing);%%% time Step
 
 % Height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
-
-%categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
-zatm_surface = [18          2         2          2        2           2         2          2        18           18          18         NaN  ];
-
 zatm_hourly_on = 0;
 
 %% Precipitation
@@ -425,6 +421,8 @@ else
    Slo_top=Slo_top_S(ij);
 end
 
+
+
 %% SOIL 
 %==========================================================================
 % Vector is divided by 100 to put the numbers within 0-1
@@ -477,12 +475,12 @@ end
 if topo == 1
 INIT_COND_v3(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
-   MASKn,GLH,Ca,SNOWD,SNOWALB,out, II, ij);
+   MASKn,GLH,Ca,SNOWD,SNOWALB,out, II, ij, TT_par);
 load(out);
 else 
-INIT_COND_v2(num_cell,m_cell,n_cell,...
+INIT_COND_v3(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
-   MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out);
+   MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out, TT_par);
 load(out);
 end
 %end

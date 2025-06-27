@@ -83,6 +83,18 @@ UTM_zone = 33; % for Italy
 % names of points
 names = string(POI.Name);
 
+%% PARAMETERS OF THE MODEL
+%==========================================================================
+% Here are the paramters of the model
+% opts check the format of the columns. Use it to force all the columns
+% with values to be numeric.
+%==========================================================================
+
+opts = detectImportOptions("C:\Users\mrodrigu\Desktop\19_ISTA\1_TC\3_Model_Source\2_MegaWat\3_PointScale_version\3_Inputs\2_Apennine\Parameters_TC.xlsx");
+opts = setvartype(opts, {'BLever', 'NoVeg'}, 'double');
+
+TT_par = readtable("C:\Users\mrodrigu\Desktop\19_ISTA\1_TC\3_Model_Source\2_MegaWat\3_PointScale_version\3_Inputs\2_Apennine\Parameters_TC.xlsx", opts);
+
 %% Load DEM and extraction of matrices - Only DTM and VEG_CODE here
 %==========================================================================
 %{
@@ -141,12 +153,15 @@ end
 ksv=reshape(VEG_CODE,num_cell,1);
 
 %% Surface elevation for vegetation
-% categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec_high   NoVeg]  
-zatm_surface = [18      2         2          2        2          2        2        2      18      18          18           2    ]; %Depend on vegetation
+%--------------------------------------------------------------------------
+% Here, note that it is needed to define the starting point of the data in
+% the excel file. In this case it is from column 5 to the end. 
+%--------------------------------------------------------------------------
+zatm_surface = TT_par(strcmp(TT_par.Parameters,'zatm_surface'),5:size(TT_par,2));
 zatm_hourly_on = 0;
 
 %% Loop for vegetation classification
-%k=98
+%k=3
 for k = 1:height(POI)
 %disp(k)
     if ~strcmp(POI.Feature{k}, 'Snow_station') %If the POI is a snow depth station, then it is just bare soil
@@ -174,13 +189,29 @@ for k = 1:height(POI)
         %       1) Broad-leaved forest assumed to be mostly decidious. Evergreen 
         %          broad-leaved are not very common and in the Appennine
         
+  % categories
+        %{
+          fir
+          Crops_WW
+          Crops_WB
+          Crops_S
+          Crops_R
+          grass_A
+          grass_B
+          shrub
+          BLever
+          BLdec_low
+          BLdec_high 
+          NoVeg  
+        %}
+
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        
+        POI.VEG_CLASS(k) = 1;             
+        POI.II(k) =  {["fir"   "shrub"   "BLdec_low" ]};   
         POI.Ccrown(k) = {[0.1 0.1 0.8]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 1; 
 
-        % categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low   BLdec_high NoVeg]  
-        POI.II(k) =  {[1           0         0          0        0           0         0          1        0            1           0          0    ]>0};         
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
@@ -203,13 +234,12 @@ for k = 1:height(POI)
         %       1) A classification for Grassland/pasture
 
         POI.Cwat(k) = 0.1; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {[0.9]};  
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 2; 
         
-        % categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-        POI.II(k) =  {[0           0         0          0        0           0         1          0        0            0          0          0    ]>0};  
-
+        POI.VEG_CLASS(k) = 2; 
+        POI.II(k) =  {["grass_B"]};
+        POI.Ccrown(k) = {[0.9]};  
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));      
+        
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
@@ -232,13 +262,12 @@ for k = 1:height(POI)
         %           are good choices for the region)
         % 
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.2;
+        
+        POI.VEG_CLASS(k) = 3;
+        POI.II(k) =  {["Crops_WW"  "Crops_WB"  "Crops_S"  "Crops_R" "grass_A"]};
         POI.Ccrown(k) = {[0.1 0.1 0.2 0.1 0.3]};   
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 3; 
-
-        % categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-        POI.II(k) =  {[0           1         1          1        1           0         1          0        0            0          0          0    ]>0};
-        
+               
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
     
@@ -247,16 +276,14 @@ for k = 1:height(POI)
         %    Case 4 includes from CORINE:
         %      1) Coniferous forest (1%)
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+        
+        POI.VEG_CLASS(k) = 4; 
+        POI.II(k) =  {["fir" "shrub" ]};  
         POI.Ccrown(k) = {[0.7 0.3]};
         POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 4; 
-
-        % categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub    BLever_high  BLdec_low  BLdec_high NoVeg]  
-        POI.II(k) =  {[1           0         0          0        0           0         0          1        0            0          0          0    ]>0};  
-    
+   
         % cc_max
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     case 5 % Mediterranean shrublands %
         %    Case 5 includes from CORINE:
@@ -265,33 +292,25 @@ for k = 1:height(POI)
         %       4)  Moors and heathland (>0.05%)
         
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {[1.0]};
-   
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+       
         POI.VEG_CLASS(k) = 5; 
-        
-        %% DEBUGGER
-        %THERE IS A PROBLEM WITH SHRUBS
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever_high  BLdec_low   BLdec  NoVeg]
-        POI.II(k) =  {[0       0         0          0        0          0        0        1      0            0           0      0    ]>0};  
+        POI.II(k) =  {["shrub"]}; 
+        POI.Ccrown(k) = {[1.0]};   
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));      
           
         % cc_max
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-    
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));     
 
     case 6 % Olives %
         %    Case 6 includes from CORINE:
         %       1) Olive groves (4%)
 
         POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {1.0};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 6; 
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec  NoVeg]
-        POI.II(k) =  {[0       0         0          0        0          0        0        1      0       0           0      0    ]>0};  
+        
+        POI.VEG_CLASS(k) = 6;
+        POI.II(k) =  {["shrub"]};
+        POI.Ccrown(k) = {[1.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));                  
     
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
@@ -308,15 +327,12 @@ for k = 1:height(POI)
         %         8) Airports (0.1%)
 
         POI.Cwat(k) = 0.0; POI.Curb(k) = 1.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {0.0};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        
         POI.VEG_CLASS(k) = 7; 
-        
-        %%CHECK  WHY IS NEEDED TO SET THE VEGETATION PARAMTERS
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec  NoVeg]
-        POI.II(k) =  {[1       0         0          0        0          0        0        0      0       0           0      0    ]>0};  
-        
+        POI.II(k) =  {["fir" ]};
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+       
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
@@ -347,13 +363,11 @@ for k = 1:height(POI)
         %        2) Glaciers and perpetual snow (0%)
 
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 1.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {0.0};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        
         POI.VEG_CLASS(k) = 8; 
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec  NoVeg ]  
-        POI.II(k) =  {[0       0         0          0        0          1        0        0      0       0           0      0     ]>0}; 
+        POI.II(k) =  {["grass_A" ]}; 
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));               
 
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
@@ -370,13 +384,12 @@ for k = 1:height(POI)
 
 
         POI.Cwat(k) = 1.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        POI.Ccrown(k) = {0.0};
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        
         POI.VEG_CLASS(k) = 9; 
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec  NoVeg]  
-        POI.II(k) =  {[0       0         0          0        0          1        0        0      0       0           0      0    ]>0};
-  
+        POI.II(k) =  {["grass_A" ]};
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));  
+        
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
@@ -388,12 +401,11 @@ for k = 1:height(POI)
         %        4) Sparsely vegetated areas (0.7%)
         
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.9;
-        POI.Ccrown(k) = {0.1};
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.VEG_CLASS(k) = 10; 
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low  BLdec  NoVeg]  
-        POI.II(k) =  {[0       0         0          0        0          1        0        0      0       0          0      0    ]>0};  
+        
+        POI.VEG_CLASS(k) = 10;
+        POI.II(k) =  {["grass_A"]}; 
+        POI.Ccrown(k) = {[0.1]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));              
 
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
@@ -406,12 +418,11 @@ for k = 1:height(POI)
     else % if I have an station, this is in bare soil.    
       
         POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 1.0;
-        POI.Ccrown(k) = {0.0};
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
+        
         POI.VEG_CLASS(k) = 10; 
-
-        %categories   [fir     Crops_WW  Crops_WB   Crops_S  Crops_R    grass_A  grass_B  shrub  BLever  BLdec_low   BLdec  NoVeg]  
-        POI.II(k) =  {[0       0         0          0        0          1        0        0      0       0           0      0    ]>0};  
+        POI.II(k) =  {["grass_A"]};  
+        POI.Ccrown(k) = {[0.0]};
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));      
 
         % cc_max
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
@@ -420,10 +431,10 @@ for k = 1:height(POI)
 
 
 % Defining zatm in each point
-if ~isempty(zatm_surface(cell2mat(POI.II(k))>0))
-POI.zatm(k) = max(zatm_surface(cell2mat(POI.II(k))>0)); %choose correct atmospheric reference height
+if ~isempty(zatm_surface(:,POI.II{k}))
+POI.zatm(k) = {zatm_surface(:,POI.II{k})}; %choose correct atmospheric reference height
 else
-POI.zatm(k) = 2;
+POI.zatm(k) = {2};
 end
 
 end
@@ -432,7 +443,7 @@ end
 %profile on -memory
 
 %% Single point Launcher
-run_Point_Pro(root, outlocation, run_folder, names(4), POI, ksv, date_start, date_end);
+run_Point_Pro(root, outlocation, run_folder, names(4), POI, ksv, date_start, date_end, TT_par, zatm_surface);
 
 %% Memory out
 %profile off
