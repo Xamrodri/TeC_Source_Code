@@ -213,7 +213,7 @@ FI_H=[0.081         0.081           NaN           NaN 0.081         0.081] ;% In
 Do_H=[800  700  NaN  NaN 800  1000]; %%[Pa] 
 a1_H=[6    6  NaN  NaN 7 6 ];  %%% [-] WUE parameter 
 go_H=[0.01          0.01           NaN           NaN 0.01          0.01 ];% [mol / s m^2] minimum Stomatal Conductance
-CT_H=[3    3  NaN  NaN 3    3 ]; %%--> 'CT' == 3  'CT' ==  4  %% Photosyntesis Typology for Plants
+CT_H=  [3    3  NaN  NaN 3    3 ]; %%--> 'CT' == 3  'CT' ==  4  %% Photosyntesis Typology for Plants
 DSE_H =[0.649          0.66           NaN           NaN 0.649   0.649  ];  %% [kJ/mol] Activation Energy - Plant Dependent
 Ha_H =[72   94  NaN  NaN 72 76]; %% [kJ / mol K]  entropy factor - Plant Dependent
 gmes_H=[Inf Inf   NaN    NaN Inf Inf  ]; %% [mol CO2 / s m^2 ];  mesophyll conductance

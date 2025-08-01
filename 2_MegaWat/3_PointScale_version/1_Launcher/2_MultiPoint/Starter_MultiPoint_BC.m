@@ -25,7 +25,7 @@ clc; clear all;
 SITE = 'Velino';
 
 %Name of the folder to save results and not overwrite previous runs
-run_folder = 'Run_9';
+run_folder = 'Run_19';
 
 %% DIRECTORY
 %==========================================================================
@@ -35,7 +35,7 @@ run_folder = 'Run_9';
 %root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
 root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/'; %Personal computer
 folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
-folder_save = [root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/Run_8/']; % Put here the path of where you downloaded the repository
+folder_save = [root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/' run_folder '/']; % Put here the path of where you downloaded the repository
 
 %% Dependencies
 addpath(genpath([folder_path,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
@@ -47,7 +47,7 @@ addpath(genpath([folder_path,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to 
 path_model = [root '1_TC/3_Model_Source/2_MegaWat/'];
 
 % Location of the launcher
-folder_launcher = [path_model '3_PointScale_version/1_Launcher/Experimental/']; % Put here the path of where you downloaded the repository
+folder_launcher = [path_model '3_PointScale_version/1_Launcher/2_MultiPoint/']; % Put here the path of where you downloaded the repository
 addpath(genpath(folder_launcher)); % Add path to Ca_Data
 
 %% Location for outputs - Creation
@@ -55,12 +55,14 @@ addpath(genpath(folder_launcher)); % Add path to Ca_Data
 outlocation = [folder_path,'3_PointScale_version/4_Outputs/' run_folder '/'];
 
 if ~exist(outlocation, 'dir'); 
-mkdir(outlocation); 
+    disp('Folders do not exist for outputs. Creating new folders')
+    mkdir(outlocation); 
     mkdir([outlocation '1_Hourly/']); 
     mkdir([outlocation '2_Daily/']); 
     mkdir([outlocation '3_Params/']); 
     mkdir([outlocation '4_INIT_COND/']); 
     mkdir([outlocation '5_Env/']); 
+    mkdir([outlocation '6_POI_table/']); 
 addpath(genpath(outlocation)); 
 end
 
@@ -69,8 +71,8 @@ end
 % Set
 %==========================================================================
 
-date_start = ["01-Jan-2000 00:00:00"]; % Starting point of the simulation
-date_end = ["31-Dec-2010 23:00:00"]; % Last timestep of the simulation
+date_start = ["01-Oct-2004 00:00:00"]; % Starting point of the simulation
+date_end = ["30-Sep-2005 23:00:00"]; % Last timestep of the simulation
 
 
 %% Main file with points 
@@ -91,10 +93,10 @@ names = string(POI.Name);
 % with values to be numeric.
 %==========================================================================
 
-opts = detectImportOptions("C:\Users\mrodrigu\Desktop\19_ISTA\1_Science_MegaWat\1_TC\3_Model_Source\2_MegaWat\3_PointScale_version\3_Inputs\2_Apennine\Parameters_TC.xlsx");
+opts = detectImportOptions([root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx']);
 opts = setvartype(opts, [7:length(opts.VariableTypes)], 'double');
 
-TT_par = readtable("C:\Users\mrodrigu\Desktop\19_ISTA\1_Science_MegaWat\1_TC\3_Model_Source\2_MegaWat\3_PointScale_version\3_Inputs\2_Apennine\Parameters_TC.xlsx", opts);
+TT_par = readtable([root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
 
 %% Load DEM and extraction of matrices - Only DTM and VEG_CODE here
 %==========================================================================
@@ -431,13 +433,13 @@ for k = 1:height(POI)
     %% CODE
         POI.VEG_CLASS(k) = 5;
 
-        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.15;
+        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.15; %0.15
                 
-        POI.II(k) =  {["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"]}; 
-        POI.Ccrown(k) = {[0.6 0.05 0.2]};  
+        POI.II(k) =  {["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"]}; %"shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"
+        POI.Ccrown(k) = {[0.6 0.05 0.2]};  %[0.6 0.05 0.2]
 
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));    
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));  
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k))); 
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     case 6 % Olives %
     %% CORINE INFORMATION FOR TIBER BASIN    
@@ -532,8 +534,8 @@ for k = 1:height(POI)
         POI.II(k) =  {["NoVeg"]}; 
         POI.Ccrown(k) = {[0.0]};
 
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));               
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
+        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));         
+        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     case 9 % Water %
     %% CORINE INFORMATION FOR TIBER BASIN   
@@ -610,17 +612,19 @@ writetable(POI, [folder_save '6_POI_table/POI_' run_folder '.csv']);
 %profile on -memory
 
 %% Single point Launcher
-run_Point_Pro(root, outlocation, run_folder, "VelinoCluster94", POI, ksv, date_start, date_end, TT_par, zatm_surface);
+run_Point_Pro_BC(root, outlocation, run_folder, "VelinoCluster74", POI, ksv, date_start, date_end, TT_par, zatm_surface);
 
 %% Memory out
 %profile off
 %profile viewer
 
-%{
+
+
 
 %% Workers - Not needed for the cluster
 % Specify the desired number of workers
 
+%{
 numWorkers = 4; % Example: Set to 4 workers
 
 % Create a parallel pool with the specified number of workers
@@ -635,6 +639,7 @@ end
 
 
 
+
 %% Computational time
 %Time counter
 tic;
@@ -642,10 +647,13 @@ tic;
 %% Specific tasks - Here define the runs
 % Define the specific indices you want to run
 
-%specific_indices = 2:length(names); % for all the runs
+idx = contains(names, "Cluster");
+names = names(idx)
+
+specific_indices = 1:length(names); % for all the runs
 %specific_indices = [1, 23];
 %specific_indices = [5, 11, 14, 22, 28, 30, 36, 38, 41, 55, 59, 65, 68, 76, 77, 82, 84, 90, 92, 95];
-specific_indices = [3, 4, 46, 56, 73, 90, 95];
+%specific_indices = [4, 10, 14, 25, 36, 80];
 
 % Create a new cell array of names based on the specific indices
 selected_names = names(specific_indices);
@@ -653,7 +661,7 @@ selected_names = names(specific_indices);
 %% Parallel computing launch for the Model
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
-        run_Point_Pro(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface);
+        run_Point_Pro_BC(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface);
     catch ME
         warning('Error occurred on worker %d: %s', k, ME.message);       
     end
@@ -666,3 +674,4 @@ disp(Computational_Time/3600)
 
 
 %}
+

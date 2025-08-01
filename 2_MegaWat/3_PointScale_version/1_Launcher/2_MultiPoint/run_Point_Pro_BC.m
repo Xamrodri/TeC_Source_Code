@@ -13,10 +13,8 @@ Area of Study: Apennines - Tiber River
 
 Code explanation: 
      This code launches the Point Scale version of TC model.
-     This function runs only one point. There is no for loop.
+     This function runs only one point. There is no for loop.   
      
-     
-
 %}
 %==========================================================================
 
@@ -30,8 +28,10 @@ function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, da
 
 %% Directories
 folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
-forc_path = [root '2_Forcing/2_Extractions_Point/3_Radiation_Partition/']; % Put here the path of where you downloaded the repository
-
+%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/']; % Put here the path of where you downloaded the repository
+forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/2_Non_Bias_corrected/']; % Put here the path of where you downloaded the repository
+%forc_path = [root '2_Forcing/2_Invariant_method/2_Extractions_Point/3_Radiation_Partition/3_Per_Point/']; % Put here the path of where you downloaded the repository
+%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/3_Test1/']; % Put here the path of where you downloaded the repository
 
 %% Study site details
 %==========================================================================
@@ -202,25 +202,11 @@ years_forc = year(date_start):year(date_end);
 forc_opened = struct(); 
 
 %% Extraction of forcing data
-for yy = years_forc
-
-forc_file= [forc_path 'Forcing_ERA5_Land_' char(SITE) '_' char(string(yy)) '_corr_all.mat']; % Put here the path of where you downloaded the repository
+forc_file= [forc_path 'Forcing_ERA5Land_' char(Point) '.mat']; % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
 
-fieldName = ['year_', char(string(yy))];
-forc_opened.(fieldName) = forc_f.(Point);
-
-end
-
 %% Combination of data into a single table
-% First, extract all the tables from the struct into a cell array
-forc_Array = struct2cell(forc_opened);
-
-% Now, use vertcat to combine all the tables in the cell array
-forc = vertcat(forc_Array{:});
-%forc = forc_f.(Point);
-
-Date_all=forc.Date; 
+Date_all=forc.dateTime; 
 
 %define period and time zone info
 x1=find(date_start == Date_all,1);
@@ -279,6 +265,39 @@ CALCULATIONS:
 
 % Period of forcing data
 forcing = forc(x1:x2,:);
+
+% Check function for variables - check_var()
+%--------------------------------------------------------------------------
+%{
+Define variables names in the string in order based on your input file.
+Do no change the order of variables in check_var. Just change the names
+based on your file of forcing. So, if your column for temperature is called
+Temp instead of t2m, then change t2m to Temp below.
+%}
+
+%Define variables names in order based on your input file
+
+%{
+check_var(forcing, ...
+    ["t2m" ... % Temperature
+    "d2m" ...  % Dew Point temperature
+    "tp" ...   % Precipitation
+    "ssrd" ... % Downward short wave radiation
+    "strd" ... % Downdward Long wave radiation
+    "ws10" ... % Wind speed
+    "sp" ...   % Air pressure
+    "es" ...   % saturation vapor pressure
+    "ea" ...   % actual vapor pressure
+    "RH" ...   % Relative humidity
+    "SAD1" ... % SAD1
+    "SAD2" ... % SAD2
+    "SAB1" ... % SAB1
+    "SAB2" ... % SAB2
+    "PARB" ... % PARB
+    "PARD" ... % PARD
+    "N" ...    % Cloudiness
+    ],Point)
+%}
 NN= height(forcing);%%% time Step
 
 % Height of virtual station
@@ -288,7 +307,7 @@ zatm_hourly_on = 0;
 %% Precipitation
 
 % Precipitation from ERA5Land
-Pr=double(forcing.Total_Precipitation_HH);
+Pr=double(forcing.tp);
 Pr(isnan(Pr))=0;
 Pr(Pr<0.01)=0;
 
@@ -298,14 +317,14 @@ Pr(Pr<0.01)=0;
 %% Air pressure
 % Air Pressure in mbar based on the PDF for variables and parameters of TC
 % Pressure comes in Pa from ERA5
-Pre=double(forcing.Pressure/100);    
+Pre=double(forcing.sp/100);    
 
 %% Temperature
 % 2m air temperature
-Ta=double(forcing.Temperature);
+Ta=double(forcing.t2m);
 
 %% Wind Speed
-Ws=double(forcing.Wind_Speed);
+Ws=double(forcing.ws10);
 Ws(Ws < 0.01) = 0.01;
 
 %% Relative humidity
@@ -333,11 +352,11 @@ alpha = 0; % switch for albedo
 
 %% Vapor pressure - Dew Point temperature
 %esat/ea/Ds/Tdew
-esat = double(forc.es);   % Vapour pressure at saturation (Pa)
-ea = double(forc.ea);     % Vapour pressure (Pa)
+esat = double(forcing.es);   % Vapour pressure at saturation (Pa)
+ea = double(forcing.ea);     % Vapour pressure (Pa)
 Ds = esat - ea;  % Vapor Pressure Deficit (Pa)
 Ds(Ds<0) = 0; 
-Tdew = double(forc.Dew_Point_Temp);
+Tdew = double(forcing.d2m);
 
 %a=17.27; b=237.3;
 %clear a b xr;

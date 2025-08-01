@@ -47,7 +47,7 @@ Krock =Krock(ksv(ij)); % Hydraulic conductivity fractured rock [mm/h]
 
 % Soil layers
 %           Depth1 Depth2 Depth3  Depth4 Depth5 Depth6 Depth7 Depth8 Depth9  Depth10
-Zs= [0      10     20      50     100    150    200    300    400     700    1500]; % Depth of top of the soil layer [mm],  ms+1
+Zs= [0      10     20      50     100    150    200    300    1000     1500    2500]; % Depth of top of the soil layer [mm],  ms+1
 Zdes = 10; % Depth of evaporation layer [mm]
 Zinf=  10; % Depth of infiltration layer (=first layer) [mm]
 Zbio = 250; % Depth of the active Biogeochemistry zone [mm]
@@ -180,7 +180,6 @@ zoms = table2array(TT_par(strcmp(TT_par.Parameters,'zoms'),II));
 %Deb_Par.zom = zoms(s);
 
 dbThick=DEB_MAP(ij);%% [mm]
-
 
 
 %%  VEGETATION SECTION
@@ -516,9 +515,14 @@ Ci_shdH(1,:) = [Ca(1)]; % [umolCO2/mol]
 %%% B1 Leaves - Grass  %%% B2 Sapwood  %%% B3 Fine Root  %%% B4 Carbohydrate Reserve
 %%% B5 Fruit and Flower %%% B6 Heartwood - Dead Sapwood %%% B7 Leaves - Grass -- Standing Dead
 %%%%%%%%%%%%%%%%%%
-LAI_H(1,:) = LAI_Htm1(ij,:);  Rrootl_H(1,:)= Rrootl_Htm1(ij,:); 
-PHE_S_H(1,:)= PHE_S_Htm1(ij,:); dflo_H(1,:)=dflo_Htm1(ij,:); AgeL_H(1,:)=AgeL_Htm1(ij,:);
-e_rel_H(1,:)=e_rel_Htm1(ij,:); hc_H(1,:) =hc_Htm1(ij,:); SAI_H(1,:) = SAI_Htm1(ij,:);
+LAI_H(1,:) = LAI_Htm1(ij,:);  
+Rrootl_H(1,:)= Rrootl_Htm1(ij,:); 
+PHE_S_H(1,:)= PHE_S_Htm1(ij,:); 
+dflo_H(1,:)=dflo_Htm1(ij,:); 
+AgeL_H(1,:)=AgeL_Htm1(ij,:);
+e_rel_H(1,:)=e_rel_Htm1(ij,:); 
+hc_H(1,:) =hc_Htm1(ij,:); 
+SAI_H(1,:) = SAI_Htm1(ij,:);
 B_H(1,:,:)= B_Htm1(ij,:,:);
 %%%%%%%%%%%%%%%%%%
 LAI_L(1,:) = LAI_Ltm1(ij,:); B_L(1,:,:)= B_Ltm1(ij,:,:); Rrootl_L(1,:)= Rrootl_Ltm1(ij,:);

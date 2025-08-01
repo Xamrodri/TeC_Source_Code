@@ -125,6 +125,7 @@ SIF_H=zeros(NN,cc_max);SIF_L=zeros(NN,cc_max);
 NCP = 8;                   % Number of Carbon Pool
 NNd = ceil(NN/24);         % Daily time step number
 
+%% Low vegetation
 LAI_L=zeros(NNd,cc_max);   % Leaf area index - low vegetation
 B_L=zeros(NNd,cc_max,NCP); % Carbon pool biomass
 NPP_L=zeros(NNd,cc_max);   % Net Primary Production - low vegetation
@@ -143,11 +144,24 @@ hc_L=zeros(NNd,cc_max);    % Vegetation height - low vegetation
 e_relN_L=ones(NNd,cc_max); % Relative Efficiency of the photosynthesis apparatus due to N limitations - low vegetation
 BA_L=zeros(NNd,cc_max);    %
 
-%%%
-LAI_H=zeros(NNd,cc_max); B_H=zeros(NNd,cc_max,NCP);NPP_H=zeros(NNd,cc_max);Rg_H=zeros(NNd,cc_max);
-RA_H=zeros(NNd,cc_max);Rms_H=zeros(NNd,cc_max);Rmr_H=zeros(NNd,cc_max); ANPP_H=zeros(NNd,cc_max);
-PHE_S_H=zeros(NNd,cc_max); dflo_H=zeros(NNd,cc_max);Rmc_H=zeros(NNd,cc_max);
-AgeL_H=zeros(NNd,cc_max);e_rel_H=ones(NNd,cc_max);SAI_H=zeros(NNd,cc_max); hc_H=zeros(NNd,cc_max); e_relN_H=ones(NNd,cc_max); BA_H=zeros(NNd,cc_max);
+%% High vegetation
+LAI_H=zeros(NNd,cc_max);
+B_H=zeros(NNd,cc_max,NCP);
+NPP_H=zeros(NNd,cc_max);
+Rg_H=zeros(NNd,cc_max);
+RA_H=zeros(NNd,cc_max);
+Rms_H=zeros(NNd,cc_max);
+Rmr_H=zeros(NNd,cc_max); 
+ANPP_H=zeros(NNd,cc_max);
+PHE_S_H=zeros(NNd,cc_max); 
+dflo_H=zeros(NNd,cc_max);
+Rmc_H=zeros(NNd,cc_max);
+AgeL_H=zeros(NNd,cc_max);
+e_rel_H=ones(NNd,cc_max);
+SAI_H=zeros(NNd,cc_max); 
+hc_H=zeros(NNd,cc_max); 
+e_relN_H=ones(NNd,cc_max); 
+BA_H=zeros(NNd,cc_max);
 %%%
 Rrootl_H=zeros(NNd,cc_max); Rrootl_L=zeros(NNd,cc_max);
 Bfac_dayH=ones(NNd,cc_max); Bfac_weekH=ones(NNd,cc_max); NPPI_H=zeros(NNd,cc_max); TdpI_H=zeros(NNd,cc_max);
@@ -391,25 +405,28 @@ for i=2:NN
     if (Datam(i,4)==0) 
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        j=j+1; [jDay(j)]= JULIAN_DAY(Datam(i,:));
+        j=j+1; 
+        [jDay(j)]= JULIAN_DAY(Datam(i,:));
         [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)] = SetSunVariables(Datam(i,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
         clear h_S delta_S zeta_S T_sunrise T_sunset
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %%%% Biogeochemistry submodule
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment(Tdp(pdind,:),O(pdind,:),V(pdind,:),Soil_Param,Phy,SPAR,Bio_Zs); % sum(V(i,:))
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+        %% BIOGEO_UNIT
+        %==============================================================
+        %
+        %==============================================================
+
+        %% Biogeochemistry submodule
+        [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment(Tdp(pdind,:),O(pdind,:),V(pdind,:),Soil_Param,Phy,SPAR,Bio_Zs); % sum(V(i,:))
+        
+        %% Condition for OPT_SoilBiogeochemistry
         if OPT_SoilBiogeochemistry == 1
+            
             IS= Ccrown*squeeze(ISOIL_L(j-1,:,:)) + Ccrown*squeeze(ISOIL_H(j-1,:,:));
             REXMY= Ccrown*squeeze(Rexmy_L(j-1,:,:)) + Ccrown*squeeze(Rexmy_H(j-1,:,:));
-            FireA = 1*((sum(ManIH==-5) + sum(ManIL==-5)) > 0);
+            FireA = 1*((sum(ManIH==-5) + sum(ManIL==-5)) > 0);            
             
-            %% BIOGEO_UNIT
-            %==============================================================
-            %
-            %==============================================================
             [P(j,:),LEAK_NH4(j),LEAK_NO3(j),LEAK_P(j),LEAK_K(j),LEAK_DOC(j),LEAK_DON(j),LEAK_DOP(j),...
                 R_NH4(j),R_NO3(j),R_P(j),R_K(j),R_DOC(j),R_DON(j),R_DOP(j),...
                 Nuptake_H(j,:),Puptake_H(j,:),Kuptake_H(j,:),Nuptake_L(j,:),Puptake_L(j,:),Kuptake_L(j,:),RexmyI(j,:),...
@@ -419,11 +436,11 @@ for i=2:NN
                 SupN_H(j-1,:),SupP_H(j-1,:),SupK_H(j-1,:),SupN_L(j-1,:),SupP_L(j-1,:),SupK_L(j-1,:),...
                 REXMY,RexmyI(j-1,:),ExEM,NavlI(j-1,:),Pcla,Psan,...
                 B_IO,jDay(j),FireA,0);
-            %%%%%%%%%%%%% End BIOGEO_UNIT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            %%%%%
+            
             BLit(j,:)= 0.002*sum(P(j,1:5))*Ccrown; % Total litter content [kg DM / m2]
             Bam =  P(j,20); %%[gC/m2]
             Bem =  P(j,21); %%[gC/m2]
+
         else % if Biogeochemical module off, then paramters are set zero            
             BLit(j,:)= 0.0 ; % Total litter content  (0.100) [kg DM / m2]
             %%% Plant uptake
