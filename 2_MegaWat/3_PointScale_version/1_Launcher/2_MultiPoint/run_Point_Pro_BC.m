@@ -23,15 +23,8 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters)
+function result=run_Point_Pro(Directories, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters)
 
-
-%% Directories
-folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
-forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/20250806_B/']; % Put here the path of where you downloaded the repository
-%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/2_Non_Bias_corrected/']; % Put here the path of where you downloaded the repository
-%forc_path = [root '2_Forcing/2_Invariant_method/2_Extractions_Point/3_Radiation_Partition/3_Per_Point/']; % Put here the path of where you downloaded the repository
-%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/3_Test1/']; % Put here the path of where you downloaded the repository
 
 %% Study site details
 %==========================================================================
@@ -107,7 +100,7 @@ Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 %% Initial condition
 % Saving initial conditions of the model
-out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
+out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
 
 %% Load DEM and geographical information
 %==========================================================================
@@ -118,7 +111,7 @@ out = strcat(outlocation, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'
 dtm_file = ["dtm_Velino_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)));
-dtm_file_op = strcat(folder_path,'5_Common_inputs/',SITE,'/',dtm_file);
+dtm_file_op = strcat(Directories.model,'5_Common_inputs/',SITE,'/',dtm_file);
 
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -202,7 +195,7 @@ years_forc = year(date_start):year(date_end);
 forc_opened = struct(); 
 
 %% Extraction of forcing data
-forc_file= [forc_path 'Forcing_ERA5Land_' char(Point) '.mat']; % Put here the path of where you downloaded the repository
+forc_file= [Directories.forc 'Forcing_ERA5Land_' char(Point) '.mat']; % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
 
 % Decompressing - Only for big data sets
@@ -381,7 +374,7 @@ MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
-    Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_', Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
+    Topo_data = load([Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_', Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
 
     Par_time = Topo_data.Par_time;
     Par_points = Topo_data.Par_points;
@@ -516,7 +509,7 @@ end
 % PARAM_IC: Define parameter file
 % MAIN_FRAME: Contains the model
 %==========================================================================
-PARAM_IC = strcat(folder_path,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
+PARAM_IC = strcat(Directories.model,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
 %% Post-compute calculations
@@ -547,7 +540,7 @@ Param_t = rows2vars(Param_t);
 Param_t = renamevars(Param_t,{'OriginalVariableNames','Var1'},{'Parameter','Value'});
 
 % Exporting as .txt
-writetable(Param_t, strcat(outlocation, '3_Params/',id_location,'_param.txt') )
+writetable(Param_t, strcat(Directories.save, '3_Params/',id_location,'_param.txt') )
 
 % Here I manually choose the T&C outputs I want to save at each point.
 Outputs_t = table(Date, ...
@@ -568,7 +561,7 @@ Outputs_t = table(Date, ...
     'O_mois','FROCK'});
 
 %% Hourly output
-writetable(Outputs_t, strcat(outlocation, '1_Hourly/',id_location,'_hourly_results.txt'))
+%writetable(Outputs_t, strcat(Directories.save, '1_Hourly/',id_location,'_hourly_results.txt'))
 
 %% Daily outputs
 % If daily outputs are activated
@@ -628,7 +621,7 @@ Outputs_t = timetable2table(Outputs_d);
 
 % Exporting as .txt
 %--------------------------------------------------------------------------
-writetable(Outputs_t, strcat(outlocation, '2_Daily/',id_location,'_daily_results.txt'))
+writetable(Outputs_t, strcat(Directories.save, '2_Daily/',id_location,'_daily_results.txt'))
 
 end 
 

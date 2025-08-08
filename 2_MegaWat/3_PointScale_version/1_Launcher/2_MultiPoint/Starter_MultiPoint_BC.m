@@ -36,6 +36,10 @@ run_folder = 'Run_24';
 date_start = ["01-Oct-1999 00:00:00"]; % Starting point of the simulation
 date_end = ["30-Sep-2000 23:00:00"]; % Last timestep of the simulation
 
+% Folder with forcings
+%--------------------------------------------------------------------------
+forc_in = '20250806_B';
+
 %% DIRECTORIES
 %==========================================================================
 % All paths are here
@@ -44,36 +48,41 @@ date_end = ["30-Sep-2000 23:00:00"]; % Last timestep of the simulation
 % Main roots
 %--------------------------------------------------------------------------
 %root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
-root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/'; %Personal computer
+Directories.root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/'; %Personal computer
 
-% Sub-paths
+% Sub-path for the model
 %--------------------------------------------------------------------------
-folder_model = [root '1_TC/3_Model_Source/2_MegaWat/'];
-folder_save = [root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/' run_folder '/']; % Put here the path of where you downloaded the repository
+Directories.model = [Directories.root '1_TC/3_Model_Source/2_MegaWat/'];
+
+% Sub-path for outputs
+%--------------------------------------------------------------------------
+Directories.save = [Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/' run_folder '/']; 
+
+% Sub-path for forcings
+%--------------------------------------------------------------------------
+Directories.forc = [Directories.root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/' forc_in '/']; % Put here the path of where you downloaded the repository;
 
 % Dependencies
 %--------------------------------------------------------------------------
-addpath(genpath([folder_model,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_model,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
-addpath(genpath([folder_model,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
-addpath(genpath([folder_model,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
+addpath(genpath([Directories.model,'1_Functions'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([Directories.model,'5_Common_inputs'])); % Where are distributed model set-up files (needed ? yes to load dtm)
+addpath(genpath([Directories.model,'3_Pyrenees_PointScale/2_Forcing'])); % Where is located the meteorological forcing and Shading matrix 
+addpath(genpath([Directories.model,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 
 %% LOCATION OF OUTPUTS - CREATION OF FOLDERS
 %==========================================================================
-% Create the directory where model outputs will be stored
-outlocation = [folder_model,'3_PointScale_version/4_Outputs/' run_folder '/'];
 
-if ~exist(outlocation, 'dir'); 
+if ~exist(Directories.save, 'dir'); 
     disp('Folders do not exist for outputs. Creating new folders')
-    mkdir(outlocation); 
-    mkdir([outlocation '1_Hourly/']); 
-    mkdir([outlocation '2_Daily/']); 
-    mkdir([outlocation '3_Params/']); 
-    mkdir([outlocation '4_INIT_COND/']); 
-    mkdir([outlocation '5_Env/']); 
-    mkdir([outlocation '6_POI_table/']); 
-addpath(genpath(outlocation)); 
+    mkdir(Directories.save); 
+    mkdir([Directories.save '1_Hourly/']); 
+    mkdir([Directories.save '2_Daily/']); 
+    mkdir([Directories.save '3_Params/']); 
+    mkdir([Directories.save '4_INIT_COND/']); 
+    mkdir([Directories.save '5_Env/']); 
+    mkdir([Directories.save '6_POI_table/']); 
+addpath(genpath(Directories.save)); 
 end
 
 
@@ -82,7 +91,7 @@ end
 
 % Points of interest
 %--------------------------------------------------------------------------
-POI = readtable([folder_model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' Clusters '.txt']); %import table with points info
+POI = readtable([Directories.model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' Clusters '.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
@@ -98,10 +107,10 @@ Use opts to force all the columns with values to be numeric.
 %}
 %--------------------------------------------------------------------------
 
-opts = detectImportOptions([root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx']);
+opts = detectImportOptions([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx']);
 opts = setvartype(opts, [7:length(opts.VariableTypes)], 'double');
 
-TT_par = readtable([root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
+TT_par = readtable([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
 
 %% DEM AND EXTRACTION OF MATRICES
 %==========================================================================
@@ -118,7 +127,7 @@ run_Point_Pro.m
 % Load preprocessed data
 %--------------------------------------------------------------------------
 dtm_file = 'dtm_Velino_250m.mat';
-mm = load([folder_model,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+mm = load([Directories.model,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % Extraction of DEM and features
 %--------------------------------------------------------------------------
@@ -639,10 +648,10 @@ end
 
 %% SAVE POI TABLE FOR REFERENCE
 %==========================================================================
-writetable(POI, [folder_save '6_POI_table/POI_' run_folder '.csv']);
+writetable(POI, [Directories.save '6_POI_table/POI_' run_folder '.csv']);
 
 
-%% SINGLE POINT LAUNCHER
+%% SINGLE POINT LAUNCHER FOR PERSONAL COMPUTER
 %==========================================================================
 
 % Time counter
@@ -651,7 +660,7 @@ tic;
 
 %Main function
 %--------------------------------------------------------------------------
-run_Point_Pro_BC(root, outlocation, run_folder, "VelinoCluster100", POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
+run_Point_Pro_BC(Directories, run_folder, "VelinoCluster100", POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
 
 % Computational time
 %--------------------------------------------------------------------------
@@ -659,13 +668,19 @@ Computational_Time =toc;
 disp('Computation time - Single Point')
 disp([num2str(round(Computational_Time/60,1)) ' mins'])
 
-%% Memory out
+% Memory out
+%--------------------------------------------------------------------------
 %profile off
 %profile viewer
 
 
-%% Workers - Not needed for the cluster
+%% MULTIPLE POINT LAUNCHER 
+%==========================================================================
 % Specify the desired number of workers
+%==========================================================================
+
+% Workers - Only for personal computer
+%--------------------------------------------------------------------------
 
 %{
 numWorkers = 4; % Example: Set to 4 workers
@@ -682,12 +697,12 @@ end
 
 
 
-%% Computational time
-%Time counter
+% Computational time - Time counter - For personal computer or HPC
+%--------------------------------------------------------------------------
 tic;
 
-%% Specific tasks - Here define the runs
-% Define the specific indices you want to run
+% Specific tasks - Here define the runs
+%--------------------------------------------------------------------------
 
 idx = contains(names, "Cluster");
 names = names(idx)
@@ -700,7 +715,8 @@ specific_indices = 1:length(names); % for all the runs
 % Create a new cell array of names based on the specific indices
 selected_names = names(specific_indices);
 
-%% Parallel computing launch for the Model
+% Parallel computing launch for the Model
+%--------------------------------------------------------------------------
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
         run_Point_Pro_BC(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
@@ -709,7 +725,8 @@ parfor k = 1:length(selected_names) %length(names)  % 3
     end
 end
 
-%% Computational time
+% Computational time - End of processing
+%--------------------------------------------------------------------------
 Computational_Time =toc;
 disp('COMPUTATIONAL TIME PARFOR [h] ')
 disp(Computational_Time/3600)
