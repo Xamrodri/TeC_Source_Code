@@ -6,7 +6,7 @@
 %% AUTHOR INFO AND STUDY SITE
 %==========================================================================
 %{
-Created on April 16, 2024
+Created on April 16, 2025
 Author: MAXIMILIANO RODRIGUEZ
 Region: Apennines
 
@@ -24,21 +24,27 @@ clc; clear;
 
 % Names of catchment and clusters
 %--------------------------------------------------------------------------
-SITE = 'Velino';
-Clusters = '500points';
+IniCond.SITE = 'Velino';
+IniCond.Clusters = '500points';
+IniCond.FORCING = "ERA5Land";
+IniCond.DeltaGMT= 1; % for Italy
 
 % Name of the folder to save results
 %--------------------------------------------------------------------------
-run_folder = 'Run_24';
+IniCond.run_folder = 'Run_24';
 
 % Modelling period
 %--------------------------------------------------------------------------
-date_start = ["01-Oct-1999 00:00:00"]; % Starting point of the simulation
-date_end = ["30-Sep-2000 23:00:00"]; % Last timestep of the simulation
+dateRun.start = "01-Oct-1999 00:00:00"; % Starting point of the simulation
+dateRun.end = "30-Sep-2000 23:00:00"; % Last timestep of the simulation
 
 % Folder with forcings
 %--------------------------------------------------------------------------
 forc_in = '20250806_B';
+
+% Choose single or multipoint
+%--------------------------------------------------------------------------
+IniCond.mode = "point";
 
 %% DIRECTORIES
 %==========================================================================
@@ -47,7 +53,7 @@ forc_in = '20250806_B';
 
 % Main roots
 %--------------------------------------------------------------------------
-%root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
+%Directories.root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
 Directories.root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/'; %Personal computer
 
 % Sub-path for the model
@@ -56,7 +62,7 @@ Directories.model = [Directories.root '1_TC/3_Model_Source/2_MegaWat/'];
 
 % Sub-path for outputs
 %--------------------------------------------------------------------------
-Directories.save = [Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/' run_folder '/']; 
+Directories.save = [Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/' IniCond.run_folder '/']; 
 
 % Sub-path for forcings
 %--------------------------------------------------------------------------
@@ -73,7 +79,7 @@ addpath(genpath([Directories.model,'3_Pyrenees_PointScale/3_Inputs'])); % Add pa
 %% LOCATION OF OUTPUTS - CREATION OF FOLDERS
 %==========================================================================
 
-if ~exist(Directories.save, 'dir'); 
+if ~exist(Directories.save, 'dir') 
     disp('Folders do not exist for outputs. Creating new folders')
     mkdir(Directories.save); 
     mkdir([Directories.save '1_Hourly/']); 
@@ -91,7 +97,7 @@ end
 
 % Points of interest
 %--------------------------------------------------------------------------
-POI = readtable([Directories.model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' Clusters '.txt']); %import table with points info
+POI = readtable([Directories.model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' IniCond.Clusters '.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
@@ -127,7 +133,7 @@ run_Point_Pro.m
 % Load preprocessed data
 %--------------------------------------------------------------------------
 dtm_file = 'dtm_Velino_250m.mat';
-mm = load([Directories.model,'5_Common_inputs/',SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+mm = load([Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % Extraction of DEM and features
 %--------------------------------------------------------------------------
@@ -648,11 +654,13 @@ end
 
 %% SAVE POI TABLE FOR REFERENCE
 %==========================================================================
-writetable(POI, [Directories.save '6_POI_table/POI_' run_folder '.csv']);
+writetable(POI, [Directories.save '6_POI_table/POI_' IniCond.run_folder '.csv']);
 
 
 %% SINGLE POINT LAUNCHER FOR PERSONAL COMPUTER
 %==========================================================================
+
+if IniCond.mode == "point"
 
 % Time counter
 %--------------------------------------------------------------------------
@@ -660,7 +668,7 @@ tic;
 
 %Main function
 %--------------------------------------------------------------------------
-run_Point_Pro_BC(Directories, run_folder, "VelinoCluster100", POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
+run_Point_Pro_BC(Directories, IniCond, "VelinoCluster100", POI, ksv, dateRun, TT_par, zatm_surface);
 
 % Computational time
 %--------------------------------------------------------------------------
@@ -679,22 +687,27 @@ disp([num2str(round(Computational_Time/60,1)) ' mins'])
 % Specify the desired number of workers
 %==========================================================================
 
+elseif IniCond.mode == "multipoint"
+
 % Workers - Only for personal computer
 %--------------------------------------------------------------------------
 
-%{
-numWorkers = 4; % Example: Set to 4 workers
+%if I am working on my personal computer define this
+if ~contains(Directories.root,"nfs") 
 
-% Create a parallel pool with the specified number of workers
-poolobj = gcp('nocreate'); % Check if a pool already exists
-if isempty(poolobj)
-    parpool(numWorkers); % Create a new pool if one doesn't exist
-elseif poolobj.NumWorkers ~= numWorkers
-    % If a pool exists with a different size, delete it and create a new one
-    delete(poolobj);
-    parpool(numWorkers);
+    numWorkers = 4; % Example: Set to 4 workers
+    
+    % Create a parallel pool with the specified number of workers
+    poolobj = gcp('nocreate'); % Check if a pool already exists
+    if isempty(poolobj)
+        parpool(numWorkers); % Create a new pool if one doesn't exist
+    elseif poolobj.NumWorkers ~= numWorkers
+        % If a pool exists with a different size, delete it and create a new one
+        delete(poolobj);
+        parpool(numWorkers);
+    end
+
 end
-
 
 
 % Computational time - Time counter - For personal computer or HPC
@@ -705,7 +718,7 @@ tic;
 %--------------------------------------------------------------------------
 
 idx = contains(names, "Cluster");
-names = names(idx)
+names = names(idx);
 
 specific_indices = 1:length(names); % for all the runs
 %specific_indices = [1, 23];
@@ -719,7 +732,7 @@ selected_names = names(specific_indices);
 %--------------------------------------------------------------------------
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
-        run_Point_Pro_BC(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
+        run_Point_Pro_BC(Directories, IniCond, selected_names(k), POI, ksv, dateRun, TT_par, zatm_surface);
     catch ME
         warning('Error occurred on worker %d: %s', k, ME.message);       
     end
@@ -731,9 +744,10 @@ Computational_Time =toc;
 disp('COMPUTATIONAL TIME PARFOR [h] ')
 disp(Computational_Time/3600)
 
-
-%}
-
 %% Memory use
 [user, sys] = memory; % Windows only
 disp(['Mem used by worker: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+
+else %if the label is not point or multipoint, define it well
+disp('The label is not right. Choose "point" or "multipoint"')
+end

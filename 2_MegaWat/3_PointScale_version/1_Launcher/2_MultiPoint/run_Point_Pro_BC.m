@@ -23,28 +23,10 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(Directories, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters)
+function result=run_Point_Pro(Directories, IniCond, Point, POI, ksv, dateRun, TT_par, zatm_surface)
 
-
-%% Study site details
-%==========================================================================
-%{
-Sites:
-   Cinca_Mido
-   Tiber
-   Velino
-Outlet_names:
-    "Cinca_Mid_OUT"
-    "Apennine_out",
-    "Monte_Terminillo"
-    "Velino_OUT"
-%}
-%==========================================================================
-
-SITE = ["Velino"]; 
-FORCING = "ERA5Land";
-UTM_zone = 33; % for Italy
-DeltaGMT= 1; % for Italy
+% DeltaGMT must be defined for MAIN_FRAME_Pro
+DeltaGMT = IniCond.DeltaGMT;
 
 %% MODEL PARAMETERS
 %==========================================================================
@@ -100,7 +82,7 @@ Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 %% Initial condition
 % Saving initial conditions of the model
-out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
+out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', IniCond.SITE ,'_MultiPoint_',Point,'.mat'); % file path initial conditions
 
 %% Load DEM and geographical information
 %==========================================================================
@@ -111,7 +93,7 @@ out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', SITE ,'_MultiPoint_',Po
 dtm_file = ["dtm_Velino_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)));
-dtm_file_op = strcat(Directories.model,'5_Common_inputs/',SITE,'/',dtm_file);
+dtm_file_op = strcat(Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file);
 
 load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
@@ -134,11 +116,11 @@ topo = 1;
 %load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/5_Snow_Albedo/Apennine_Init_Snow_Albedo_virtual.mat'));
 
 %% Impose measured albedo on glacier areas
-fn_alb_elev = strcat(SITE, '_Albedo_vs_elev.mat');
+fn_alb_elev = strcat(IniCond.SITE, '_Albedo_vs_elev.mat');
 
 if exist(fn_alb_elev,'file')>0
 disp('Using measured glacier albedo');
-load([SITE '_Albedo_vs_elev']);
+load([IniCond.SITE '_Albedo_vs_elev']);
 
 Afirn = DTM.*0 + 0.28;
 dem_inc = DTM <= Alb_el_tt{1,2};
@@ -191,7 +173,7 @@ ij = POI.ij(loc);
 %==========================================================================
 
 % Years needed
-years_forc = year(date_start):year(date_end);
+years_forc = year(dateRun.start):year(dateRun.end);
 forc_opened = struct(); 
 
 %% Extraction of forcing data
@@ -206,15 +188,15 @@ forc = Data_compressor(forc,'decompress');
 Date_all=forc.dateTime; 
 
 %define period and time zone info
-x1=find(date_start == Date_all,1);
-x2=find(date_end == Date_all,1);
+x1=find(dateRun.start == Date_all,1);
+x2=find(dateRun.end == Date_all,1);
 
 
 %% Displaying modelling parameters
-disp(strcat("Site selected: ", SITE));
-disp(['Forcing selected: ' char(FORCING)]);
+disp(strcat("Site selected: ", IniCond.SITE));
+disp(['Forcing selected: ' char(IniCond.FORCING)]);
 disp(['Running T&C for pixel: ' char(id_location)]);
-disp(['Simulation period: ' datestr(date_start) ' to ' datestr(date_end)]);
+disp(['Simulation period: ' datestr(dateRun.start) ' to ' datestr(dateRun.end)]);
 
 %% Fetch time and do date handling
 Date = Date_all(x1:x2);
@@ -374,7 +356,7 @@ MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
-    Topo_data = load([Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_', Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
+    Topo_data = load([Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',IniCond.SITE,'_', IniCond.Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
 
     Par_time = Topo_data.Par_time;
     Par_points = Topo_data.Par_points;
@@ -383,7 +365,7 @@ if topo == 1
     %string(POI.Name(loc))
     %% Debugging
     Par_time_table=Par_time.(Point); %Table to use
-    Par_time_period = Par_time_table(Par_time_table.Time>=date_start & Par_time_table.Time<=date_end, :); %variables per period
+    Par_time_period = Par_time_table(Par_time_table.Time>=dateRun.start & Par_time_table.Time<=dateRun.end, :); %variables per period
 
     %ShF
     ShF = Par_time_period.ShF_S;
