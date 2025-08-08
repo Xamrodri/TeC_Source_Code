@@ -8,7 +8,7 @@ function[]=Check_Land_Cover_Fractions(Crock,Curb,Cwat,Cbare,Ccrown)
 % Csno - Crock - Curb - Cwat - Cbare - Ccrown (1...n)  
 %%% PARAMETERS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if  not((Cwat + Curb + Crock + Cbare + sum(Ccrown))==1)
+if  round(Cwat + Curb + Crock + Cbare + sum(Ccrown)) ~=1
     disp('LAND USE COVER INPUTS INCONSISTENT')
     clear Ccrown Curb Crock Cbare Cwat 
     return 

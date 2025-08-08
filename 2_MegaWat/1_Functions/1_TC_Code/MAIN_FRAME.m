@@ -255,7 +255,35 @@ end
 %%%%%%%%% CALL PARAMETERS AND INITIAL CONDITION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 run(PARAM_IC);
+
+%disp(cc)
+%% Definition of Veg_Optical_Parameter
+%==========================================================================
+% These parameters defined here as it gives an error in the parfor when 
+% stored in the MOD_PARAM_Multipoint file. Potential problem with cc within
+% MOD_PARAM_Multipoint file..
+%==========================================================================
+for i=1:cc
+    %%%%%%%% Vegetation Optical Parameter
+    [PFT_opt_H(i)]=Veg_Optical_Parameter(OPT_PROP_H(i));
+    [PFT_opt_L(i)]=Veg_Optical_Parameter(OPT_PROP_L(i));
+end
+
+for i=1:cc
+    [Stoich_H(i)]=Veg_Stoichiometric_Parameter(Nl_H(i));
+    [ParEx_H(i)]=Exudation_Parameter(0);
+    [Mpar_H(i)]=Vegetation_Management_Parameter;
+end
+
+for i=1:cc
+    [Stoich_L(i)]=Veg_Stoichiometric_Parameter(Nl_L(i));
+    [ParEx_L(i)]=Exudation_Parameter(0);
+    [Mpar_L(i)]=Vegetation_Management_Parameter;
+end
+
+
 Restating_parameters;
+
 if length(Oice)==1
     Oice=zeros(NN,ms);
 end

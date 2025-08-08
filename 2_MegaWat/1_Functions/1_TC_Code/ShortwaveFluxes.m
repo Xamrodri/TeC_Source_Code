@@ -1,37 +1,45 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Subfunction ShortwaveFluxes              %%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%   Subfunction ShortwaveFluxes   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function[RabsbSun_vegH,RabsbShd_vegH,Rabsb_soiH,PAR_sun_H,PAR_shd_H,...
     RabsbSun_vegL,RabsbShd_vegL,Rabsb_soiL,PAR_sun_L,PAR_shd_L,FsunH,FshdH,...
     FsunL,FshdL,Kopt_H,Kopt_L,fapar_H,fapar_L,NDVI,ALB,Rabsb_sno,Rabsb_bare,Rabsb_urb,Rabsb_wat,Rabsb_rock,Rabsb_ice,Rabsb_deb,...
     soil_alb,e_gr,e_sur]=ShortwaveFluxes(Ccrown,Cbare,Crock,Curb,Cwat,Csno,Cice,...
     Rsw,PAR,SvF,dw_SNO,hc_H,hc_L,SnoDep,ydepth,IceDep,Cdeb,Deb_Par,Urb_Par,h_S,snow_alb,Aice,OS,Color_Class,OM_H,OM_L,...
     LAI_H,SAI_H,LAId_H,LAI_L,SAI_L,LAId_L,PFT_opt_H,PFT_opt_L)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%% INPUT
 %%%%% OUTPUT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%% -- %%% alb Rsw --->  .dir_vis .dir_nir .dif_vis .dif_nir
-%%%%%%% ALBEDOs Computation %%%%%%%%
+
+%% ALBEDOs Computation
 [soil_alb,e_gr]=Albedo_Soil_Properties(OS,Color_Class);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%% Absorbed Radiation Not Vegetated Patches % -Other Surfaces - %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Rock
+
+%% Absorbed Radiation Not Vegetated Patches % -Other Surfaces - %%%
+
+% Rock
+%--------------------------------------------------------------------------
 if (Crock > 0)  && (h_S > 0)
     [sur_alb,e_sur.R]=Albedo_OS_Properties('Crock',h_S);
     [Rabsb_rock,Rrfl_vis_rock,Rrfl_nir_rock]=ShortwaveFluxesOS(Rsw,SvF,sur_alb); %%% [W/m^2]
 else
     Rabsb_rock=0; e_sur.R=1; Rrfl_vis_rock= 0; Rrfl_nir_rock=0;
 end
-%%%% Urban
+
+% Urban
+%--------------------------------------------------------------------------
 if (Curb > 0)  && (h_S > 0)
     [sur_alb,e_sur.U]=Albedo_OS_Properties('Curb',h_S,Urb_Par);
     [Rabsb_urb,Rrfl_vis_urb,Rrfl_nir_urb]=ShortwaveFluxesOS(Rsw,SvF,sur_alb); %%% [W/m^2]
 else
     Rabsb_urb=0;e_sur.U=1; Rrfl_vis_urb=0;Rrfl_nir_urb=0;
 end
-%%%%% Water
+
+% Water
+%--------------------------------------------------------------------------
 if ((Cwat > 0) || (ydepth >0)) && (h_S > 0)
     [sur_alb,e_sur.W]=Albedo_OS_Properties('Cwat',h_S);
     [Rabsb_wat,Rrfl_vis_wat,Rrfl_nir_wat]=ShortwaveFluxesOS(Rsw,SvF,sur_alb); %%% [W/m^2]
@@ -39,7 +47,9 @@ else
     Rabsb_wat=0;  e_sur.W =1; Rrfl_vis_wat=0; Rrfl_nir_wat=0;
     sur_alb = NaN;
 end
-%%% Glacier
+
+% Glacier
+%--------------------------------------------------------------------------
 if (Cice > 0) && (h_S > 0)
     if Cdeb == 0
         [ice_alb,e_sur.I]=Albedo_Ice_Properties(Aice);
@@ -55,14 +65,17 @@ else
     ice_alb = NaN;
     Rabsb_deb=0; e_sur.D =1; Rrfl_vis_deb=0; Rrfl_nir_deb=0;
 end
-%%%%%%%%%%%%%%%%%%%%
-%%% Bare Soil
+
+% Bare Soil
+%--------------------------------------------------------------------------
 if (Cbare > 0) && (h_S > 0)
     [Rabsb_bare,Rrfl_vis_bare,Rrfl_nir_bare]=ShortwaveFluxesOS(Rsw,SvF,soil_alb); %%% [W/m^2]
 else
     Rabsb_bare=0;Rrfl_vis_bare=0;Rrfl_nir_bare=0;
 end
-%%% Snow Cover
+
+% Snow Cover
+%--------------------------------------------------------------------------
 if (Csno > 0) && (h_S > 0)
     if sum(snow_alb.dir_vis + snow_alb.dif_vis+snow_alb.dir_nir + snow_alb.dif_nir)==0
         snow_alb=soil_alb;
@@ -71,8 +84,8 @@ if (Csno > 0) && (h_S > 0)
 else
     Rabsb_sno=0; Rrfl_vis_sno=0; Rrfl_nir_sno=0;
 end
-%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Parameters definition
 cc=length(Ccrown);
 RabsbSun_vegH=zeros(1,cc);
 RabsbShd_vegH=zeros(1,cc);
@@ -85,35 +98,40 @@ FsunH=zeros(1,cc);FshdH=zeros(1,cc);
 FsunL=zeros(1,cc);FshdL=zeros(1,cc);
 Kopt_H=zeros(1,cc);Kopt_L=zeros(1,cc);
 fapar_H=zeros(1,cc);fapar_L=zeros(1,cc);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Within Canopy - Clumping Factor %%%
+
+%% Within Canopy - Clumping Factor
 LAI_H = LAI_H.*OM_H;
 SAI_H = SAI_H.*OM_H;
 LAId_H = LAId_H.*OM_H;
 LAI_L = LAI_L.*OM_L;
 SAI_L = SAI_L.*OM_L ;
 LAId_L = LAId_L.*OM_L;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Loop over crowns - SHORTWAVE
 for i=1:cc
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% SHORTWAVE %%%%%%%%%%%%%%%%%
-    %%% Normal
+
+    % Normal
+    %----------------------------------------------------------------------
     [RabsbSun_vegH(i),RabsbShd_vegH(i),Rabsb_soiH(i),Rrfl_vis_vegH(i),Rrfl_nir_vegH(i),PAR_sun_H(i),PAR_shd_H(i),...
         RabsbSun_vegL(i),RabsbShd_vegL(i),Rabsb_soiL(i),Rrfl_vis_vegL(i),Rrfl_nir_vegL(i),PAR_sun_L(i),PAR_shd_L(i),FsunH(i),FshdH(i),...
         FsunL(i),FshdL(i),Kopt_H(i),Kopt_L(i)]=ShortwaveFluxesVEG(Rsw,PAR,SvF,...
         LAI_H(i),SAI_H(i),LAId_H(i),LAI_L(i),SAI_L(i),LAId_L(i),PFT_opt_H(i),PFT_opt_L(i),snow_alb,soil_alb,h_S,Csno,dw_SNO,hc_L(i),SnoDep,Rabsb_sno);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Water Logging
+   
+    % Water Logging
+    %----------------------------------------------------------------------
     if ydepth > 0 && Csno == 0
+        
         dw_WatH= min(1,ydepth./hc_H(i));
         dw_WatL= min(1,ydepth./hc_L(i));
-        %%% 
+      
         [RabsbSun_vegH(i),RabsbShd_vegH(i),Rabsb_soiH(i),Rrfl_vis_vegH(i),Rrfl_nir_vegH(i),PAR_sun_H(i),PAR_shd_H(i),...
             RabsbSun_vegL(i),RabsbShd_vegL(i),Rabsb_soiL(i),Rrfl_vis_vegL(i),Rrfl_nir_vegL(i),PAR_sun_L(i),PAR_shd_L(i),FsunH(i),FshdH(i),...
             FsunL(i),FshdL(i),Kopt_H(i),Kopt_L(i)]=ShortwaveFluxes_SUBM_VEG(Rsw,PAR,SvF,...
-            LAI_H(i),SAI_H(i),LAId_H(i),LAI_L(i),SAI_L(i),LAId_L(i),PFT_opt_H(i),PFT_opt_L(i),sur_alb,h_S,dw_WatH,dw_WatL,hc_H(i),hc_L(i),ydepth);
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            LAI_H(i),SAI_H(i),LAId_H(i),LAI_L(i),SAI_L(i),LAId_L(i),PFT_opt_H(i),PFT_opt_L(i),sur_alb,h_S,dw_WatH,dw_WatL,hc_H(i),hc_L(i),ydepth);        
     end
-    %%% Glacier
+
+    % Glacier
+    %----------------------------------------------------------------------
     if Cice == 1 && Csno == 0
         if Cdeb == 0
             if (LAI_H(i)+SAI_H(i)+LAId_H(i))>0 
@@ -126,22 +144,25 @@ for i=1:cc
                 FsunL(i),FshdL(i),Kopt_H(i),Kopt_L(i)]=ShortwaveFluxesVEG(Rsw,PAR,SvF,...
                 LAI_H(i),SAI_H(i),LAId_H(i),LAI_L(i),SAI_L(i),LAId_L(i),PFT_opt_H(i),PFT_opt_L(i),ice_alb,soil_alb,h_S,Cice,dw_ICE,hc_L(i),IceDep,Rabsb_ice);
         else
-            %%% Glacier with debris 
+    % Glacier with debris 
+    %----------------------------------------------------------------------
             [RabsbSun_vegH(i),RabsbShd_vegH(i),Rabsb_soiH(i),Rrfl_vis_vegH(i),Rrfl_nir_vegH(i),PAR_sun_H(i),PAR_shd_H(i),...
                 RabsbSun_vegL(i),RabsbShd_vegL(i),Rabsb_soiL(i),Rrfl_vis_vegL(i),Rrfl_nir_vegL(i),PAR_sun_L(i),PAR_shd_L(i),FsunH(i),FshdH(i),...
                 FsunL(i),FshdL(i),Kopt_H(i),Kopt_L(i)]=ShortwaveFluxesVEG(Rsw,PAR,SvF,...
                 LAI_H(i),SAI_H(i),LAId_H(i),LAI_L(i),SAI_L(i),LAId_L(i),PFT_opt_H(i),PFT_opt_L(i),sur_alb,soil_alb,h_S,Cdeb,1,hc_L(i),IceDep,Rabsb_deb);
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
+
     if (h_S > 0)
         fapar_H(i) = (PAR_sun_H(i)+PAR_shd_H(i))./(PAR.dir+PAR.dif);
         fapar_L(i) = (PAR_sun_L(i)+PAR_shd_L(i))./(PAR.dir+PAR.dif);
     end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%% COMPUTATION NDVI %%%%%%%%%%%%%%
+
+
+%% COMPUTATION of NDVI
 if  (h_S > 0) && ((Rsw.dir_vis + Rsw.dif_vis+Rsw.dir_nir + Rsw.dif_nir)>0)
+    
     if sum(LAI_H+SAI_H+LAId_H) > 0
         Rup_vis = (1-Csno)*(1-Cice)*(Cwat*Rrfl_vis_wat + Crock*Rrfl_vis_rock + Curb*Rrfl_vis_urb + Cbare*Rrfl_vis_bare) + ...
             (1-Csno)*Cice*((1-Cdeb)*Rrfl_vis_ice + Cdeb*Rrfl_vis_deb) + (1-sum(Ccrown))*Csno*Rrfl_vis_sno;
