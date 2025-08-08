@@ -23,13 +23,13 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface)
+function result=run_Point_Pro(root, outlocation, run_folder, Point, POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters)
 
 
 %% Directories
 folder_path = [root '1_TC/3_Model_Source/2_MegaWat/']; % Put here the path of where you downloaded the repository
-%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/']; % Put here the path of where you downloaded the repository
-forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/2_Non_Bias_corrected/']; % Put here the path of where you downloaded the repository
+forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/20250806_B/']; % Put here the path of where you downloaded the repository
+%forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/2_Non_Bias_corrected/']; % Put here the path of where you downloaded the repository
 %forc_path = [root '2_Forcing/2_Invariant_method/2_Extractions_Point/3_Radiation_Partition/3_Per_Point/']; % Put here the path of where you downloaded the repository
 %forc_path = [root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/3_Test1/']; % Put here the path of where you downloaded the repository
 
@@ -205,6 +205,10 @@ forc_opened = struct();
 forc_file= [forc_path 'Forcing_ERA5Land_' char(Point) '.mat']; % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
 
+% Decompressing - Only for big data sets
+%--------------------------------------------------------------------------
+forc = Data_compressor(forc,'decompress');
+
 %% Combination of data into a single table
 Date_all=forc.dateTime; 
 
@@ -277,7 +281,7 @@ Temp instead of t2m, then change t2m to Temp below.
 
 %Define variables names in order based on your input file
 
-%{
+
 check_var(forcing, ...
     ["t2m" ... % Temperature
     "d2m" ...  % Dew Point temperature
@@ -297,7 +301,7 @@ check_var(forcing, ...
     "PARD" ... % PARD
     "N" ...    % Cloudiness
     ],Point)
-%}
+
 NN= height(forcing);%%% time Step
 
 % Height of virtual station
@@ -377,7 +381,7 @@ MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
-    Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_ShF.mat']); % ShF matrix created during pre-processing step
+    Topo_data = load([folder_path,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',char(SITE),'_', Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
 
     Par_time = Topo_data.Par_time;
     Par_points = Topo_data.Par_points;

@@ -23,9 +23,11 @@ clc; clear all;
 
 %% Names of cacthment
 SITE = 'Velino';
+Clusters = '500points';
 
 %Name of the folder to save results and not overwrite previous runs
-run_folder = 'Run_19';
+run_folder = 'Run_24';
+
 
 %% DIRECTORY
 %==========================================================================
@@ -71,15 +73,15 @@ end
 % Set
 %==========================================================================
 
-date_start = ["01-Oct-2004 00:00:00"]; % Starting point of the simulation
-date_end = ["30-Sep-2005 23:00:00"]; % Last timestep of the simulation
+date_start = ["01-Oct-1999 00:00:00"]; % Starting point of the simulation
+date_end = ["30-Sep-2011 23:00:00"]; % Last timestep of the simulation
 
 
 %% Main file with points 
 %==========================================================================
 % In this version, POI keeps all the data needed to run TC.
 %==========================================================================
-POI = readtable([path_model '3_PointScale_version/3_Inputs/2_Apennine/Velino_MultiPoints.txt']); %import table with points info
+POI = readtable([path_model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' Clusters '.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
@@ -175,7 +177,8 @@ for k = 1:height(POI)
     switch ksv(POI.ij(k))
 
     case 1 % Decidious Broad-leaved forest %
-        %% CORINE INFORMATION FOR TIBER BASIN 
+        % CORINE INFORMATION FOR TIBER BASIN 
+        %------------------------------------------------------------------
         %   1) Broad-leaved forest (32.5%)
         %   2) Mixed forest (1.2%)
         %
@@ -194,10 +197,12 @@ for k = 1:height(POI)
         %   From Simone:
         %       1) Broad-leaved forest assumed to be mostly decidious. Evergreen 
         %          broad-leaved are not very common and in the Appennine
-        %% EXAMPLES OF SHRUBS
+        % EXAMPLES OF SHRUBS
+        %------------------------------------------------------------------
         %   1) Pixel 2, 3
         %
-        %% OPTIONS FOR CALIBRATION
+        % OPTIONS FOR CALIBRATION
+        %------------------------------------------------------------------
         %   1) Collelongo         
         %      Original: 
         %           ["BLdec_highElev_Collelongo"]
@@ -240,7 +245,8 @@ for k = 1:height(POI)
 
  
     case 2 % Grassland/pasture %
-        %% CORINE INFORMATION FOR TIBER BASIN 
+        % CORINE INFORMATION FOR TIBER BASIN 
+        %------------------------------------------------------------------
         %    1) Natural grasslands (5.0%)
         %    2) Pastures (1.3%)       
         %    3) Green urban areas (0.1%)
@@ -252,10 +258,12 @@ for k = 1:height(POI)
         %    3) Salines
         %    4) Intertaidal flats
 
-        %% EXAMPLES OF SHRUBS
+        % EXAMPLES OF SHRUBS
+        %------------------------------------------------------------------
         %     1) Pixel 45
 
-        %% OPTIONS FOR CALIBRATION
+        % OPTIONS FOR CALIBRATION
+        %------------------------------------------------------------------
         %   1) Vall d'Alinyà
         %     
         %      Original: 
@@ -304,7 +312,8 @@ for k = 1:height(POI)
 
 
     case 3 % Crops %
-        %% CORINE INFORMATION FOR TIBER BASIN 
+        % CORINE INFORMATION FOR TIBER BASIN 
+        %------------------------------------------------------------------
         %       1)  Non-irrigated arable land (25.4%)
         %       2)  Land principally occupied by agriculture with significant
         %           areas of natural vegetation. (8.8%)
@@ -320,10 +329,12 @@ for k = 1:height(POI)
         %       1)  Crops (Choose one crop, wheat and sunflowers 
         %           are good choices for the region)
         % 
-        %% EXAMPLES OF SHRUBS
+        % EXAMPLES OF SHRUBS
+        %------------------------------------------------------------------
         %     1) Pixel 55
         %
-        %% OPTIONS FOR CALIBRATION
+        % OPTIONS FOR CALIBRATION
+        %------------------------------------------------------------------
         %   1) Aurade
         %      Original:
         %         ["Crops_WW" "Crops_WB" "Crops_S" "Crops_R"]
@@ -348,13 +359,16 @@ for k = 1:height(POI)
     
 
     case 4 % Evergreen needleaves at high elevation (>700m) %   
-        %% CORINE INFORMATION FOR TIBER BASIN 
+        % CORINE INFORMATION FOR TIBER BASIN 
+        %------------------------------------------------------------------
         %     1) Coniferous forest (1%)
         %
-        %% EXAMPLES OF EVERGREEN NEEDLEAVES
+        % EXAMPLES OF EVERGREEN NEEDLEAVES
+        %------------------------------------------------------------------
         %     1) Pixel 72
         %
-        %% OPTIONS FOR CALIBRATION
+        % OPTIONS FOR CALIBRATION
+        %------------------------------------------------------------------
         %     1) Renon
         %        Original: 
         %           ["EvGreen_NeedLeaves_Renon"]
@@ -388,15 +402,18 @@ for k = 1:height(POI)
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
     
     case 5 % Mediterranean shrublands %        
-    %% CORINE INFORMATION FOR TIBER BASIN  
+    % CORINE INFORMATION FOR TIBER BASIN  
+    %----------------------------------------------------------------------
     %   1)  Transitional woodland-shrub (5%)    
     %   2)  Sclerophyllous vegetation (0.4%)
     %   3)  Moors and heathland (>0.05%)
     %
-    %% EXAMPLES OF SHRUBS
+    % EXAMPLES OF SHRUBS
+    %----------------------------------------------------------------------
     %   1) Pixel 89
     %
-    %% OPTIONS FOR CALIBRATION 
+    % OPTIONS FOR CALIBRATION 
+    %----------------------------------------------------------------------
     %   1) Garraf 
     %      Original:
     %           ["shrub_Garraf_A" "shrub_Garraf_B"]
@@ -442,12 +459,15 @@ for k = 1:height(POI)
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     case 6 % Olives %
-    %% CORINE INFORMATION FOR TIBER BASIN    
+    % CORINE INFORMATION FOR TIBER BASIN   
+    %----------------------------------------------------------------------
     %    1) Olive groves (4%)
-    %% EXAMPLES OF OLIVES
+    % EXAMPLES OF OLIVES
+    %----------------------------------------------------------------------
     %    1) Pixel 94
     %
-    %% OPTIONS FOR CALIBRATION 
+    % OPTIONS FOR CALIBRATION 
+    %----------------------------------------------------------------------
     %    1) Negrisia 
     %       Original: 
     %           ["crops_Negrisia"]
@@ -480,7 +500,8 @@ for k = 1:height(POI)
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
     case 7 % Urban %
-    %% CORINE INFORMATION FOR TIBER BASIN    
+    % CORINE INFORMATION FOR TIBER BASIN    
+    %----------------------------------------------------------------------
     %         1) Discontinuous urban fabric (3%)
     %         2) Industrial or commercial units (0.7%)
     %         3) Continuous urban fabric (0.6%)
@@ -523,7 +544,8 @@ for k = 1:height(POI)
 
 
     case 8 % Rock %
-    %% CORINE INFORMATION FOR TIBER BASIN   
+    % CORINE INFORMATION FOR TIBER BASIN   
+    %----------------------------------------------------------------------
     %        1) Bare rocks (0.2%)
     %        2) Glaciers and perpetual snow (0%)
     %% CODE
@@ -538,7 +560,8 @@ for k = 1:height(POI)
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
 
     case 9 % Water %
-    %% CORINE INFORMATION FOR TIBER BASIN   
+    % CORINE INFORMATION FOR TIBER BASIN
+    %----------------------------------------------------------------------
     %        1) Water bodies (0.3%)
     %        2) Water courses (0.2%)
 
@@ -559,7 +582,8 @@ for k = 1:height(POI)
         POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
 
     case 10 % Bare soils %
-    %% CORINE INFORMATION FOR TIBER BASIN   
+    % CORINE INFORMATION FOR TIBER BASIN   
+    %----------------------------------------------------------------------
     %        1) Mineral extraction sites (0.2%)
     %        2) Burnt areas (0.1%)
     %        3) Beaches - dunes - sands (>0.05%)
@@ -611,14 +635,26 @@ writetable(POI, [folder_save '6_POI_table/POI_' run_folder '.csv']);
 %% Memory in
 %profile on -memory
 
+
+
 %% Single point Launcher
-run_Point_Pro_BC(root, outlocation, run_folder, "VelinoCluster74", POI, ksv, date_start, date_end, TT_par, zatm_surface);
+% Time counter
+%--------------------------------------------------------------------------
+tic;
+
+%Main function
+%--------------------------------------------------------------------------
+run_Point_Pro_BC(root, outlocation, run_folder, "VelinoCluster100", POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
+
+% Computational time
+%--------------------------------------------------------------------------
+Computational_Time =toc;
+disp('Computation time - Single Point')
+disp([num2str(round(Computational_Time/60,1)) ' mins'])
 
 %% Memory out
 %profile off
 %profile viewer
-
-
 
 
 %% Workers - Not needed for the cluster
@@ -661,7 +697,7 @@ selected_names = names(specific_indices);
 %% Parallel computing launch for the Model
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
-        run_Point_Pro_BC(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface);
+        run_Point_Pro_BC(root, outlocation, run_folder, selected_names(k), POI, ksv, date_start, date_end, TT_par, zatm_surface, Clusters);
     catch ME
         warning('Error occurred on worker %d: %s', k, ME.message);       
     end
@@ -675,3 +711,6 @@ disp(Computational_Time/3600)
 
 %}
 
+%% Memory use
+[user, sys] = memory; % Windows only
+disp(['Mem used by worker: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
