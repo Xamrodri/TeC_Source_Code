@@ -22,8 +22,8 @@ mat_mod = mat;
 
 if decision == "compress"
 
-mat_mod.t2m = int16(mat.t2m*100);
-mat_mod.d2m = int16(mat.d2m*100);
+mat_mod.t2m = int16(floor(mat.t2m*100));
+mat_mod.d2m = int16(floor(mat.d2m*100));
 mat_mod.tp = int16(mat.tp*100);
 mat_mod.ssrd = int16(mat.ssrd*10);
 mat_mod.strd = int16(mat.strd*10);
@@ -65,7 +65,7 @@ mat_mod.tp = single(mat.tp)/100;
 mat_mod.ssrd = single(mat.ssrd)/10;
 mat_mod.strd = single(mat.strd)/10;
 mat_mod.ws10 = single(mat.ws10)/10;
-mat_mod.sp = int32(mat.sp);
+mat_mod.sp = single(mat.sp);
 mat_mod.es = single(mat.es)/10;
 mat_mod.ea = single(mat.ea)/10;
 mat_mod.RH = single(mat.RH)/10;

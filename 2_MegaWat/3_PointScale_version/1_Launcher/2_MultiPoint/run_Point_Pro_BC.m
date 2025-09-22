@@ -23,7 +23,7 @@ Code explanation:
 
 
 %% As a Function 
-function result=run_Point_Pro(Directories, IniCond, Point, POI, ksv, dateRun, TT_par, zatm_surface)
+function result=run_Point_Pro(Directories, IniCond, Point, POI, ksv, dateRun, TT_par, zatm_surface, dtm_file)
 
 % DeltaGMT must be defined for MAIN_FRAME_Pro
 DeltaGMT = IniCond.DeltaGMT;
@@ -90,7 +90,6 @@ out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', IniCond.SITE ,'_MultiPo
 % "dtm_Tiber_250m.mat"
 % "dtm_Cinca_Mid_250m.mat"
 %==========================================================================
-dtm_file = ["dtm_Velino_250m.mat"]; 
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)));
 dtm_file_op = strcat(Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file);
@@ -177,12 +176,23 @@ years_forc = year(dateRun.start):year(dateRun.end);
 forc_opened = struct(); 
 
 %% Extraction of forcing data
+% DEBUGGER
+%--------------------------------------------------------------------------
+%Point2 = "VelinoCluster450";
+%--------------------------------------------------------------------------
+
 forc_file= [Directories.forc 'Forcing_ERA5Land_' char(Point) '.mat']; % Put here the path of where you downloaded the repository
 load(forc_file); % Load forcing table for the current POI
+
+%forc(forc.t2m<forc.d2m,:)
 
 % Decompressing - Only for big data sets
 %--------------------------------------------------------------------------
 forc = Data_compressor(forc,'decompress');
+
+%DEBUGGING
+%find(forc.t2m<forc.d2m)
+
 
 %% Combination of data into a single table
 Date_all=forc.dateTime; 
@@ -283,7 +293,8 @@ NN= height(forcing);%%% time Step
 zatm_hourly = repmat(2.00,height(forcing),1);
 zatm_hourly_on = 0;
 
-%% Precipitation
+% Precipitation
+%--------------------------------------------------------------------------
 
 % Precipitation from ERA5Land
 Pr=double(forcing.tp);
@@ -292,44 +303,51 @@ Pr(Pr<0.01)=0;
 
 %Precipitation from stations
 
-
-%% Air pressure
+% Air pressure
+%--------------------------------------------------------------------------
 % Air Pressure in mbar based on the PDF for variables and parameters of TC
 % Pressure comes in Pa from ERA5
 Pre=double(forcing.sp/100);    
 
-%% Temperature
+% Temperature
+%--------------------------------------------------------------------------
 % 2m air temperature
 Ta=double(forcing.t2m);
 
-%% Wind Speed
+% Wind Speed
+%--------------------------------------------------------------------------
 Ws=double(forcing.ws10);
 Ws(Ws < 0.01) = 0.01;
 
-%% Relative humidity
+% Relative humidity
+%--------------------------------------------------------------------------
 % Divided by 100 to set the number in the range 0-1
 U=double(forcing.RH/100);
 
-%% Longwave radiation
+% Longwave radiation
+%--------------------------------------------------------------------------
 % N can be cloud cover [-] or longwave incoming radiation [W m-2]
 % Latm=forcing.LW_rad_downward_HH; % Latm:Incoming long wave radiation [W m-2]
 % N=ones(NN,1); % cloud cover [-]
 % N = forcing.LW_rad_downward_HH;
 N = double(forcing.N);
 
-%% Radiation partition
+% Radiation partition
+%--------------------------------------------------------------------------
 SAD1=double(forcing.SAD1); SAD2=double(forcing.SAD2); 
 SAB1=double(forcing.SAB1); SAB2=double(forcing.SAB2);
 PARB=double(forcing.PARB); PARD=double(forcing.PARD);
 
-%% Albedo parameters
+% Albedo parameters
+%--------------------------------------------------------------------------
 %Ameas = ones(NN,1);
 alpha = 0; % switch for albedo
 %Ameas_t=0; % albedo
 %Aice_meas_on_hourly = ones(height(forcing),1)/2; % albedo
 %Asno_meas_on_hourly = ones(height(forcing),1)/2; % albedo
 
-%% Vapor pressure - Dew Point temperature
+% Vapor pressure - Dew Point temperature
+%--------------------------------------------------------------------------
 %esat/ea/Ds/Tdew
 esat = double(forcing.es);   % Vapour pressure at saturation (Pa)
 ea = double(forcing.ea);     % Vapour pressure (Pa)
@@ -337,10 +355,15 @@ Ds = esat - ea;  % Vapor Pressure Deficit (Pa)
 Ds(Ds<0) = 0; 
 Tdew = double(forcing.d2m);
 
+% Clear forcing and forc - Already used - Important for several clusters
+%--------------------------------------------------------------------------
+clear forc forcing
+
 %a=17.27; b=237.3;
 %clear a b xr;
 %xr=a*Ta./(b+Ta)+log10(U);
 %Tdew=b*xr./(a-xr);          % Presumed dewpoint temperature (°C)
+
 
 %% DING PARAMETERIZATION
 % Initial daily mean values for Ding parametrization
@@ -356,15 +379,13 @@ MASKn=reshape(MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
-    Topo_data = load([Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/4_Results/1_Velino/',IniCond.SITE,'_', IniCond.Clusters,'_ShF.mat']); % ShF matrix created during pre-processing step
-
-    Par_time = Topo_data.Par_time;
-    Par_points = Topo_data.Par_points;
-
-    %% Topography
-    %string(POI.Name(loc))
-    %% Debugging
-    Par_time_table=Par_time.(Point); %Table to use
+    load([Directories.terrain char(Point) '_ShF_temporal.mat']); % ShF matrix created during pre-processing step
+    load([Directories.terrain 'ShF_spatial.mat']); % ShF matrix created during pre-processing step
+ 
+    % Topography
+    %----------------------------------------------------------------------
+     
+    Par_time_table=Temporal_ShF; %Table to use
     Par_time_period = Par_time_table(Par_time_table.Time>=dateRun.start & Par_time_table.Time<=dateRun.end, :); %variables per period
 
     %ShF
@@ -387,7 +408,8 @@ if topo == 1
 
     %clear zeta_S 
     
-    %% Radiative parameters
+    % Radiative parameters
+    %----------------------------------------------------------------------
     SAB1(sin(h_S) <= 0.10)  =  0;
     SAB2(sin(h_S) <= 0.10)  =  0;
     SAD1(sin(h_S) <= 0.10)  =  0;
@@ -419,6 +441,9 @@ else
    Slo_top=Slo_top_S(ij);
 end
 
+% Clearing tables for freeing space
+%--------------------------------------------------------------------------
+clear Par_time_table Par_time_period Temporal_ShF Par_points
 
 
 %% SOIL 
@@ -431,7 +456,7 @@ end
 
 PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
 PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
-PORG=reshape(PORG,num_cell,1)/100; Porg= PORG(ij); % Soil organic content at pixel ij
+PORG=reshape(PORG,num_cell,1)/100; Porg = PORG(ij); % Soil organic content at pixel ij
 
 %Psan = 0.244
 %Pcla = 0.334
@@ -470,6 +495,7 @@ end
 %if exist(out, 'file') == 2
 %load(out);
 %else
+
 if topo == 1
 INIT_COND_v3(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
@@ -481,6 +507,8 @@ INIT_COND_v3(num_cell,m_cell,n_cell,...
    MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out, TT_par);
 load(out);
 end
+
+
 %end
 
 %% Debugger
@@ -492,7 +520,50 @@ end
 % MAIN_FRAME: Contains the model
 %==========================================================================
 PARAM_IC = strcat(Directories.model,'3_PointScale_version/3_Inputs/MOD_PARAM_Multipoint_Pro.m');
+
+%% DEBUGGER
+%Deleting initial conditions 
+%% DEBUGGER
+%------------------------------------------------------------------
+%[user, sys] = memory; % Windows only
+%disp(['Mem used by the Starter: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+%clear An_H_t An_L_t O_t Tdp_t V_t Psi_I_H_t Psi_l_L_t Psi_l_H_t ...
+%    Psi_x_H_t Psi_x_L_t Rdark_H_t Rdark_L_t Tdp_H_t Tdp_L_t
+%------------------------------------------------------------------
+
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
+
+%% REMOVAL OF PARAMETERS TO FREE SPACE -SIZE OF ELEMENT ARE IMPORTANT
+% clear variables not needed any more
+%--------------------------------------------------------------------------
+all_vars = who;
+vars_to_keep = {'Date', 'EICE','ESN','SND','SWE', 'Ta','Ws','U','N', 'Ts', ...
+    'SAD1','SAD2','SAB1','SAB2','Pre','Pr','Pr_sno', 'ALB','Smelt','Imelt','SSN', ...
+    'ICE','ET', 'ETen' ,'QE', 'ros', 'NDVI', 'T_H', 'T_L', 'O', 'FROCK', ...
+    'Directories', 'IniCond', 'Point', 'POI', 'ksv', 'dateRun', ...
+    'Lat','Lon','Zbas','dbThick', 'SnowIce_Param', 'Deb_Par','id_location','output_daily', ...
+    'LAI_H', 'LAI_L', 'NPP_H', 'NPP_L', 'Ccrown'};
+
+vars_to_delete = setdiff(all_vars, vars_to_keep);
+for i = 1:length(vars_to_delete)
+    clear(vars_to_delete{i});
+end
+
+% Get a structure array of all variables in the current workspace
+%--------------------------------------------------------------------------
+vars = whos;
+
+% Iterate through the variables and sum their sizes
+%--------------------------------------------------------------------------
+totalSize = 0;
+for i = 1:length(vars)
+    totalSize = totalSize + vars(i).bytes;
+end
+
+% Display variables size
+%--------------------------------------------------------------------------
+disp(['Total memory used by all variables: ', num2str(totalSize/1e6), ' MB']);
+
 
 %% Post-compute calculations
 %==========================================================================
@@ -611,8 +682,17 @@ end
 % Here only for one point - For the snow station. More points can be
 % defined
 if strcmp(POI{POI.Name == Point,'Feature'}{1}, 'Snow_station')
-save(strcat(outlocation, '5_Env/Env_',id_location,'.mat'))
+save(strcat(Directories.save, '5_Env/Env_',id_location,'.mat'))
 end
+
+%% Memory use - Windows only
+if ~contains(Directories.root,"nfs") 
+[user, sys] = memory; % Windows only
+disp(['Mem used by worker on ',char(Point), ': ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+end
+
+
+
 
 %% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================

@@ -785,8 +785,8 @@ Ck = sum((Pr_liq(2:end)+Pr_sno(2:end))*dth)+ sum(IrD*dth) + sum(dV)...
     - sum(EICE*dth) + (IP_wc(1) -IP_wc(end)) + (ICE(1) -ICE(end)) + (WAT(1) -WAT(end)) + (FROCK(1) -FROCK(end)) + ...
     Asur*( (Vx_H(1,:)-Vx_H(end,:)) + (Vl_H(1,:)-Vl_H(end,:))  + (Vx_L(1,:)-Vx_L(end,:)) + (Vl_L(1,:)-Vl_L(end,:)) )*Ccrown' ; %%%[mm]
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-disp(Ck);
-disp(mean(DQ));
+%disp(Ck);
+%disp(mean(DQ));
 % T_H, T_L  EG, EIn_urb, EIn_rock, [mm/h]
 
 %% Evaporation calculation

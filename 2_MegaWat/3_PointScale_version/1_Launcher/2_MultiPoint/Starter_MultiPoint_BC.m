@@ -24,14 +24,14 @@ clc; clear;
 
 % Names of catchment and clusters
 %--------------------------------------------------------------------------
-IniCond.SITE = 'Velino';
-IniCond.Clusters = '500points';
+IniCond.SITE = 'Tiber';
+IniCond.Clusters = '501points';
 IniCond.FORCING = "ERA5Land";
 IniCond.DeltaGMT= 1; % for Italy
 
 % Name of the folder to save results
 %--------------------------------------------------------------------------
-IniCond.run_folder = 'Run_24';
+IniCond.run_folder = 'Run_34';
 
 % Modelling period
 %--------------------------------------------------------------------------
@@ -40,11 +40,30 @@ dateRun.end = "30-Sep-2000 23:00:00"; % Last timestep of the simulation
 
 % Folder with forcings
 %--------------------------------------------------------------------------
-forc_in = '20250806_B';
+%{
+20250806_A for 50points in Velino
+20250723   for 100points in Velino
+20250806_B for 500points in Velino
+20250806_C for 999points in Velino
+20250818 for 25points in Pianello
+20250829 for 500points in Tiber
+%}
+forc_in = '20250903';
 
-% Choose single or multipoint
+% Folder with Terrain inputs
+%--------------------------------------------------------------------------
+%{
+1_Velino
+2_Pianello_in_Chiascio
+3_Tiber
+%}
+terrain_in = '3_Tiber';
+
+% Choose point or multipoint
 %--------------------------------------------------------------------------
 IniCond.mode = "point";
+% if point mode, then select the point
+selected_point = "TiberCluster419";
 
 %% DIRECTORIES
 %==========================================================================
@@ -53,7 +72,7 @@ IniCond.mode = "point";
 
 % Main roots
 %--------------------------------------------------------------------------
-%Directories.root = '/nfs/scistore18/pelligrp/mrodrigu/' %HPC
+%Directories.root = '/nfs/scistore18/pelligrp/mrodrigu/'; %HPC
 Directories.root = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/'; %Personal computer
 
 % Sub-path for the model
@@ -66,7 +85,11 @@ Directories.save = [Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale
 
 % Sub-path for forcings
 %--------------------------------------------------------------------------
-Directories.forc = [Directories.root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/' forc_in '/']; % Put here the path of where you downloaded the repository;
+Directories.forc = [Directories.root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/' forc_in '/']; 
+
+% Sub-path for terrain
+%--------------------------------------------------------------------------
+Directories.terrain = [Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/2_Results/' terrain_in '/1_ByCluster/' IniCond.Clusters '/']; 
 
 % Dependencies
 %--------------------------------------------------------------------------
@@ -97,7 +120,7 @@ end
 
 % Points of interest
 %--------------------------------------------------------------------------
-POI = readtable([Directories.model '3_PointScale_version/3_Inputs/2_Apennine/Velino_' IniCond.Clusters '.txt']); %import table with points info
+POI = readtable([Directories.model '3_PointScale_version/3_Inputs/2_Apennine/' IniCond.SITE '_' IniCond.Clusters '.txt']); %import table with points info
 UTM_zone = 33; % for Italy
 [POI.LAT, POI.LON] = utm2ll(POI.UTM_X, POI.UTM_Y, UTM_zone);
 
@@ -132,7 +155,7 @@ run_Point_Pro.m
 
 % Load preprocessed data
 %--------------------------------------------------------------------------
-dtm_file = 'dtm_Velino_250m.mat';
+dtm_file = ['dtm_' IniCond.SITE '_250m.mat'];
 mm = load([Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % Extraction of DEM and features
@@ -193,7 +216,7 @@ zatm_surface = TT_par(strcmp(TT_par.Parameters,'zatm_surface'),7:size(TT_par,2))
 zatm_hourly_on = 0;
 
 %% Loop for vegetation classification
-%k=3
+%k=1
 for k = 1:height(POI)
 %disp(k)
     if ~strcmp(POI.Feature{k}, 'Snow_station') %If the POI is a snow depth station, then it is just bare soil
@@ -657,6 +680,7 @@ end
 writetable(POI, [Directories.save '6_POI_table/POI_' IniCond.run_folder '.csv']);
 
 
+
 %% SINGLE POINT LAUNCHER FOR PERSONAL COMPUTER
 %==========================================================================
 
@@ -668,13 +692,19 @@ tic;
 
 %Main function
 %--------------------------------------------------------------------------
-run_Point_Pro_BC(Directories, IniCond, "VelinoCluster100", POI, ksv, dateRun, TT_par, zatm_surface);
+run_Point_Pro_BC(Directories, IniCond, selected_point, POI, ksv, dateRun, TT_par, zatm_surface, dtm_file);
 
 % Computational time
 %--------------------------------------------------------------------------
 Computational_Time =toc;
 disp('Computation time - Single Point')
 disp([num2str(round(Computational_Time/60,1)) ' mins'])
+
+%% Memory use - Windows only
+if ~contains(Directories.root,"nfs") 
+[user, sys] = memory; % Windows only
+disp(['Mem used by worker: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+end
 
 % Memory out
 %--------------------------------------------------------------------------
@@ -695,7 +725,7 @@ elseif IniCond.mode == "multipoint"
 %if I am working on my personal computer define this
 if ~contains(Directories.root,"nfs") 
 
-    numWorkers = 4; % Example: Set to 4 workers
+    numWorkers = 3; % Example: Set to 4 workers
     
     % Create a parallel pool with the specified number of workers
     poolobj = gcp('nocreate'); % Check if a pool already exists
@@ -723,7 +753,7 @@ names = names(idx);
 specific_indices = 1:length(names); % for all the runs
 %specific_indices = [1, 23];
 %specific_indices = [5, 11, 14, 22, 28, 30, 36, 38, 41, 55, 59, 65, 68, 76, 77, 82, 84, 90, 92, 95];
-%specific_indices = [4, 10, 14, 25, 36, 80];
+specific_indices = [409, 419];
 
 % Create a new cell array of names based on the specific indices
 selected_names = names(specific_indices);
@@ -732,7 +762,7 @@ selected_names = names(specific_indices);
 %--------------------------------------------------------------------------
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
-        run_Point_Pro_BC(Directories, IniCond, selected_names(k), POI, ksv, dateRun, TT_par, zatm_surface);
+        run_Point_Pro_BC(Directories, IniCond, selected_names(k), POI, ksv, dateRun, TT_par, zatm_surface, dtm_file);
     catch ME
         warning('Error occurred on worker %d: %s', k, ME.message);       
     end
@@ -741,12 +771,14 @@ end
 % Computational time - End of processing
 %--------------------------------------------------------------------------
 Computational_Time =toc;
-disp('COMPUTATIONAL TIME PARFOR [h] ')
-disp(Computational_Time/3600)
+disp('Computation time - MultiPoint ')
+disp([num2str(round(Computational_Time/60,1)) ' mins'])
 
-%% Memory use
+%% Memory use - Windows only
+if ~contains(Directories.root,"nfs") 
 [user, sys] = memory; % Windows only
-disp(['Mem used by worker: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+disp(['Mem used by the Starter: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+end
 
 else %if the label is not point or multipoint, define it well
 disp('The label is not right. Choose "point" or "multipoint"')

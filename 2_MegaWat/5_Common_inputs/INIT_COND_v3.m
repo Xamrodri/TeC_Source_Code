@@ -586,8 +586,12 @@ B_Htm1(ij_vect,1,8)= 0;
 
 end
 
+% Name of variables
+%--------------------------------------------------------------------------
+vars = whos;
+Ini_variables = {vars.name};
 
-
-%Save data to mat file
+% Save data to mat file
+%--------------------------------------------------------------------------
 save(out);
 
