@@ -1,0 +1,3 @@
+name,chx,chy,col,row,idx,lon,lat
+Pianello_in_Chiascio,302013,4779899,24,14,3073,302013,4779899
+Branca_in_Chiascio,311614,4792631,62,65,8178,311614,4792631
