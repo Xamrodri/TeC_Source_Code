@@ -1,45 +1,54 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Subfunction  ROUTING_MODULE             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[q_runon,q_channel_out,Qi_in,Slo_pot,Q_exit,Qsub_exit,T_pot,...
-    QpointH,QpointC,UpointH,UpointC,Q_ch_added,Utot_H,Utot_C]= ROUTING_MODULE(dt,dth,Rd,Rh,Qi_out,q_channel_in,...
-    cellsize,Area,DTM,NMAN_H,NMAN_C,MRough,WC,SN,T_flow,T_potI,Slo_top,ms_max,POT,ZWT,OPT_HEAD,Xout,Yout)
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%% OUTPUT
-%%% q_runon  [mm]  %% Runon
-%%% Qi_in, [mm] %% Subsurface Lateral flow
-%%% Slo_pot [fraction] %% Slope of Hydraulic head
-%%% Q_exit [mm] %% discharge from domain surface
-%%% Qsub_exit [mm] %% discharge from domain subsurface
-%%% q_channel_out [mm] %%% Water in channels
-%%% T_pot -- new flow direction cell of matrixs for subsurface
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%% INPUT
-%%% dt [s] time step
-%%% Rd Dunne Runoff  [mm]
-%%% Rh Horton Runoff [mm]
-%%% Qi_out  Lateral Subsurface [mm/h]
-%%% q_channel_in [mm] Water in channels in
-%%%% cellsize [m]
-%%% Area [m^2] watershed area
-%%% DTM
-%%% NMAN_H  [s/(m^1/3)] Manning Coefficient hillslope
-%%% NMAN_C  [s/(m^1/3)] Manning Coefficient channels
-%%% WC [m] Channel width
-%%% SN [-] stream network identifier
-%%% T_flow [ Sparse mn x mn]  Flow matrix surface
-%%% T_potI  ms cells [ Sparse mn x mn]  Flow matrixs for subsurface
-%%% Slo_top [ fraction] Topographic Slope
-%%% ms_max Soil layers
-%%% POT Head in a cell [mm]
-%%% Zwt [mm] water table depth %%%
-%%% OPT_HEAD options
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
+OUTPUT
+    q_runon:       Runon [mm] 
+    Qi_in:         Subsurface Lateral flow [mm]
+    Slo_pot:       Slope of Hydraulic head [fraction] 
+    Q_exit:        discharge from domain surface [mm]
+    Qsub_exit:     discharge from domain subsurface [mm]
+    q_channel_out: Water in channels [mm]
+    T_pot:         new flow direction cell of matrixs for subsurface
+
+INPUT
+    dt:            time step [s]
+    Rd:            Dunne Runoff  [mm]
+    Rh:            Horton Runoff [mm]
+    Qi_out:        Lateral Subsurface [mm/h]
+    q_channel_in:  Water in channels in [mm]
+    cellsize:      size of cells [m]
+    Area:          watershed area [m^2] 
+    DTM:           DTM
+    NMAN_H:        Manning Coefficient hillslope [s/(m^1/3)]
+    NMAN_C:        Manning Coefficient channels [s/(m^1/3)]
+    WC:            Channel width [m] 
+    SN:            stream network identifier [-] 
+    T_flow:        Flow matrix surface [ Sparse mn x mn] 
+    T_potI:        ms cells   Flow matrixs for subsurface [ Sparse mn x mn]
+    Slo_top:       Topographic Slope [fraction]
+    ms_max:        Soil layers
+    POT:           Head in a cell [mm]
+    Zwt:           water table depth [mm] 
+%}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function[q_runon,        q_channel_out,  Qi_in,    Slo_pot,    Q_exit,  ...
+         Qsub_exit,      T_pot,          QpointH,  QpointC,    UpointH, ...
+         UpointC,        Q_ch_added,     Utot_H,   Utot_C]= ...
+                            ROUTING_MODULE( ... 
+         dt,             dth,            Rd,        Rh,        Qi_out,  ...
+         q_channel_in,   cellsize,       Area,      DTM,       NMAN_H,  ...
+         NMAN_C,         MRough,         WC,        SN,        T_flow,  ...
+         T_potI,         Slo_top,        ms_max,    POT,       ZWT,  ...
+         OPT_HEAD,       Xout,           Yout)
+
+%% OPT_HEAD options
 [m_cell,n_cell]=size(DTM);
-Qsur=Rh+Rd; %% [mm] %% Hillslope surface water
-Qsur(Qsur<0)=0; %%%% Numerical Instability Issue
-Qi_out = Qi_out*dth;  %% Subsurface flow [mm]
-%%%%%%%%%%%
+Qsur=Rh+Rd; % [mm] %% Hillslope surface water
+Qsur(Qsur<0)=0; % Numerical Instability Issue
+Qi_out = Qi_out*dth;  % Subsurface flow [mm]
+
+% Initialization
 Q_exit = 0; %% Surface Flow exits the domain
 Qsub_exit = 0; % Subsurface Flow exits the domain
 npoint = length(Xout);
@@ -53,24 +62,42 @@ Qi_fall=zeros(m_cell,n_cell);
 tH_store = zeros(m_cell,n_cell);
 tC_store = zeros(m_cell,n_cell);
 %Qi_in=zeros(m_cell,n_cell,ms_max);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBSURFACE ROUTING
+
+%% SUBSURFACE ROUTING
 for jk=1:ms_max
-    %%%% No Seepage
-    Qi_seep(:,:,jk)=Qi_out(:,:,jk).*(SN); %%[mm]
-    Qi_out(:,:,jk)= Qi_out(:,:,jk).*(1-SN); %% [mm]
-    %%% SUBSURFACE ROUTING
-    Qi_outR(:,:,jk)=Flow_Routing_Step2(DTM,T_potI{jk},Qi_out(:,:,jk)); %% [mm]
-    %%%%%%%%%%%%%%%%%%%%%%%%%%
-    Qsub_exit = Qsub_exit + (sum(sum(Qi_out(:,:,jk)))- sum(sum(Qi_outR(:,:,jk)))); %%%  %%[mm]
-    Qi_out(:,:,jk)=Qi_outR(:,:,jk);   %% [mm]
+    % No Seepage
+    %----------------------------------------------------------------------
+    Qi_seep(:,:,jk)=Qi_out(:,:,jk).*(SN); % [mm]
+    Qi_out(:,:,jk)= Qi_out(:,:,jk).*(1-SN); % [mm]
+
+    % SUBSURFACE ROUTING
+    %----------------------------------------------------------------------
+    Qi_outR(:,:,jk)=Flow_Routing_Step2(DTM,T_potI{jk},Qi_out(:,:,jk)); % [mm]
+    
+    % Sum
+    %----------------------------------------------------------------------
+    Qsub_exit = Qsub_exit + (sum(sum(Qi_out(:,:,jk)))- sum(sum(Qi_outR(:,:,jk)))); % [mm]
+    Qi_out(:,:,jk)=Qi_outR(:,:,jk);   % [mm]
 end
+
 Qi_in = Qi_out ; %%% [mm] Lateral subsurface for next step
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Qi_seep=sum(Qi_seep,3); %% [mm] Seepage flow from soils to channels
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OVERLAND FLOW ROUTING
-dti= 60; %%[s] Internal Time step for Surface Routing
+
+%% DEBUGGER
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%SN(14,26)
+%Qi_out(14,26,9)
+%Qi_seep(14,26)
+%Qi_in(14,26,8)
+
+%Qi_outR(14,26)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% OVERLAND FLOW ROUTING
+dti= 60; % Internal Time step for Surface Routing [s]
 cdti = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if sum(sum(Qsur))>0
@@ -88,7 +115,9 @@ if sum(sum(Qsur))>0
         kdt(kdt>1)=1;
         kdt(kdt<0)=1; %% For numerical instabilities 
         kdt(isnan(kdt))=0;
-        %%%% Surface Routing
+
+        % Surface Routing
+        %------------------------------------------------------------------
         [QsurM]=Flow_Routing_Step2(DTM,T_flow,kdt.*Qsur); %%[mm]
         QsurM2 = QsurM.*(1-SN); %%[mm]
         Qi_fall = Qi_fall + QsurM.*(SN); %% [mm]
@@ -109,45 +138,52 @@ if sum(sum(Qsur))>0
 else
     Qsur = zeros(m_cell,n_cell);
 end
-%%%%%%%%%%
+
 q_runon = Qsur;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% CHANNEL FLOW ROUTING
-q_channel = q_channel_in + Qi_seep + Qi_fall; %%% [mm]
-Q_ch_added = Qi_seep + Qi_fall; %% [mm]
-dti= 2; %%[s] Internal Time step for Surface Routing
+
+%% CHANNEL FLOW ROUTING
+q_channel = q_channel_in + Qi_seep + Qi_fall; % [mm]
+Q_ch_added = Qi_seep + Qi_fall; % [mm]
+dti= 2; % Internal Time step for Surface Routing [s]
 cdti = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if sum(sum(q_channel))>0
    % for jj=1:1:dt/dti;
     while cdti < dt
-        %%%%%% SURFACE VELOCITY %%%%%%%%%%%
-        Y = (q_channel/1000).*cellsize./WC ; %% [m]
-        t= (cellsize.*NMAN_C)./(Y.^(2/3).*sin(atan(Slo_top)).^0.5); %%% [s]
+
+        % SURFACE VELOCITY
+        % Y: Hydraulic radius [m]
+        %------------------------------------------------------------------
+        Y = (q_channel/1000).*cellsize./WC ; % [m]
+        t = (cellsize.*NMAN_C)./(Y.^(2/3).*sin(atan(Slo_top)).^0.5); % [s]
         t(isnan(t))=0;
         tC_store = tC_store + t*dti/dt;
-        kdt= dti./t; %[]
+        
+        kdt= dti./t; % [-]
         kdt(kdt>1)=1; 
-        kdt(kdt<0)=1; %% For numerical instabilities 
+        kdt(kdt<0)=1; % For numerical instabilities 
         kdt(isnan(kdt))=0;
-        %%%% Surface Routing
-        [QchM]=Flow_Routing_Step2(DTM,T_flow,kdt.*q_channel); %%[mm]
-        QchR = QchM + (q_channel - kdt.*q_channel) ; %% [mm]
+
+        % Surface Routing
+        %------------------------------------------------------------------
+        [QchM]=Flow_Routing_Step2(DTM,T_flow,kdt.*q_channel); % [mm]
+        QchR = QchM + (q_channel - kdt.*q_channel) ; % [mm]
         %%%%%%%%%%%%%%
-        Q_exit= Q_exit + (sum(sum(q_channel))- sum(sum(QchR))); %% [mm]
+        Q_exit= Q_exit + (sum(sum(q_channel))- sum(sum(QchR))); % [mm]
         for ipo=1:npoint
-            QpointC(ipo)= QpointC(ipo) + kdt(Yout(ipo),Xout(ipo))*q_channel(Yout(ipo),Xout(ipo)); %%%%%[mm]
+            QpointC(ipo)= QpointC(ipo) + kdt(Yout(ipo),Xout(ipo))*q_channel(Yout(ipo),Xout(ipo)); % [mm]
         end
         %%%
         q_channel=QchR; %%[mm]
-       cdti = cdti +dti;
+        cdti = cdti +dti;
         dti =  min(min(t(t>0)));
         if cdti+dti>dt; dti = dt-cdti; end
     end
 else
     q_channel = zeros(m_cell,n_cell);
 end
-q_channel_out = q_channel;%[mm]
+q_channel_out = q_channel; % [mm]
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for ipo=1:npoint
     UpointH(ipo)= cellsize./tH_store(Yout(ipo),Xout(ipo)); %%% Surface Velocity [m/s]
@@ -156,13 +192,14 @@ end
 Utot_H= cellsize./tH_store; %%% Surface Velocity [m/s]
 Utot_C= cellsize./tC_store; %%% Surface Velocity [m/s]
 %%%%%%%%%%%%%%%%%%%%%%%%
-Q_exit = Q_exit*(cellsize^2)/Area; %%[mm]
-Qsub_exit = Qsub_exit*(cellsize^2)/Area; %%[mm]
+Q_exit = Q_exit*(cellsize^2)/Area; % [mm]
+Qsub_exit = Qsub_exit*(cellsize^2)/Area; % [mm]
 %%%%%%%%%%%%%%%%%%%%%%%%
 %QpointH = (QpointH/dth)*(cellsize^2)/(3600000); %% [m^3/s]
 %QpointC = (QpointC/dth)*(cellsize^2)/(3600000); %% [m^3/s]
 %%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%% HYDRAULIC HEAD PART %%%
+
+%% HYDRAULIC HEAD PART
 T_pot=cell(1,ms_max);
 Slo_pot = zeros(m_cell,n_cell,ms_max);
 met_fdir=1;

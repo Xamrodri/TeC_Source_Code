@@ -49,7 +49,7 @@ Krock=Krock(ANSWER);
 
 %%%%%%%%%%%%%%%%%% Soil layer depths [mm]
 %%%%%%%%%%%%%%%%%%  "Zs" & "dz" have to correspond to "vi" in the launcher (->SOIL MOISTURE)
-Zs= [0    10    20    50   100   150   200   300   400    700   1000]; %% ms+1
+Zs= [0    10    20    50   100   150   200   300   400    1000   1500]; %% ms+1
 % Zs= [0    10    20    50   100   150   200   300   400   500   600   800  1000  1250  1500]; %% ms+1
 if  not(length(Zs)==ms+1)
     disp('SOIL LAYER MESH INCONSISTENT')

@@ -166,7 +166,6 @@ end
 % MAKE SURE DEBRIS THICKNESS 0 FOR CLEAN GLACIER!!
 %==========================================================================
 
-%categories  [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A  grass_B     shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
 albs = table2array(TT_par(strcmp(TT_par.Parameters,'albs'),II));
 lans = table2array(TT_par(strcmp(TT_par.Parameters,'lans'),II));
 zoms = table2array(TT_par(strcmp(TT_par.Parameters,'zoms'),II));
@@ -236,7 +235,6 @@ ZR50_L = table2array(TT_par(strcmp(TT_par.Parameters,'ZR50_L'),II));
 ZRmax_H = table2array(TT_par(strcmp(TT_par.Parameters,'ZRmax_H'),II));
 ZRmax_L = table2array(TT_par(strcmp(TT_par.Parameters,'ZRmax_L'),II));
 
-
 %% INTERCEPTION PARAMETERS 
 
 In_max_urb= 5;    % Maximum interception capacity in urban [mm]
@@ -289,7 +287,6 @@ Vmax_H = table2array(TT_par(strcmp(TT_par.Parameters,'Vmax_H'),II));
 Vmax_L = table2array(TT_par(strcmp(TT_par.Parameters,'Vmax_L'),II));
 
 %% Hydraulic Parameters
-%categories    [fir_high    Crops_WW  Crops_WB   Crops_S  Crops_R     grass_A   grass_B    shrub  BLever_high  BLdec_low  BLdec_high NoVeg]  
 Psi_sto_00_H = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_00_H'),II));
 Psi_sto_50_H = table2array(TT_par(strcmp(TT_par.Parameters,'Psi_sto_50_H'),II));
 
@@ -523,9 +520,27 @@ AgeL_H(1,:)=AgeL_Htm1(ij,:);
 e_rel_H(1,:)=e_rel_Htm1(ij,:); 
 hc_H(1,:) =hc_Htm1(ij,:); 
 SAI_H(1,:) = SAI_Htm1(ij,:);
-B_H(1,:,:)= B_Htm1(ij,:,:);
+
+B_H(1,:,1)= full(B_Htm1{:,:,1}(ij,:));
+B_H(1,:,2)= full(B_Htm1{:,:,2}(ij,:));
+B_H(1,:,3)= full(B_Htm1{:,:,3}(ij,:));
+B_H(1,:,4)= full(B_Htm1{:,:,4}(ij,:));
+B_H(1,:,5)= full(B_Htm1{:,:,5}(ij,:));
+B_H(1,:,6)= full(B_Htm1{:,:,6}(ij,:));
+B_H(1,:,7)= full(B_Htm1{:,:,7}(ij,:));
+B_H(1,:,8)= full(B_Htm1{:,:,8}(ij,:));
+
+B_L(1,:,1)= full(B_Ltm1{:,:,1}(ij,:));
+B_L(1,:,2)= full(B_Ltm1{:,:,2}(ij,:));
+B_L(1,:,3)= full(B_Ltm1{:,:,3}(ij,:));
+B_L(1,:,4)= full(B_Ltm1{:,:,4}(ij,:));
+B_L(1,:,5)= full(B_Ltm1{:,:,5}(ij,:));
+B_L(1,:,6)= full(B_Ltm1{:,:,6}(ij,:));
+B_L(1,:,7)= full(B_Ltm1{:,:,7}(ij,:));
+B_L(1,:,8)= full(B_Ltm1{:,:,8}(ij,:));
+
 %%%%%%%%%%%%%%%%%%
-LAI_L(1,:) = LAI_Ltm1(ij,:); B_L(1,:,:)= B_Ltm1(ij,:,:); Rrootl_L(1,:)= Rrootl_Ltm1(ij,:);
+LAI_L(1,:) = LAI_Ltm1(ij,:);  Rrootl_L(1,:)= Rrootl_Ltm1(ij,:);
 PHE_S_L(1,:)=PHE_S_Ltm1(ij,:); dflo_L(1,:)=dflo_Ltm1(ij,:); AgeL_L(1,:)=AgeL_Ltm1(ij,:);
 e_rel_L(1,:)=e_rel_Ltm1(ij,:); hc_L(1,:) =hc_Ltm1(ij,:); SAI_L(1,:) =SAI_Ltm1(ij,:);
 %%%%%%%%%%%%%%%%%%
@@ -533,16 +548,25 @@ BLit(1)=0.0;  %% [kg DM /m2 PFT] Litter Biomass
 %%%%%%%%%%%%%%%%%%
 RexmyI(1,:)= [0 0 0];
 %%%%%%%%%%%%%%%%%%
-Nreserve_H(1,:)= Nreserve_Htm1(ij,:,:); 
-Preserve_H(1,:)= Preserve_Htm1(ij,:,:); 
-Kreserve_H(1,:)= Kreserve_Htm1(ij,:,:);
-FNC_H(1,:)=FNC_Htm1(ij,:,:); 
-NupI_H(1,:,:)= NupI_Htm1(ij,:,:); 
-Nreserve_L(1,:)= Nreserve_Ltm1(ij,:,:);
-Preserve_L(1,:)=Preserve_Ltm1(ij,:,:); 
-Kreserve_L(1,:)=Kreserve_Ltm1(ij,:,:);
-FNC_L(1,:)=FNC_Ltm1(ij);
-NupI_L(1,:,:)= NupI_Ltm1(ij,:,:);
+Nreserve_H(1,:) = Nreserve_Htm1(ij,:); 
+Preserve_H(1,:) = Preserve_Htm1(ij,:); 
+Kreserve_H(1,:) = Kreserve_Htm1(ij,:);
+
+NupI_H(1,:,1)= full(NupI_Htm1{:,:,1}(ij,:)); 
+NupI_H(1,:,2)= full(NupI_Htm1{:,:,2}(ij,:)); 
+NupI_H(1,:,3)= full(NupI_Htm1{:,:,3}(ij,:)); 
+
+NupI_L(1,:,1)= full(NupI_Ltm1{:,:,1}(ij,:));
+NupI_L(1,:,2)= full(NupI_Ltm1{:,:,2}(ij,:));
+NupI_L(1,:,3)= full(NupI_Ltm1{:,:,3}(ij,:));
+
+FNC_H(1,:)=FNC_Htm1(ij,:); 
+
+Nreserve_L(1,:)= Nreserve_Ltm1(ij,:);
+Preserve_L(1,:)= Preserve_Ltm1(ij,:); 
+Kreserve_L(1,:)= Kreserve_Ltm1(ij,:);
+
+FNC_L(1,:)=FNC_Ltm1(ij,:);
 %%%%%%%%%%%%%%%%%%
-TdpI_H(1,:)=TdpI_Htm1(ij,:,:); 
-TdpI_L(1,:)=TdpI_Ltm1(ij,:,:);
+TdpI_H(1,:)=TdpI_Htm1(ij,:); 
+TdpI_L(1,:)=TdpI_Ltm1(ij,:);

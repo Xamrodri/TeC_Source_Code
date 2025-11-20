@@ -31,7 +31,7 @@ IniCond.DeltaGMT= 1; % for Italy
 
 % Name of the folder to save results
 %--------------------------------------------------------------------------
-IniCond.run_folder = 'Run_34';
+IniCond.run_folder = 'Run_35';
 
 % Modelling period
 %--------------------------------------------------------------------------
@@ -63,7 +63,7 @@ terrain_in = '3_Tiber';
 %--------------------------------------------------------------------------
 IniCond.mode = "point";
 % if point mode, then select the point
-selected_point = "TiberCluster419";
+selected_point = "TiberCluster1";
 
 %% DIRECTORIES
 %==========================================================================
@@ -680,7 +680,6 @@ end
 writetable(POI, [Directories.save '6_POI_table/POI_' IniCond.run_folder '.csv']);
 
 
-
 %% SINGLE POINT LAUNCHER FOR PERSONAL COMPUTER
 %==========================================================================
 
@@ -703,7 +702,7 @@ disp([num2str(round(Computational_Time/60,1)) ' mins'])
 %% Memory use - Windows only
 if ~contains(Directories.root,"nfs") 
 [user, sys] = memory; % Windows only
-disp(['Mem used by worker: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+disp(['Mem used in the Starter: ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
 end
 
 % Memory out
@@ -753,7 +752,7 @@ names = names(idx);
 specific_indices = 1:length(names); % for all the runs
 %specific_indices = [1, 23];
 %specific_indices = [5, 11, 14, 22, 28, 30, 36, 38, 41, 55, 59, 65, 68, 76, 77, 82, 84, 90, 92, 95];
-specific_indices = [409, 419];
+specific_indices = 1:20;
 
 % Create a new cell array of names based on the specific indices
 selected_names = names(specific_indices);

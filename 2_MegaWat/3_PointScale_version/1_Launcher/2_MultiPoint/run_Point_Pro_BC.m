@@ -496,20 +496,18 @@ end
 %load(out);
 %else
 
+
 if topo == 1
-INIT_COND_v3(num_cell,m_cell,n_cell,...
+INIT_COND_v4(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,Ca,SNOWD,SNOWALB,out, II, ij, TT_par);
 load(out);
 else 
-INIT_COND_v3(num_cell,m_cell,n_cell,...
+INIT_COND_v4(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,Slo_top_S,ksv,Ca,SNOWD,SNOWALB,out, TT_par);
 load(out);
 end
-
-
-%end
 
 %% Debugger
 %disp(Nreserve)
@@ -533,22 +531,6 @@ PARAM_IC = strcat(Directories.model,'3_PointScale_version/3_Inputs/MOD_PARAM_Mul
 
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
-%% REMOVAL OF PARAMETERS TO FREE SPACE -SIZE OF ELEMENT ARE IMPORTANT
-% clear variables not needed any more
-%--------------------------------------------------------------------------
-all_vars = who;
-vars_to_keep = {'Date', 'EICE','ESN','SND','SWE', 'Ta','Ws','U','N', 'Ts', ...
-    'SAD1','SAD2','SAB1','SAB2','Pre','Pr','Pr_sno', 'ALB','Smelt','Imelt','SSN', ...
-    'ICE','ET', 'ETen' ,'QE', 'ros', 'NDVI', 'T_H', 'T_L', 'O', 'FROCK', ...
-    'Directories', 'IniCond', 'Point', 'POI', 'ksv', 'dateRun', ...
-    'Lat','Lon','Zbas','dbThick', 'SnowIce_Param', 'Deb_Par','id_location','output_daily', ...
-    'LAI_H', 'LAI_L', 'NPP_H', 'NPP_L', 'Ccrown'};
-
-vars_to_delete = setdiff(all_vars, vars_to_keep);
-for i = 1:length(vars_to_delete)
-    clear(vars_to_delete{i});
-end
-
 % Get a structure array of all variables in the current workspace
 %--------------------------------------------------------------------------
 vars = whos;
@@ -562,8 +544,26 @@ end
 
 % Display variables size
 %--------------------------------------------------------------------------
-disp(['Total memory used by all variables: ', num2str(totalSize/1e6), ' MB']);
+disp(['Memory used by variables at the end of MAIN_FRAME: ', num2str(totalSize/1e6), ' MB']);
 
+
+
+%% REMOVAL OF PARAMETERS TO FREE SPACE -SIZE OF ELEMENT ARE IMPORTANT
+% clear variables not needed any more
+%--------------------------------------------------------------------------
+all_vars = who;
+
+vars_to_keep = {'Date', 'EICE','ESN','SND','SWE', 'Ta','Ws','U','N', 'Ts', ...
+    'SAD1','SAD2','SAB1','SAB2','Pre','Pr','Pr_sno', 'ALB','Smelt','Imelt','SSN', ...
+    'ICE','ET', 'ETen' ,'QE', 'ros', 'NDVI', 'T_H', 'T_L', 'O', 'FROCK', ...
+    'Directories', 'IniCond', 'Point', 'POI', 'ksv', 'dateRun', ...
+    'Lat','Lon','Zbas','dbThick', 'SnowIce_Param', 'Deb_Par','id_location','output_daily', ...
+    'LAI_H', 'LAI_L', 'NPP_H', 'NPP_L', 'Ccrown'};
+
+vars_to_delete = setdiff(all_vars, vars_to_keep);
+for i = 1:length(vars_to_delete)
+    clear(vars_to_delete{i});
+end
 
 %% Post-compute calculations
 %==========================================================================
@@ -619,17 +619,20 @@ Outputs_t = table(Date, ...
 %% Daily outputs
 % If daily outputs are activated
 
+
 if output_daily == 1
 
 % Timetable creation
 %--------------------------------------------------------------------------
 Outputs_tt = table2timetable(Outputs_t); 
 
+
 % Mean of variables
 %--------------------------------------------------------------------------
 Outputs_dm = retime(Outputs_tt,'daily',@nanmean); % For average variables
 % Initial matrix set based on averages
 Outputs_d = Outputs_dm; 
+
 
 % Some variables must be summed
 %--------------------------------------------------------------------------
@@ -642,6 +645,8 @@ Outputs_d.ET = Outputs_ds.ET;
 Outputs_d.ETen = Outputs_ds.ETen;
 Outputs_d.T_H = Outputs_ds.T_H;
 Outputs_d.T_L = Outputs_ds.T_L;
+
+
 
 % Average of NDVI must be calculated without zeros during the night
 %--------------------------------------------------------------------------
@@ -656,6 +661,7 @@ customMeanNoZeros = @(x) mean(x(~isnan(x)), 'omitnan');
 
 table_ndvi = retime(Filtered_Outputs_tt(:,{'NDVI'}),'daily',customMeanNoZeros); % For sum variables
 
+
 % Adding daily outputs
 %--------------------------------------------------------------------------
 Outputs_d.LAI_H = sum(LAI_H.*Ccrown,2); % Leaf area index
@@ -668,15 +674,18 @@ Outputs_d.NPP = Outputs_d.NPP_H + Outputs_d.NPP_L;
 
 Outputs_d.NDVI = table_ndvi.NDVI;
 
+
 % Change of format
 %--------------------------------------------------------------------------
 Outputs_t = timetable2table(Outputs_d);
+
 
 % Exporting as .txt
 %--------------------------------------------------------------------------
 writetable(Outputs_t, strcat(Directories.save, '2_Daily/',id_location,'_daily_results.txt'))
 
 end 
+
 
 %% Save of the environment
 % Here only for one point - For the snow station. More points can be
@@ -685,14 +694,21 @@ if strcmp(POI{POI.Name == Point,'Feature'}{1}, 'Snow_station')
 save(strcat(Directories.save, '5_Env/Env_',id_location,'.mat'))
 end
 
-%% Memory use - Windows only
-if ~contains(Directories.root,"nfs") 
-[user, sys] = memory; % Windows only
-disp(['Mem used by worker on ',char(Point), ': ', num2str(user.MemUsedMATLAB/1e6), ' MB'])
+%% Memory
+% Get a structure array of all variables in the current workspace
+%--------------------------------------------------------------------------
+vars = whos;
+
+% Iterate through the variables and sum their sizes
+%--------------------------------------------------------------------------
+totalSize = 0;
+for i = 1:length(vars)
+    totalSize = totalSize + vars(i).bytes;
 end
 
-
-
+% Display variables size
+%--------------------------------------------------------------------------
+disp(['Memory used by variables at the end of run_Point_Pro_BC: ', num2str(totalSize/1e6), ' MB']);
 
 %% OTHER CALCULATIONS OUT OF THE MODEL
 %==========================================================================

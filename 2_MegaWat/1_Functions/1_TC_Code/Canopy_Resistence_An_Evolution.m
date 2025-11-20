@@ -1,13 +1,17 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   Subfunction  Canopy_Resistence&NPP      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function[rs_sun,rs_shd,Ci_sun,Ci_shd,An,Rdark,Lpho,SIF,DCi]=Canopy_Resistence_An_Evolution(PAR_sun,PAR_shd,LAI,...
-    Kopt,Knit,Fsun,Fshd,Citm1_sun,Citm1_shd,...
-    Ca,ra,rb,Ts,Ta,Pre,Ds,...
-    Psi_L,Psi_sto_50,Psi_sto_99,...
-    CT,Vmax,DS,Ha,FI,Oa,Do,a1,go,e_rel,e_relN,gmes,rjv,mSl,Sl,Opt_CR)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% INPUT
+function[rs_sun,rs_shd,Ci_sun,Ci_shd,An,Rdark,Lpho,SIF,DCi]= ...
+             Canopy_Resistence_An_Evolution(...
+    PAR_sun,   PAR_shd,    LAI,         Kopt,       Knit,  ...
+    Fsun,      Fshd,       Citm1_sun,   Citm1_shd,  Ca, ... 
+    ra,        rb,         Ts,          Ta,         Pre, ...
+    Ds,        Psi_L,      Psi_sto_50,  Psi_sto_99, CT, ...
+    Vmax,      DS,         Ha,          FI,         Oa, ...
+    Do,        a1,         go,          e_rel,      e_relN, ...
+    gmes,      rjv,        mSl,         Sl,         Opt_CR)
+
+%% INPUT
 % Knit Plant type Nitrogen extinction coefficient
 % LAI Leaf Area Index
 %%% Ci [umolCO2/mol] Leaf Interior  CO2 concentration
@@ -38,23 +42,23 @@ function[rs_sun,rs_shd,Ci_sun,Ci_shd,An,Rdark,Lpho,SIF,DCi]=Canopy_Resistence_An
 %%% Rdark %  %% [umolCO2/ s m^2 ] %% Surface Leaf Concentration
 Citm1_sun(Citm1_sun<200)=200;
 Citm1_shd(Citm1_shd<200)=200; 
-%%%%%%%%%%%%%%%%%%%%
+
+%% Case
 ANSW_SCA=1;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%% SCALING FROM LEAF TO CANOPY
-Vmax=Vmax*e_rel*e_relN; %%% Relative efficiency for age
+
+%% SCALING FROM LEAF TO CANOPY
+Vmax=Vmax*e_rel*e_relN; % Relative efficiency for age
 %IPAR = PAR_sun + PAR_shd ; %%%
 switch ANSW_SCA
     case 1
-        %%% To be recomputed for Vmax only for LAI and with Kopt to avoid issue with SAI LAIdead 
+        % To be recomputed for Vmax only for LAI and with Kopt to avoid issue with SAI LAIdead 
         FsunV = (1.0 - exp(-Kopt*(LAI)))/(Kopt*(LAI));
         FsunV(FsunV<0.01)=0; FsunV(FsunV>1)=1;
         FshdV = 1- FsunV;
-        %%% Two big leaves with Kn
+        % Two big leaves with Kn
         Can_sun = (1-exp(-(Kopt+Knit)*LAI))/(Kopt + Knit);
         Can_shd = (1-exp(-Knit*LAI))/Knit -(1-exp(-(Kopt+Knit)*LAI))/(Kopt + Knit);
-        %%% Two big leaves with Kn
+        % Two big leaves with Kn
         Vmax_sun= Vmax*Can_sun/(LAI*FsunV);
         Vmax_shd= Vmax*Can_shd/(LAI*FshdV);
         if FsunV == 0
@@ -92,20 +96,21 @@ gmes_shd =gmes; %%
 %%%
 PAR_sun = PAR_sun/(LAI*Fsun);
 PAR_shd = PAR_shd/(LAI*Fshd);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% SUNLIT FRACTION
+
+%% SUNLIT FRACTION
 if Fsun > 0
-    %Opt_CR = optimset('TolX',3);
-    %[Ci_sun]=fzero(@CO2_Concentration,Citm1_sun,Opt_CR,PAR_sun,Ca,ra,rb_sun,Ts,Ta,Pre,Ds,...
-    %    O,Owp,Oss,CT,Vmax_sun,Tup,Tlow,DS,Ha,FI,Oa,Do,a1,go_sun);
-    %%%
+    %{
+    Opt_CR = optimset('TolX',3);
+    [Ci_sun]=fzero(@CO2_Concentration,Citm1_sun,Opt_CR,PAR_sun,Ca,ra,rb_sun,Ts,Ta,Pre,Ds,...
+        O,Owp,Oss,CT,Vmax_sun,Tup,Tlow,DS,Ha,FI,Oa,Do,a1,go_sun);
+    %}
     [Ci_sun]=fzero(@CO2_Concentration,Citm1_sun,Opt_CR,PAR_sun,Ca,ra,rb_sun,Ts,Pre,Ds,...
         Psi_L,Psi_sto_50,Psi_sto_99,CT,Vmax_sun,DS,Ha,FI,Oa,Do,a1,go_sun,gmes_sun,rjv);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %[CiF_sun,An_sun,rc_sun,Rdark_sun]= PHOTOSYNTESIS(Ci_sun,PAR_sun,Ca,ra,rb_sun,Ts,Ta,Pre,Ds,...
-    %    O,Owp,Oss,...
-    %    CT,Vmax_sun,Tup,Tlow,DS,Ha,FI,Oa,Do,a1,go_sun);
-    %%%%
+    %{
+    [CiF_sun,An_sun,rc_sun,Rdark_sun]= PHOTOSYNTESIS(Ci_sun,PAR_sun,Ca,ra,rb_sun,Ts,Ta,Pre,Ds,...
+        O,Owp,Oss,...
+        CT,Vmax_sun,Tup,Tlow,DS,Ha,FI,Oa,Do,a1,go_sun);
+    %}
     [CiF_sun,An_sun,rc_sun,Rdark_sun,SIF_sun]= photosynthesis_biochemical(Ci_sun,PAR_sun,Ca,ra,rb_sun,Ts,Pre,Ds,...
         Psi_L,Psi_sto_50,Psi_sto_99,...
         CT,Vmax_sun,DS,Ha,FI,Oa,Do,a1,go_sun,gmes_sun,rjv);
@@ -117,8 +122,13 @@ end
 
 %% Debugger
 %disp(Fshd)
+%--------------------------------------------------------------
+%fileloc = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/1_TC/6_Debugging/';
+%save([fileloc 'From_Dist_canopy.mat']);
+%--------------------------------------------------------------
 
-%%%% SHADOWED FRACTION
+
+%% SHADOWED FRACTION
 if Fshd > 0
     %Opt_CR = optimset('TolX',3);
     %[Ci_shd]=fzero(@CO2_Concentration,Citm1_shd,Opt_CR,PAR_shd,Ca,ra,rb_shd,Ts,Ta,Pre,Ds,...

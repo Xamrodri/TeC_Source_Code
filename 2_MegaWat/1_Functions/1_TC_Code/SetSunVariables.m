@@ -2,23 +2,25 @@
 %   Subfunction SetSunVariables   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day] = SetSunVariables(Datam,DeltaGMT,Lon,Lat,t_bef,t_aft)
-%%% INPUT 
-%%% Datam %% [Yr, MO, DA, HR]
-%%% DeltaGMT [°] 
-%%% Lon [°]
-%%% Lat [°]
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% OUTPUT 
-%%delta_S,  Solar declination
-%%tau_S,  Hour angle of the sun
-%%h_S, [rad] solar altitude
-%%zeta_S, Sun's azimuth
-%%T_sunrise, [h]  sunrise time, 
-%%T_sunset,  [h]sunset time, 
-%%L_day, [h] total day length
-%%r_ES,[] ratio of the actual Earth-Sun to the mean Earth-Sun  distance
-%%jDay,    Julian Day 
-%%Delta_TSL [h] Time difference between standard and local meridian
+%{
+INPUT 
+    Datam %% [Yr, MO, DA, HR]
+    DeltaGMT [°] 
+    Lon [°]
+    Lat [°]
+
+OUTPUT 
+    delta_S,  Solar declination
+    tau_S,  Hour angle of the sun
+    h_S, [rad] solar altitude
+    zeta_S, Sun's azimuth
+    T_sunrise, [h]  sunrise time, 
+    T_sunset,  [h]sunset time, 
+    L_day, [h] total day length
+    r_ES,[] ratio of the actual Earth-Sun to the mean Earth-Sun  distance
+    jDay,    Julian Day 
+    Delta_TSL [h] Time difference between standard and local meridian
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Determine the julian day of the current time
 days = [31 28 31 30 31 30 31 31 30 31 30 31];    

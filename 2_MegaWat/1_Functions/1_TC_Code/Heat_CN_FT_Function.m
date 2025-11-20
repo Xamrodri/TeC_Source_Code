@@ -1,24 +1,25 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%   Subfunction  Thermal Mod %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Subfunction  Thermal Mod
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [T] = Heat_CN_FT_Function(Ttm1,dts,Pre,rsd,lan_dry,lan_s,cv_s,SPAR,L,Pe,O33,alpVG,nVG,...
     Phy1,s_SVG,bVG,Osat,Ohy,Oicetm1,Otm1,Zs,G0,Gn,Tup,Tdown,AE,OPZ,OPT_FR_SOIL)
+
 Ttm1=flip(Ttm1); 
 Ttm1=reshape(Ttm1,length(Ttm1),1); 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 Zs=sort(-Zs');
 nz=length(Zs)-1; %% number of layers 
-nn = nz + 2; %%% number of nodes for temperature 
-dz= diff(Zs); %%%% [mm]  Thickness of the Layers
-dz=dz*0.001; %% [m]
+nn = nz + 2;     %% number of nodes for temperature 
+dz= diff(Zs);    %% [mm]  Thickness of the Layers
+dz=dz*0.001;     %% [m]
 
 %Dz=[dz(1)*0.5, 0.5*(dz(1:nz-1)+dz(2:nz))];
 DzC = [dz(1)*0.5 ; 0.5*(dz(1:nz-1)+dz(2:nz)) ; dz(end)*0.5];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-g=9.81; %% m/s2
-roi = 916.2; %% ice density [kg/m^3]
-Lf= 1000*333.7; %% [J/Kg] %% Latent heat melt/freezing
+g=9.81;          %% m/s2
+roi = 916.2;     %% ice density [kg/m^3]
+Lf= 1000*333.7;  %% [J/Kg] %% Latent heat melt/freezing
 %%%%%%%%%%%
 [lanS,cv_Soil,~,~,~,Cw]=Soil_Thermal_properties_FT(Ttm1(2:nn-1),Pre,flip(rsd),flip(lan_dry),flip(lan_s),flip(cv_s),SPAR,flip(L),flip(Pe),flip(O33),flip(alpVG),flip(nVG),...
     Phy1,flip(s_SVG),flip(bVG),flip(Osat),flip(Ohy),flip(Oicetm1+Otm1),OPT_FR_SOIL);

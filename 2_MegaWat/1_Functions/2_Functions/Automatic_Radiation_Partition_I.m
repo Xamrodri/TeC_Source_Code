@@ -8,6 +8,7 @@ function[SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD,N,Rsws,t_bef,t_aft]=Automatic_Radia
 %%% GRAPH_VAR 0/1 switcher to plot outputs 
 %%% Rsw --> Measured Solar radiation
 %load([cur_dir,'\Res_',Location_Name,'.mat']);
+
 D=Date; N=zeros(size(D,1),1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -189,7 +190,9 @@ if GRAPH_VAR==1;
     %%%%%%%%%%%%  
 end
 [SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Ratio_Evaluator(Rsws,Rsw,SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD); 
+
 end
+
 function[SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Ratio_Evaluator(Rsws,Rsw,SD,SB,SAD1,SAD2,SAB1,SAB2,PARB,PARD)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Rsw=reshape(Rsw,1,length(Rsw));  Rsw(isnan(Rsw))=Rsws(isnan(Rsw));

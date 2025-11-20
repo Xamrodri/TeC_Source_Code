@@ -1,11 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%% OUTPUT WRITING %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
+Modified: MAXIMILIANO RODRIGUEZ, NOVEMBER 2024
+Modified: ACHILLE JOUBERTON, since 2023
+Original: PASCAL BURI, 28 FEBRUARY 2022% 
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% ADAPTED: MAXIMILIANO RODRIGUEZ, NOVEMBER 2024
-% Original: PASCAL BURI, 28 FEBRUARY 2022% Modified: ACHILLE JOUBERTON, since 2023
 
 %% MASS BALANCE VARIABLE
 %==========================================================================
@@ -29,23 +31,20 @@ else
 end
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%% SET NON-SOIL PIXELS IN 
-%%%%%%%  SOIL MOISTURE VARIABLES TO ZERO
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-O(ksv>4,:)=0;
-OF(ksv>4,:)=0;
-OS(ksv>4,:)=0;
-V(ksv>4,:)=0;
-V_ice(ksv>4,:)=0;
+%% SET NON-SOIL PIXELS IN 
+%  SOIL MOISTURE VARIABLES TO ZERO
+%O(ksv>4,:)=0;
+%OF(ksv>4,:)=0;
+%OS(ksv>4,:)=0;
+%V(ksv>4,:)=0;
+%V_ice(ksv>4,:)=0;
 
-%==========================================================================
-% SPATIAL AVERAGE OVER THE WATERSHED
+%% SPATIAL AVERAGE OVER THE WATERSHED
 %==========================================================================
 % This calculates the average across the basins based on the Mask.
 % Kinde tracks the cells were the Mask is equal to 1. 
+%==========================================================================
 
-%% Calculations
 alp_soil_tg	=	mean(alp_soil(Kinde));	%%[-]
 Ca_tg       =	mean(Ca_S(Kinde));	%%[ppm]
 Cice_tg     =	mean(Cice(Kinde));	%%[]
@@ -159,8 +158,8 @@ Rsw_tg      =	mean(Rsw_space(Kinde));	%%[W/m^2]
 T_tg        =	T_L_tg +T_H_tg;	%%[mm/h]
 V_tg        =	mean(Asur(Kinde).*V_space(Kinde));	%%[mm]
 Vice_tg     =	mean(Asur(Kinde).*Vice_space(Kinde));	%%[mm]
-In_tg       =	mean(In_H_space(Kinde) +  In_L_space(Kinde) +  SP_wc(Kinde) + In_SWE(Kinde) + In_urb(Kinde) + In_rock(Kinde)+ IP_wc(Kinde) );	%%[mm]
-
+In_tg       =	mean(In_H_space(Kinde) +  In_L_space(Kinde) +  SP_wc(Kinde) + ... 
+                In_SWE(Kinde) + In_urb(Kinde) + In_rock(Kinde)+ IP_wc(Kinde) );	%%[mm]
 
 
 %% SIMPLE MASS CHECK CONTROL
@@ -191,13 +190,16 @@ vars_avg = {'Date','alp_soil_tg','Ca_tg','Cicew_tg','Cice_tg','CK1_tg','Csnow_tg
         'SP_wc_tg','SWE_avalanched_tg','SWE_tg','t','Ta_tg','Tdamp_tg','Tdew_tg','Tdp_tg','Tice_tg','TsVEG_tg','Ts_tg','T_H_tg',...
         'T_L_tg','T_tg','U_SWE_tg','Vice_tg','V_tg','WAT_tg','WIS_tg','WR_IP_tg','WR_SP_tg','Ws_tg','ZWT_tg'};
 
-%% Current date
+% Current date
+%--------------------------------------------------------------------------
 Date_str = datestr(datetime(Datam_S(1),Datam_S(2), Datam_S(3), Datam_S(4),0,0),'dd-mmm-yyyy HH:MM:ss');
 
-%% Printing in file if option 1 is selected
+%% OPTION 1: Printing in file 
+%==========================================================================
 if output_manag(1) == 1
 
-%% First t. The file is created.
+% First t. The file is created.
+%--------------------------------------------------------------------------
 % [Output: columns in alphabetical order]
 if t==2
     tit{1}=strcat(outlocation,"/Spatial_data/", 'OUTPUT_',SITE,'_AVG.dat'); 
@@ -210,7 +212,8 @@ if t==2
     fprintf(fid(1),'%s\t\n',vars_avg{length(vars_avg)});
 end
 
-%% Case for reinit
+% Case for reinit
+%--------------------------------------------------------------------------
 if t==t1_reinit % if re-starting a T&C run at timestep t1_reinit
 
    tit{1}=strcat(outlocation, '/OUTPUT_',SITE,'_AVG.dat'); % file name
@@ -246,8 +249,9 @@ if t==t1_reinit % if re-starting a T&C run at timestep t1_reinit
       clear your_text 
 end 
 
-%% Adding the data
-%%% START <<OUTPUT_ZZZ_AVG.dat>> %%%
+% Adding the data
+%--------------------------------------------------------------------------
+% START <<OUTPUT_ZZZ_AVG.dat>>
 fprintf(fid(1),'%s\t',Date_str);
 fprintf(fid(1),'%g\t',alp_soil_tg);
 fprintf(fid(1),'%g\t',Ca_tg);      
@@ -351,42 +355,42 @@ fprintf(fid(1),'%g\t',WR_IP_tg);
 fprintf(fid(1),'%g\t',WR_SP_tg);	
 fprintf(fid(1),'%g\t',Ws_tg);       
 fprintf(fid(1),'%g\t\n',ZWT_tg);
-%%% END <<OUTPUT_ZZZ_AVG.dat>> %%%
+% END <<OUTPUT_ZZZ_AVG.dat>> %
 
-%% Closing the file
+% Closing the file
+%--------------------------------------------------------------------------
 if t==N_time_step
     fclose(fid(1));
 end
 
 end
 
-%==========================================================================
-% SPATIAL STANDARD DEVIATION OVER THE WATERSHED
+%% OPTION 2: SPATIAL STANDARD DEVIATION OVER THE WATERSHED
 %==========================================================================
 % This calculates the standard deviation across the basin, based on the 
 % Mask from the Launcher.
 % Kinde tracks the cells where the Mask is 1. That is, where there is data.
+%==========================================================================
 
-%% Printing in file if option 2 is selected
 if output_manag(2) == 1
 
 %% Calculations for STD
-std_alp_soil_tg	=	std(alp_soil(Kinde));	%%[]
-std_Ca_tg       =	std(Ca_S(Kinde));	%%[W/m^2]
-std_Ds_tg       =	std(Ds_S(Kinde));	%%[°C]
-std_dw_SNO_tg	=	std(dw_SNO(Kinde));	%%[]
-std_ea_tg       =	std(ea_S(Kinde));	%%[Pa]
-std_EG_tg       =	std(EG(Kinde));	%%[mm/h]
-std_EICE_tg     =	std(EICE(Kinde));	%%[mm/h]
-std_EIn_H_tg	=	std(EIn_H_space(Kinde));	%%[mm/h]
-std_EIn_L_tg	=	std(EIn_L_space(Kinde));	%%[mm/h]
-std_EIn_rock_tg	=	std(EIn_rock(Kinde));	%%[mm/h]
-std_EIn_urb_tg	=	std(EIn_urb(Kinde));	%%[mm/h]
-std_er_tg       =	std(er(Kinde));	%%[kg/s m^2]
-std_ESN_tg      =	std(ESN(Kinde)+ESN_In(Kinde));	%%[mm/h]
-std_SSN_tg      =	std(SSN(Kinde)+SSN_In(Kinde));	%%[mm/h]
-std_EWAT_tg     =	std(EWAT(Kinde));	%%[mm/h]
-std_f_tg        =	std(f(Kinde)*dth);	%%[mm]
+std_alp_soil_tg	=	std(alp_soil(Kinde));	  % []
+std_Ca_tg       =	std(Ca_S(Kinde));	      % [W/m^2]
+std_Ds_tg       =	std(Ds_S(Kinde));	      % [°C]
+std_dw_SNO_tg	=	std(dw_SNO(Kinde));	      % []
+std_ea_tg       =	std(ea_S(Kinde));	      % [Pa]
+std_EG_tg       =	std(EG(Kinde));	          % [mm/h]
+std_EICE_tg     =	std(EICE(Kinde));	      % [mm/h]
+std_EIn_H_tg	=	std(EIn_H_space(Kinde));  % [mm/h]
+std_EIn_L_tg	=	std(EIn_L_space(Kinde));  % [mm/h]
+std_EIn_rock_tg	=	std(EIn_rock(Kinde));	  % [mm/h]
+std_EIn_urb_tg	=	std(EIn_urb(Kinde));	  % [mm/h]
+std_er_tg       =	std(er(Kinde));	          % [kg/s m^2]
+std_ESN_tg      =	std(ESN(Kinde)+ESN_In(Kinde));	% [mm/h]
+std_SSN_tg      =	std(SSN(Kinde)+SSN_In(Kinde));	% [mm/h]
+std_EWAT_tg     =	std(EWAT(Kinde));	      % [mm/h]
+std_f_tg        =	std(f(Kinde)*dth);	      % [mm]
 std_FROCK_tg	=	std(FROCK(Kinde));	%%[mm]
 std_G_tg        =	std(G(Kinde));	%%[W/m^2]
 std_Gfin_tg     =	std(Gfin(Kinde));	%%[W/m^2]
@@ -596,33 +600,29 @@ if t==N_time_step
 end
 end
 
-%% SPATIAL AVERAGE OVER THE VEGETATION TYPE
+%% OPTION 3: SPATIAL AVERAGE OVER THE VEGETATION TYPE
 %==========================================================================
 % START VEGETATION TYPES 
 %==========================================================================
 
-%%% 1 = Fir
-%%% 2 = Larch
-%%% 3 = Grass
-%%% 4 = Shrub
-%%% 5 = Broadleaf-evergreen
-%%% 6 = Broadleaf-deciduous
-%%% 7 = Rock/Ice
-
-%% Printing in file if option 3 is selected
+% Printing in file if option 3 is selected
+%--------------------------------------------------------------------------
 if output_manag(3) == 1
 
-Veg_names = {'Fir','Larch','Grass','Shrub','Broadleaf-evergreen','Broadleaf-deciduous','Rock/Ice'};
-%%% END VEGETATION TYPES %%%
+%ijki = 2
+%ievc = 5
 
 for ijki=1:cc_max
     for ievc=1:length(EVcode)
+
         riev= find(ksv==EVcode(ievc));
-        %%%%%%
-        OH_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*OH(riev,ijki)); %%[]
-        std_OH_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*OH(riev,ijki)); %%[]
-        OL_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*OL(riev,ijki)); %%[]
-        std_OL_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*OL(riev,ijki)); %%[]
+        
+        OH_tg(ievc,ijki)       = mean(Ccrown_OUT(ievc,ijki)*OH(riev,ijki)); %%[]
+        std_OH_tg(ievc,ijki)   = std(Ccrown_OUT(ievc,ijki)*OH(riev,ijki));  %%[]
+
+        OL_tg(ievc,ijki)       = mean(Ccrown_OUT(ievc,ijki)*OL(riev,ijki)); %%[]
+        std_OL_tg(ievc,ijki)   = std(Ccrown_OUT(ievc,ijki)*OL(riev,ijki)); %%[]
+        
         An_H_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*An_H(riev,ijki)); %%[]
         std_An_H_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*An_H(riev,ijki)); %%[]
         An_L_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*An_L(riev,ijki)); %%[]
@@ -639,8 +639,8 @@ for ijki=1:cc_max
         std_LAI_H_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*LAI_H(riev,ijki)); %%[]
         LAI_L_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*LAI_L(riev,ijki)); %%[]
         std_LAI_L_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*LAI_L(riev,ijki)); %%[]
-        NDVI_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*NDVI(riev,ijki)); %%[]
-        std_NDVI_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*NDVI(riev,ijki)); %%[]
+        %NDVI_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*NDVI(riev,ijki)); %%[]
+        %std_NDVI_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*NDVI(riev,ijki)); %%[]
         NPP_H_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*NPP_H(riev,ijki)); %%[]
         std_NPP_H_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*NPP_H(riev,ijki)); %%[]
         NPP_L_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*NPP_L(riev,ijki)); %%[]
@@ -679,9 +679,7 @@ for ijki=1:cc_max
         std_PHE_S_L_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*PHE_S_L(riev,ijki)); %%[]
         %Llitter_tg(ievc,ijki) =  mean(Ccrown_OUT(ievc,ijki)*Llitter(riev,ijki)); %%[]
         %std_Llitter_tg(ievc,ijki) = std(Ccrown_OUT(ievc,ijki)*Llitter(riev,ijki)); %%[]
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %,B_H(ij,:,:),,,
-        %,B_L(ij,:,:),
+
     end
 end
 
@@ -699,7 +697,7 @@ if t==2
     for ijki=1:cc_max
         for ievc=1:length(EVcode)
             if Ccrown_OUT(ievc,ijki)>0
-                tit2{ievc,ijki}=strcat(outlocation,"/Spatial_data/",'OUTPUT_',SITE,'_AVG_PFT_',Veg_names{ievc},'.dat');
+                tit2{ievc,ijki}=strcat(outlocation,"/Spatial_data/",'OUTPUT_',SITE,'_AVG_PFT_',num2str(ievc),'.dat');
                 fid2(ievc,ijki)=fopen(tit2{ievc,ijki},'a');
 
                 % Add labels to column list
@@ -718,7 +716,7 @@ if t==t1_reinit
         for ievc=1:length(EVcode)
             if Ccrown_OUT(ievc,ijki)>0
 
-                  tit2{ievc,ijki}=strcat(outlocation,'OUTPUT_',SITE,'_AVG_PFT_',Veg_names{ievc},'.dat');
+                  tit2{ievc,ijki}=strcat(outlocation,'OUTPUT_',SITE,'_AVG_PFT_',num2str(ievc),'.dat');
 
                   % Check the line number after which delete everything (based on datestamp)
                   fid2(ievc,ijki)=fopen(tit2{ievc,ijki},'r+');  % Open the file
@@ -770,7 +768,7 @@ for ijki=1:cc_max
             fprintf(fid2(ievc,ijki),'%g\t',LAIdead_L_tg(ievc,ijki));
             fprintf(fid2(ievc,ijki),'%g\t',LAI_H_tg(ievc,ijki));
             fprintf(fid2(ievc,ijki),'%g\t',LAI_L_tg(ievc,ijki));
-            fprintf(fid2(ievc,ijki),'%g\t',NDVI_tg(ievc,ijki));
+            %fprintf(fid2(ievc,ijki),'%g\t',NDVI_tg(ievc,ijki));
             fprintf(fid2(ievc,ijki),'%g\t',NPP_H_tg(ievc,ijki));
             fprintf(fid2(ievc,ijki),'%g\t',NPP_L_tg(ievc,ijki));
             fprintf(fid2(ievc,ijki),'%g\t',OH_tg(ievc,ijki)); 
@@ -806,11 +804,13 @@ end
 
 end
 
+%% OPTION 4
 %==========================================================================
 % SPATIAL STD OVER THE VEGETATION TYPE
 %==========================================================================
 
-%%%%%% Vegetation vars name
+% Vegetation vars name
+%--------------------------------------------------------------------------
 if output_manag(4) == 1
 
 vars_veg_std = {'Date','std_AgeL_H_tg','std_AgeL_L_tg','std_ANPP_H_tg','std_ANPP_L_tg','std_An_H_tg','std_An_L_tg',...
@@ -818,7 +818,6 @@ vars_veg_std = {'Date','std_AgeL_H_tg','std_AgeL_L_tg','std_ANPP_H_tg','std_ANPP
     'std_NPP_L_tg','std_OH_tg','std_OL_tg','std_PHE_S_H_tg','std_PHE_S_L_tg','std_RA_H_tg','std_RA_L_tg','std_Rdark_H_tg',...
         'std_Rdark_L_tg','std_Rg_H_tg','std_Rg_L_tg','std_SAI_H_tg','std_SAI_L_tg','std_Tdp_H_tg','std_Tdp_L_tg','std_hc_L_tg'};
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% [Output: columns in alphabetical order] %%%
 if t==2
     for ijki=1:cc_max
@@ -930,12 +929,10 @@ end
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%% SPATIAL AVERAGE OVER EACH LAND COVER CLASS
-%%%%%%%%%  (vegetation types, rock, ice, clean-ice, debris-covered)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% OPTION 5: SPATIAL AVERAGE OVER EACH LAND COVER CLASS
+%==========================================================================
+%  (vegetation types, rock, ice, clean-ice, debris-covered)
+
 % Land cover class index "LCinde"
 % 1: idx_Veg1 (veg 1 index (Fir))
 % 2: idx_Veg2 (veg 2 index (Larch))
@@ -947,6 +944,7 @@ end
 % 8: idx_Ice (ice index)
 % 9: idx_Cleanice (clean-ice index)
 % 10: idx_Debice (debris-covered ice index)
+
 if output_manag(5) == 1
 
 LC_names = {'Fir','Larch','Grass','Shrub','Broadleaf-evergreen','Broadleaf-deciduous',...
@@ -1250,12 +1248,12 @@ if t==N_time_step
 end
 
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%% SPATIAL STD OVER EACH LAND COVER CLASS
-%%%%%%%%%  (vegetation types, rock, ice, clean-ice, debris-covered)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% OPTION 6: SPATIAL STD OVER EACH LAND COVER CLASS
+%==========================================================================
+% SPATIAL STD OVER EACH LAND COVER CLASS
+% (vegetation types, rock, ice, clean-ice, debris-covered)
+
 % Land cover class index "LCinde"
 % 1: idx_Veg1 (veg 1 index (Fir))
 % 2: idx_Veg2 (veg 2 index (Larch))
@@ -1265,6 +1263,7 @@ end
 % 6: idx_Ice (ice index)
 % 7: idx_Cleanice (clean-ice index)
 % 8: idx_Debice (debris-covered ice index)
+
 if output_manag(6) == 1
 
 for ilc=1:length(LCinde) %%%loop over classes
@@ -1560,9 +1559,7 @@ end
 
 end 
 
-%% SPATIAL AVERAGE MAPS AT SPECIFIC TIMES
-%==========================================================================
-% OPTION 7 IN THE LAUNCHER
+%% OPTION 7: SPATIAL AVERAGE MAPS AT SPECIFIC TIMES
 %==========================================================================
 
 if output_manag(7) == 1
@@ -2018,8 +2015,6 @@ end
 
 %% ALBEDO OUTPUT DAILY MAPS
 %==========================================================================
-% 
-%==========================================================================
 
 if t==2
     toutp_alb=2;
@@ -2052,12 +2047,11 @@ end
 
 end
 
-%% TRACKED PIXELS TIME SERIES
-%==========================================================================
-% OPTION 8 FROM LAUNCHER
+%% OPTION 8: TRACKED PIXELS TIME SERIES
 %==========================================================================
 
-%% Printing or not
+% Printing or not
+%--------------------------------------------------------------------------
 if output_manag(8) == 1
 
 % Variable names for pixel time series
@@ -2131,7 +2125,7 @@ for ipo=1:npoint
     fprintf(fid5(1,ipo),'%g\t',CK1(ij));	
     fprintf(fid5(1,ipo),'%g\t',Csno(ij));	
     fprintf(fid5(1,ipo),'%g\t',Csnow(ij));	
-    fprintf(fid5(1,ipo),'%g\t',cos_fst(ij));	
+    %fprintf(fid5(1,ipo),'%g\t',cos_fst(ij));	
     fprintf(fid5(1,ipo),'%g\t',Ct(ij));	
     fprintf(fid5(1,ipo),'%g\t',DEB_MAP(ij));	
     fprintf(fid5(1,ipo),'%g\t',DQ_S(ij));	

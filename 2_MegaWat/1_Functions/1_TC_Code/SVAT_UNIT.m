@@ -149,26 +149,31 @@ end
     zatm,disp_h,zom,zom_under,SNDtm1,disp_h_H,zom_H,disp_h_L,zom_L);
 %%%%
 for i=1:length(Ccrown)
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    %%% Litter resistance %%%%%%%
+
+    %% Litter resistance 
     [r_litter(i),alp_litter(i)]=Litter_Resistence(Ws,Ta,Pre,zatm,disp_h,zom,Sllit,BLit(i),In_Littertm1);
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    %%%% Neutrel undercanopy resistence
+    %% Neutrel undercanopy resistence
     %[rap_H(i),rap_L(i),rb_H(i),rb_L(i)]=Undercanopy_Leaf_Resistence(Ws,Ta,Ta,hc_H(i),hc_L(i),...
     %    (LAI_H(i)+SAI_H(i)+LAIdead_H(i)),(LAI_L(i)+SAI_L(i)+LAIdead_L(i)),d_leaf_H(i),d_leaf_L(i),...
     %    zatm,disp_h,zom,zom_under,SNDtm1,disp_h_H(i),zom_H(i),disp_h_L(i),zom_L(i));
-    %%%%%%% Stomatal resistance
+   
+    %% Stomatal resistance
     if ((LAI_H(i) > 0) && (OPT_VegSnow==0)) || ((LAI_H(i)>0) && (OPT_VegSnow==1) && (dw_SNO <= 0.5))
-        %%%
+
         ran = (1/((0.4^2)*Ws))*(log((zatm-disp_h)/zom))^2; %%% Neutral aerodynamic resistance  %%[s/m]
-        %%%
-        [rs_sunH(i),rs_shdH(i),Ci_sunH(i),Ci_shdH(i),An_H(i),Rdark_H(i),Lpho_H(i),SIF_H(i)]=Canopy_Resistence_An_Evolution(PAR_sun_H(i),PAR_shd_H(i),LAI_H(i),...
-            Kopt_H(i),KnitH(i),FsunH(i),FshdH(i),Citm1_sunH(i),Citm1_shdH(i),...
-            Ca,ran,rb_H(i),Ta,Ta,Pre,Ds,...
-            Psi_ltm1_H(i),Psi_sto_50_H(i),Psi_sto_00_H(i),...
-            CT_H(i),Vmax_H(i),DSE_H(i),Ha_H(i),FI_H(i),Oa,Do_H(i),a1_H(i),go_H(i),e_rel_H(i),e_relN_H(i),gmes_H(i),rjv_H(i),mSl_H(i),Sl_H(i),Opt_CR);
+        
+        % Canopy_Resistence_An_Evolution
+        %------------------------------------------------------------------
+        [rs_sunH(i),rs_shdH(i),Ci_sunH(i),Ci_shdH(i),An_H(i),Rdark_H(i),Lpho_H(i),SIF_H(i)]= ...
+                            Canopy_Resistence_An_Evolution(...
+            PAR_sun_H(i),    PAR_shd_H(i),   LAI_H(i),          Kopt_H(i),       KnitH(i), ...
+            FsunH(i),        FshdH(i),       Citm1_sunH(i),     Citm1_shdH(i),   Ca, ...
+            ran,             rb_H(i),        Ta,                Ta,              Pre, ...
+            Ds,              Psi_ltm1_H(i),  Psi_sto_50_H(i),   Psi_sto_00_H(i), CT_H(i), ...
+            Vmax_H(i),       DSE_H(i),       Ha_H(i),           FI_H(i),         Oa, ...
+            Do_H(i),         a1_H(i),        go_H(i),           e_rel_H(i),      e_relN_H(i), ...
+            gmes_H(i),       rjv_H(i),       mSl_H(i),          Sl_H(i),         Opt_CR);
     else
         rs_sunH(i) = Inf; rs_shdH(i) = Inf; An_H(i) = 0; Rdark_H(i)=0;  Ci_sunH(i)=0;  Ci_shdH(i)=0; Lpho_H(i)=0; SIF_H(i) =0 ;
     end
@@ -240,7 +245,8 @@ if Csno == 1
                 Gsno= sign(Gsno)*min([abs(Gsno),abs(Gsno_max)]);
             end
 
-            %%% Snow over debris covered ice
+            % Snow over debris covered ice
+            %--------------------------------------------------------------
             %%% Debris Heat Flux
             ms_deb = length(Tdebtm1);
             lan_deb =  Deb_Par.lan*ones(1,ms_deb) ;%%% [W/m K ] Thermal conductivity debris
@@ -496,7 +502,10 @@ else
                 }
             %}
             %% DEBUGGER
-            %save(strcat('C:/Users/mrodrigu/Desktop/19_ISTA/1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/4_Outputs/Run_8/5_Env/','Check','.mat'))
+            %--------------------------------------------------------------
+            %fileloc = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/1_TC/6_Debugging/';
+            %save([fileloc 'From_Point.mat']);
+            %--------------------------------------------------------------
 
             [Ts]=fzero(@Surface_Temperature,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
                 Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...
@@ -788,7 +797,8 @@ if Csno == 1
         Tdeb=0;
     end
 else
-    %%% Ice without the snow
+    % Ice without the snow
+    %----------------------------------------------------------------------
     if Cice == 1
         if Cdeb == 1
             %%% Debris Heat Flux
@@ -851,7 +861,7 @@ else
         %%%%%%%%%%
         %%% --> Variables Snowpack Icepack Debris and snow free vegetation also when there aren't
         %%%  TsF,SWE,D,ros,In_SWE,SP_wc,WR_SP,U_SWE,dQ,Qf,t_sls
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %------------------------------------------------------------------
         TsF=0;
         SWE=0;
         WR_SP= Pr_sno*(1-Cwat)+ dw_SNO*sum(Ccrown)*Pr_liq + SP_wctm1 + SWEtm1 + In_SWEtm1 ; %% All the terms should be equal to zero
@@ -874,8 +884,8 @@ else
         Smelt = 0;
         Tdpsnow=Tdpsnowtm1*0; 
         Tice = 0;
-        Tdeb = 0;
-    end
+        Tdeb = zeros(1,length(Tdebtm1)); % Change by Max - Oct 26, 2025
+     end
 end
 %%%%%
 %%%%%%%%%%%%%%%%%%
@@ -1036,10 +1046,9 @@ for rj=1:length(Ccrown)
         J_Ldis(rj,:) = Jsx_L(rj)./sum(J_Ldis(rj,:)).*J_Ldis(rj,:);% [mm/h]
     end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%% INTERCEPTION and WATER TO THE SOIL
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% INTERCEPTION and WATER TO THE SOIL
+%==========================================================================
 [In_H,In_L,In_Litter,Dr_H,Dr_L,WIS]=Interceptions_Veg(dt,...
     Ccrown,Cfol_H,Cfol_L,CLitter,Cbare,Csno,Cice,Crock,Curb,Cwat,dw_SNO,In_Ltm1,In_Htm1,In_Littertm1,...
     In_max_H,In_max_L,BLit,...
