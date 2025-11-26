@@ -34,19 +34,18 @@ IniCond.DeltaGMT= 1; % for Italy
 
 % Name of the folder to save results 
 %--------------------------------------------------------------------------
-IniCond.run_folder = 'Run_44';
+IniCond.run_folder = 'Run_42';
 
 % Restart option
 %--------------------------------------------------------------------------
-restart.id = 0; % Set to 1 to continue a un-completed T&C run
+restart.id = 0; % Set to 1 to continue an un-completed T&C run
 %Define iter to restart
-restart.month = 6;
-restart.year = 2001;
-restart.run = 'Run_41'; 
+restart.date = '30_Jun_2001';
+restart.run = 'Run_42'; 
 
 % Modelling period
 %--------------------------------------------------------------------------
-dateRun.start = "01-Jul-2001 00:00:00"; % Starting point of the simulation
+dateRun.start = "25-Jun-2001 00:00:00"; % Starting point of the simulation
 dateRun.end = "5-Jul-2001 23:00:00"; % Last timestep of the simulation
 
 % Folder with forcings
@@ -122,8 +121,7 @@ if ~exist(Directories.save, 'dir')
     for i=1:length(all_yy)
     mkdir([Directories.save char(num2str(all_yy(i)))]);
     end  
-
-    mkdir([Directories.save 'Initial']);
+   
     mkdir([Directories.save 'Store']);
 
 addpath(genpath(Directories.save)); 
@@ -146,23 +144,22 @@ Use opts to force all the columns with values to be numeric.
 %--------------------------------------------------------------------------
 
 opts = detectImportOptions([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx']);
-opts = setvartype(opts, [7:length(opts.VariableTypes)], 'double');
+opts = setvartype(opts, 7:length(opts.VariableTypes), 'double');
 
 TT_par = readtable([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
 
 %% Some parameters
-
 SITEs = IniCond.SITE; % All of my study catchments
 FORCING = 'ERA5';
-DeltaGMTs=[1];
+DeltaGMTs=1;
 
 % Catchment outlet POI name
-outlet_names = ["Pianello_in_Chiascio"];
+outlet_names = "Pianello_in_Chiascio";
 
 % Parameters
-Tmods = [0]; % temperature modification above clean ice [°C];
-Tmaxs = [2]; % Maximum air temperature for precipitation phase scheme (2-dual thresholds)
-Tmins = [0]; % Minimum air temperature for precipitation phase scheme (2-dual thresholds)
+Tmods = 0; % temperature modification above clean ice [°C];
+Tmaxs = 2; % Maximum air temperature for precipitation phase scheme (2-dual thresholds)
+Tmins = 0; % Minimum air temperature for precipitation phase scheme (2-dual thresholds)
  
 
 %% Simulation period
@@ -173,23 +170,23 @@ x2=datetime(dateRun.end);
 % Veg: Vegetation
 % LC: Land Cover class
 
-output_manag = [1,  % Catch_av
-                0,  % Catch_std
-                1,  % Veg_avg
-                0,  % Veg_std
-                0,  % LC_avg
-                0,  % LC_std
-                1,  % Maps
+output_manag = [1;  % Catch_av
+                0;  % Catch_std
+                1;  % Veg_avg
+                0;  % Veg_std
+                0;  % LC_avg
+                0;  % LC_std
+                1;  % Maps
                 1]; % POI
 
 %% GLACIER AND AVALANCHE PARAMETERS
 % Switch for glacier dynamics (keep to 0 for this case study)
-Idyn = [0];
+Idyn = 0;
 
 % switch on/off avalanching
-Aval = [1];  % 1 to turn on avalanching, 0 to turn off avalanching
-a_aval = [0.1]; % avalanche parameters a (Bernhart & Schulz 2010)
-C_aval = [145]; % avalanche parameters C 
+Aval = 1;  % 1 to turn on avalanching, 0 to turn off avalanching
+a_aval = 0.1; % avalanche parameters a (Bernhart & Schulz 2010)
+C_aval = 145; % avalanche parameters C 
 
 %% SNOW INITIAL CONDITION
 % Initial snow depth
@@ -223,14 +220,14 @@ SITE = char(SITEs);
 DeltaGMT= IniCond.DeltaGMT;
 
 % Solar variables 
-t_bef=[1]; % Integration interval for solar variables (hour)
-t_aft=[0]; % Integration interval for solar variables (hour)
+t_bef=1; % Integration interval for solar variables (hour)
+t_aft=0; % Integration interval for solar variables (hour)
 
 outlet_name = char(outlet_names);
 
 %% Diplay setting of the incoming T&C model runs:
 disp(['Site selected: ' IniCond.SITE])
-disp(['Simulation period: ' datestr(x1,'dd-mmm-yyyy HH:MM') ' to ' datestr(x2,'dd-mmm-yyyy HH:MM')])
+disp(['Simulation period: ' char(string(x1,'dd-MMM-yyyy HH:mm')) ' to ' char(string(x2,'dd-MMM-yyyy HH:mm'))])
 disp(['Precipitation phase scheme: ' parameterize_phase_label{:}])
 
 if Idyn == 0; disp('Ice dynamics: off'); else; disp('Ice dynamics: on'); end
@@ -244,7 +241,7 @@ if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 outlocation = [Directories.save];
 
 % Create output directory if it doesn't exist already
-if ~exist(outlocation, 'dir');
+if ~exist(outlocation, 'dir')
     mkdir(outlocation);
     addpath(genpath(outlocation));
 end
@@ -289,15 +286,17 @@ Nd_time_step = ceil(N_time_step/24)+1;
 % Steps
 dt=3600; %% [s]
 dth=1; %% [h]
-[YE,MO,DA,HO,MI,SE] = datevec(Date);
+[YE,MO,DA,HO,~,~] = datevec(Date);
 Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
 clear YE MO DA HO MI SE
 
 % Carbon
 %-------------------------------------------------------------------------
-load(['Ca_Data.mat']);
+load('Ca_Data.mat');
 
-d1 = find(abs(Date_CO2-datenum(Date(1)))<1/36);d2 = find(abs(Date_CO2-datenum(Date(end)))<1/36);
+d1 = find(abs(Date_CO2 - datenum(Date(1)))<1/36); 
+d2 = find(abs(Date_CO2 - datenum(Date(end)))<1/36);
+
 Ca=Ca(d1:d2);
 clear d1 d2 Date_CO2
 Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol] -
@@ -306,7 +305,7 @@ Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol] -
 %--------------------------------------------------------------------------
 L_day=zeros(length(Datam),1);
 for j=2:24:length(Datam)
-    [h_S,delta_S,zeta_S,T_sunrise,T_sunset,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
+    [~,~,~,~,~,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
 end
 
 Lmax_day = max(L_day);
@@ -375,7 +374,6 @@ x_cell=xllcorner:cellsize:(xllcorner+cellsize*(n_cell-1));
 y_cell=yllcorner:cellsize:(yllcorner+cellsize*(m_cell-1));
 % MASK=ones(m_cell,n_cell); MASK(isnan(DTM))=0;
 MASKn=reshape(MASK,num_cell,1);
-Kinde = find(MASK==1);
 
 %"Xoutlet" & "Youtlet": outlet point, predefined in dtm_XXX.mat-file
 
@@ -391,8 +389,8 @@ Ared=ones(num_cell,1);
 
 % Flow Boundary Condition
 %--------------------------------------------------------------------------
-Xout = [26]; % Temporal fix to extract discharge (this is the column)
-Yout = [14]; % Tempotal fix to extract discharge (this is the row)
+Xout = 26; % Temporal fix to extract discharge (this is the column)
+Yout = 14; % Tempotal fix to extract discharge (this is the row)
 
 Slo_top(Youtlet,Xoutlet)=0.05;
 npoint = length(Xout);
@@ -405,19 +403,21 @@ for jk=1:ms_max
     T_pot{jk}= T_flow;
 end
 
-% Width channel
+% Width channel - Manning coefficient
 %--------------------------------------------------------------------------
 WC = cellsize*ones(m_cell,n_cell); %% [m]  Width channel
 WC(SN==1)=0.0018*sqrt((cellsize^2)*Aacc(SN==1)); %% [m]
 WC=WC.*MASK;
-SN(isnan(SN))=0; %% [Stream Identifier]
+SN(isnan(SN))=0; % [Stream Identifier]
 SNn=reshape(SN,num_cell,1);
 
-NMAN_C=SN*0.040; NMAN_H=0.1; %%[s/(m^1/3)] manning coefficient
-MRough = 0.01*(1-SN); %%[m] Microroughness
+NMAN_C=SN*0.040; 
+NMAN_H=0.1; % manning coefficient [s/(m^1/3)]
+MRough = 0.01*(1-SN); % Microroughness [m]
 NMAN_C=NMAN_C.*MASK;
 NMAN_H=NMAN_H.*MASK;
 MRough=MRough.*MASK;
+
 %%%
 Kres_Rock =8760; % Bedrock aquifer constant [h]
 SPRINGn = SNn; % Spring Location
@@ -440,35 +440,35 @@ POI = table('Size', [10, 7], ...
 POI.Class = (1:10)';
 
 % Representation of each vegetation class
-POI.Veg_type = {["BLdec_lowElev_ro2" "grass_Bondone"],                                      % Class 1:  Decidious Broad-leaved forest
-                ["grass_Bondone"],                                                          % Class 2:  Grassland/pasture
-                ["Crops_WW"  "Crops_WB"  "Crops_S"  "Crops_R" "grass_Bondone"],             % Class 3:  Crops
-                ["EvGreen_NeedLeaves_LeBray" "BLdec_highElev_Collelongo"],                  % Class 4:  Evergreen needleaves at high elevation (>700m)
-                ["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"],  % Class 5:  Mediterranean shrublands
-                ["crops_Negrisia" "grass_Bondone"],                                         % Class 6:  Olives
-                ["NoVeg"],                                                                  % Class 7:  Urban
-                ["NoVeg"],                                                                  % Class 8:  Rock
-                ["NoVeg"],                                                                  % Class 9:  Water
+POI.Veg_type = {["BLdec_lowElev_ro2" "grass_Bondone"];                                      % Class 1:  Decidious Broad-leaved forest
+                ["grass_Bondone"];                                                          % Class 2:  Grassland/pasture
+                ["Crops_WW"  "Crops_WB"  "Crops_S"  "Crops_R" "grass_Bondone"];             % Class 3:  Crops
+                ["EvGreen_NeedLeaves_LeBray" "BLdec_highElev_Collelongo"];                  % Class 4:  Evergreen needleaves at high elevation (>700m)
+                ["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"];  % Class 5:  Mediterranean shrublands
+                ["crops_Negrisia" "grass_Bondone"];                                         % Class 6:  Olives
+                ["NoVeg"];                                                                  % Class 7:  Urban
+                ["NoVeg"];                                                                  % Class 8:  Rock
+                ["NoVeg"];                                                                  % Class 9:  Water
                 ["grass_Alinya"]                                                            % Class 10: Bare soils
                 };
 
-POI.Ccrowns =  {[0.8 0.2],
-                [0.9],
-                [0.1 0.1 0.2 0.1 0.3],
-                [0.5 0.2],
-                [0.6 0.05 0.2],
-                [0.4 0.2],
-                [0.0],
-                [0.0],
-                [0.0],
+POI.Ccrowns =  {[0.8 0.2];
+                [0.9];
+                [0.1 0.1 0.2 0.1 0.3];
+                [0.5 0.2];
+                [0.6 0.05 0.2];
+                [0.4 0.2];
+                [0.0];
+                [0.0];
+                [0.0];
                 [0.1]};
 
 % From class 1 to 10
 %              1     2     3     4     5      6     7     8     9     10
-POI.Cwat  = ({[0.0],[0.0],[0.0],[0.0],[0.0], [0.0],[1.0],[0.0],[1.0],[0.0]})';
-POI.Curb  = ({[0.0],[0.0],[0.0],[0.0],[0.0], [0.0],[0.0],[0.0],[0.0],[0.0]})';
-POI.Crock = ({[0.0],[0.0],[0.0],[0.0],[0.0], [0.0],[0.0],[1.0],[0.0],[0.0]})';
-POI.Cbare = ({[0.0],[0.1],[0.2],[0.3],[0.15],[0.4],[0.0],[0.0],[0.0],[0.9]})';
+POI.Cwat  = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  1.0,  0.0,  1.0,  0.0})';
+POI.Curb  = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  0.0,  0.0,  0.0,  0.0})';
+POI.Crock = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  0.0,  1.0,  0.0,  0.0})';
+POI.Cbare = ({ 0.0, 0.1,  0.2,   0.3,  0.15,  0.4,  0.0,  0.0,  0.0,  0.9})';
 
 
 % cc_max calculation
@@ -544,15 +544,15 @@ end
 
 %% If I am NOT restarting. So, in the normal case.
 if restart.id == 0
-out = [Directories.save 'Initial/INITIAL_CONDITIONS_' SITE '.mat'];
+out = [Directories.save 'Store/INITIAL_CONDITIONS_' SITE '.mat'];
 INIT_COND_v6(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,Ca,SNOWD,SNOWALB,out, ...
    POI, TT_par, idxCode, Slo_top);
 load(out);
-    elseif restart.id == 1  %in case of restart  
-    disp(['Parameters restarted from file: ' char(num2str(restart.month)) '_' char(num2str(restart.year)) '-' restart.run])    
-    load([Directories.restart restart.run '/Store/Initial_Conditions_' char(num2str(restart.month)) '_' char(num2str(restart.year)) '.mat']);
+    %elseif restart.id == 1  %in case of restart  
+    %disp(['Parameters restarted from file: ' restart.date '-' restart.run])    
+    %load([Directories.restart restart.run '/Store/State_Conditions_' restart.date '.mat']);
 end
 
 
@@ -579,7 +579,7 @@ OPT_min_SPD =               0.006;            %% [m] minimum snow pack depth to 
 
 % Time counter
 %--------------------------------------------------------------------------
-tic ;
+tic;
 %profile on
 
 %% Workers - Only for personal computer (Windows)
@@ -587,6 +587,7 @@ tic ;
 
 %if I am working on my personal computer define this
 %{
+
 
 if ~contains(Directories.root,"nfs") 
 
@@ -605,8 +606,10 @@ if ~contains(Directories.root,"nfs")
 end
 %}
 
-%save([Directories.save 'Store/Before_t.mat'])
 
+%% FOR COUNTING VARIABLES - REESTARTING
+%--------------------------------------------------------------------------
+%save([Directories.model '2_distributed_version/5_Variables/Before_t.mat'])
 
 % Label for the creation of outputs
 %--------------------------------------------------------------------------
@@ -614,19 +617,18 @@ output_creation = 0;
 
 %% Iterating on time
 %==========================================================================
-fts = 2;
-for t=fts:N_time_step   
+%fts = 2;
+%t=2
+for t=1:N_time_step
     
-%waitbar(t/N_time_step,bau)
 disp(['Iter: ' char(num2str(t))]);
 
-% CHECK WELL WHY THE MODEL USES t-1 instead of t
-Datam_S=Datam(t-1,:);
-
 % Year and month to load the forcing
-%----------------------------------------------------------------------
+%--------------------------------------------------------------------------
+Datam_S=Datam(t,:);
 yy = char(num2str(Datam_S(1,1)));
 mth = char(num2str(Datam_S(1,2)));
+Date_run = datetime(Datam_S(1,1), Datam_S(1,2), Datam_S(1,3));
 
 %% Matrix for storing - Initializing outputs
 %==========================================================================
@@ -639,12 +641,12 @@ if output_creation == 0
 disp("Creating matrices for storing")
 
 % function  Date_generator requires yy and mth as numbers
-date_forMonth = Date_generator(str2num(yy),str2num(mth));
+date_forMonth = Date_generator(str2double(yy),str2double(mth));
 t_store = date_forMonth(end); % Date to store data
 
 xdim = size(MASK, 1);
 ydim = size(MASK, 2);
-zdim = length(date_forMonth); 
+zdim = length(date_forMonth);
 
 ANPP_H_spatial         = single(zeros(xdim , ydim, zdim)); % Above ground net primary production
 ANPP_L_spatial         = single(zeros(xdim , ydim, zdim));
@@ -790,7 +792,7 @@ end
 
     % Load new forcings if the forcings do not exists or the year and
     % months are different from the ones loaded
-    if ~exist('t2m', 'var') || str2num(yy) ~= year_loaded || str2num(mth) ~= month_loaded
+    if ~exist('t2m', 'var') || str2double(yy) ~= year_loaded || str2double(mth) ~= month_loaded
     
     disp(['New forcing loaded for period: ' char(num2str(yy)) '-' char(num2str(mth)) ])    
 
@@ -847,15 +849,15 @@ end
    
     % Store year and month loaded
     %----------------------------------------------------------------------
-    year_loaded = str2num(yy);
-    month_loaded = str2num(mth);
+    year_loaded = str2double(yy);
+    month_loaded = str2double(mth);
 
     end
     
     %% Finding the row in the forcing of the modeling date      
-    t_forc = find(Date(t-1) == date_forMonth);
+    t_forc = find(Date(t) == date_forMonth);
 
-    % Other parameters
+    % Other parametersp
     %----------------------------------------------------------------------
     t_bef=1; t_aft=0; % otherwise problems when loading SWPART        
     
@@ -865,14 +867,15 @@ end
     Ta_S = double(reshape(Ta_S,num_cell,1));
     Ta_S(MASKn==0) = NaN;
 
-    %%% define Ta_day array (Ta-maps of last 24 hours), needed for albedo scheme
-    %%% parameterization
+    %% Definition of Ta_day array
+    % Ta-maps of last 24 hours, needed for albedo scheme
+    % parameterization
     
-    if t == fts
+    if t == 1
         Ta_day = Ta_S;
-    elseif t > fts && t <= fts+24
+    elseif t > 1 & t < 25
         Ta_day = [Ta_day,Ta_S];
-    elseif t > fts+24
+    elseif t >= 25
         Ta_day = [Ta_day(:,2:24),Ta_S];
     end
 
@@ -1006,10 +1009,11 @@ end
     ],Point)
     %}
     
+
     %% SPATIAL INITIALIZATION VECTOR PREDEFINING
     %======================================================================
    
-    if t == 2
+    if t == 1 & restart.id == 0
         % General vegetation/hydrology
         %------------------------------------------------------------------
         alp_soil=	     alp_soiltm1;
@@ -1037,9 +1041,9 @@ end
         ELitter=	     ELittertm1;
         er=              ertm1;
         ESN_In=          ESN_Intm1;
-        SSN_In =         SSN_Intm1;
+        %SSN_In =         SSN_Intm1;
         ESN=             ESNtm1; 
-        SSN=             SSNtm1;  
+        %SSN=             SSNtm1;  
         EWAT=            EWATtm1;
         FROCK=           FROCKtm1;
         f=               ftm1;
@@ -1050,9 +1054,7 @@ end
         ICE_D=           ICE_Dtm1;
         ICE=             ICEtm1;
         Imelt=           Imelttm1;
-        In_H=            In_Htm1;
         In_Litter=	     In_Littertm1;
-        In_L=            In_Ltm1;
         In_rock=	     In_rocktm1;
         In_SWE=          In_SWEtm1;
         In_urb=          In_urbtm1;
@@ -1072,17 +1074,17 @@ end
         POT=             POTtm1;
         Pr_liq=          Pr_liqtm1;
         Pr_sno=          Pr_snotm1;
-        Q_channel=	     Q_channel;
-        Q_exit=          Q_exit;
-        q_runon=         q_runon;
+        %Q_channel=	     Q_channel;
+        %Q_exit=          Q_exit;
+        %q_runon=         q_runon;
         QE=              QEtm1;
         QEV=             QEVtm1;
         Qfm=             Qfmtm1;
-        Qi_in=           Qi_in;
+        %Qi_in=           Qi_in;
         %Qi_in_Ro=        Qi_out;
-        Qi_out_Rout=     Qi_out_Rout;
+        %Qi_out_Rout=     Qi_out_Rout;
         Qi_out=          Qi_outtm1;
-        Qsub_exit=	     Qsub_exit;
+        %Qsub_exit=	     Qsub_exit;
         Qv=              Qvtm1;
         r_litter=	     r_littertm1;
         r_soil=          r_soiltm1;
@@ -1093,7 +1095,7 @@ end
         ros=             rostm1;
         SE_rock=	     SE_rocktm1;
         SE_urb=          SE_urbtm1;
-        Slo_head=	     Slo_head;
+        %Slo_head=	     Slo_head;
         Smelt=           Smelttm1;
         SND=             SNDtm1;
         snow_albedo=     snow_albedotm1;
@@ -1109,7 +1111,7 @@ end
         Tdp=             Tdptm1;
         Tdp_snow =       Tdp_snowtm1;
         Tice=            Ticetm1;
-        Tstm0=           Tstm0;
+        %Tstm0=           Tstm0;
         Ts=              Tstm1;
         Ts_under =       Ts_undertm1;
         TsVEG=           TsVEGtm1;
@@ -1299,9 +1301,16 @@ end
         Vl_L=       Vl_Ltm1;
         Vx_H=       Vx_Htm1;
         Vx_L=       Vx_Ltm1;
-
     end
   
+
+    %% BEFORE INITIALIZATION OF VARIABLES - IF RESTART - ADD STATE VARIABLES
+    % This line restarts initial conditions and variables of the system. It
+    % does not consider forcings and storage variables
+    if restart.id == 1
+            disp(['Parameters restarted from file: ' restart.date ' - ' restart.run])    
+            load([Directories.restart restart.run '/Store/State_Conditions_' restart.date '.mat']);
+    end
 
     %% LOOP
     %======================================================================
@@ -1310,7 +1319,7 @@ end
     %P = (Xout - 1) * 133 + Yout;
 
     %Follow=MASK; %Debugging
-    parfor ij= 1:num_cell % this is a parfor
+    for ij= 3666 % 1:num_cell % this is a parfor
         % Good practice to use a simple for loop for debugging/testing
         % ij is the index to go pixel by pixel through the mask
         % ij=1:num_cell
@@ -1352,7 +1361,7 @@ end
              
             
             % If hour (Datam_S(4)) is equal to 1
-            if (Datam_S(4)==1)                                
+            if (Datam_S(4)==1)
                 %% SOIL BIOGEOCHEMISTRY MODULE
                 [Se_bio,Se_fc,Psi_bio,Tdp_bio,VSUM,VTSUM]=Biogeo_environment([squeeze(Tdp_t(ij,:,:))]',[squeeze(O_t(ij,:,:))]',[squeeze(V_t(ij,:,:))]',...
                     Soil_Param,Phy,SPAR,Bio_Zs);%
@@ -1360,9 +1369,9 @@ end
                 % Biogeochemistry Unit
                 Nuptake_H(ij,:)= 0.0;
                 Puptake_H(ij,:)= 0.0;
-                Kuptake_H(ij,:)= 0.0; %% [gK/m^2 day]
+                Kuptake_H(ij,:)= 0.0; % [gK/m^2 day]
                 %%%
-                Nuptake_L(ij,:)= 0.0; %% [gN/m^2 day]
+                Nuptake_L(ij,:)= 0.0; % [gN/m^2 day]
                 Puptake_L(ij,:)= 0.0;
                 Kuptake_L(ij,:)= 0.0;
                 %%%
@@ -1562,6 +1571,8 @@ y = 1;
         end
    end %% END OF PARFOR
     
+
+
 %% LATER STEPS AFTER PARFOR
 %==========================================================================
     %%post-compute sublimation from ESN, do this inside hydrology module
@@ -1614,7 +1625,7 @@ y = 1;
     
     %% Glacier volume redistribution 
 
-if (Datam_S(2)==1) && (Datam_S(3)==1) && (Datam_S(4)==1) && (Idyn > 0)
+if (Datam_S(2)==1) & (Datam_S(3)==1) & (Datam_S(4)==1) & (Idyn > 0)
         
         GLA = (GLH > 0) & (MASK == 1); % Glacier mask
 
@@ -1694,7 +1705,6 @@ end
 
 
     %% AVALANCHES COMPONENT
-
     SND=    reshape(SND,m_cell,n_cell); SND(isnan(SND)) = 0;
     SWE=    reshape(SWE,m_cell,n_cell); SWE(isnan(SWE)) = 0;
     ros=    reshape(ros,m_cell,n_cell); ros(isnan(ros)) = 0;
@@ -1725,17 +1735,18 @@ end
         V_tgtm1=    sum(Ared.*Asur.*sum(Vtm1,2))*(cellsize^2)/Area;
         Vice_tgtm1= sum(Ared.*Asur.*sum(Vicetm1,2))*(cellsize^2)/Area;
         SWE_tgtm1=  sum(SWEtm1)*(cellsize^2)/Area;
+        
         In_tgtm1=   (sum(sum(In_Htm1)) + sum(sum(In_Ltm1)) + ...
-            sum(sum(In_Littertm1)) + sum(SP_wctm1) + ...
-            sum(In_SWEtm1) + sum(In_urbtm1) + ...
-            sum(In_rocktm1) + sum(IP_wctm1) ) * (cellsize^2)/Area;
-        ICE_tgtm1=  sum(ICEtm1)*(cellsize^2)/Area; %%
-        WAT_tgtm1=  sum(WATtm1)*(cellsize^2)/Area; %%
-        FROCK_tgtm1=sum(FROCKtm1)*(cellsize^2)/Area; %%
+                    sum(sum(In_Littertm1)) + sum(SP_wctm1) + ...
+                    sum(In_SWEtm1) + sum(In_urbtm1) + ...
+                    sum(In_rocktm1) + sum(IP_wctm1) ) * (cellsize^2)/Area;
+
+        ICE_tgtm1=  sum(ICEtm1)*(cellsize^2)/Area;
+        WAT_tgtm1=  sum(WATtm1)*(cellsize^2)/Area;
+        FROCK_tgtm1=sum(FROCKtm1)*(cellsize^2)/Area; 
     end
        
     %% ALBEDO MAP
-
     if t==2 
         snow_albedo_out = snow_albedotm1;
         surface_albedo_out = surface_albedotm1;
@@ -1933,7 +1944,6 @@ end
   
     % Assignation to temporal matrix
     %----------------------------------------------------------------------
-    
     t_date = datetime(Datam_S(1), Datam_S(2), Datam_S(3), Datam_S(4), 0, 0);
     t_assign =  find(t_date  ==  date_forMonth);
 
@@ -1989,17 +1999,22 @@ end
 
     %Rd_spatial(Yout,Xout, 50);
     
+
+    %% FOR COUNTING VARIABLES - REESTARTING
+    %--------------------------------------------------------------------------
+    %save([Directories.model '2_distributed_version/5_Variables/End_t_ksv10.mat'])
+
     %% SAVING
     %======================================================================
     % Only save when it is the last day of the month or the last iteration
     %======================================================================
-    if t_date  == t_store | t == N_time_step
-
+    if t_date  == t_store || t == N_time_step
+    
     % Saving
     %----------------------------------------------------------------------
-    disp('Storing results in .mat file')
+    disp(['Storing results in .mat file for: ' char(string(Date_run, 'dd')) '_' char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy'))])
 
-    save([Directories.save yy '/3D_Outputs_' yy '_' mth '.mat'], ...
+    save([Directories.save yy '/3D_Outputs_'  char(string(Date_run, 'dd')) '_' char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy')) '.mat'], ...
          'ANPP_H_spatial',   'ANPP_L_spatial',    'EG_spatial',      'EIn_H_spatial',  'EIn_L_spatial', ...
          'EIn_rock_spatial', 'EIn_urb_spatial',   'EWAT_spatial',    'T_H_spatial',    'T_L_spatial', ...
          'SSN_spatial',      'ESN_spatial',       'ELitter_spatial', 'ESN_In_spatial', 'FROCK_spatial', ...
@@ -2033,12 +2048,32 @@ end
     %--------------------------------------------------------------------------
     disp(['Memory used by variables at the end of MAIN_FRAME: ', num2str(totalSize/1e6), ' MB']);
     
-    % Saving actual conditions in the model to restart if needed
-    %----------------------------------------------------------------------
-    % run(['INIT_COND_MID.m'])
-       
+    end
+        
+    %% Saving actual conditions in the model to restart if needed
+    %======================================================================
+    % This needs to save the variables on on DD-MMM-YYYY 00:00:00.
+    %======================================================================    
+    if t_date  == t_store
     %save([Directories.save 'Store/Initial_Conditions_' ...
     %  char(num2str(day(t_store))) '_' char(num2str(month(t_store))) '_' char(num2str(year(t_store))) '.mat'])
+    
+    %Variables to exclude
+    load([Directories.model '2_distributed_version/5_Variables/var_state_exclude.mat'])
+
+    % All variables
+    all_vars = who;
+    
+    %Remove of forcing and storing variables
+    variables_to_keep = setdiff(all_vars, variables_exclude); 
+
+    save([Directories.save 'Store/State_Conditions_' ...
+      char(num2str(day(t_store))) '_' char(string(t_store, 'MMM')) '_' char(string(t_store, 'yyyy')) '.mat'], ...
+       variables_to_keep{:})
+    
+    %clearvars('-except', variables_retain{:})
+    
+    %{
 
     INIT_COND_MID(t_store, Directories, ...
      alp_soil,      b_soil,          Bam,              Bem,            BLit, ...
@@ -2102,11 +2137,9 @@ end
      Psi_x_L_t,     Rdark_H_t,       Rdark_L_t,        Ta_t,           Tdp_H_t, ...
      Tdp_L_t,       Tdp_t,           V_t,              Ared,           ICEym1, ...
      SNOWALB,       SWEym1 ...         
-        );
-
-
+        );  
+    %}
     end
-
     %run(['OUTPUT_MANAGER_DIST_LABEL.m']);
 
     % Save the workspace at frequent interval. Very useful in case it crashes 
@@ -2125,7 +2158,7 @@ end
 
 %% Display
 Computational_Time =toc;
-disp('COMPUTATIONAL TIME [h] ')
+disp('COMPUTATIONAL TIME [h]')
 disp(Computational_Time/3600)
 
 %Q_channel
