@@ -36,8 +36,8 @@ aR =100;
 ms=10; % Number of soil layers (has to correspond to "ms_max" in the launcher)
 
 %         Depth1 Depth2 Depth3  Depth4 Depth5 Depth6 Depth7 Depth8 Depth9  Depth10
-Kbot  =  [0.0    0.0    0.0     0.0    0.0    0.0    5      0.0    0.0     0.0  ]; % Conductivity at the bedrock layer [mm/h] 
-Krock =  [NaN    NaN    NaN     NaN    NaN    NaN    0.15   NaN    NaN     NaN  ]; % Conductivity of Fractured Rock [mm/h] 
+Kbot  =  [0.0    0.0    0.0     0.0    0.0    0.0    0.0      0.0    0.0     5     ]; % Conductivity at the bedrock layer [mm/h] 
+Krock =  [NaN    NaN    NaN     NaN    NaN    NaN    NaN      NaN    NaN     0.15  ]; % Conductivity of Fractured Rock [mm/h] 
 
 Kbot = Kbot(cell_class); % Conductivity of the bedrock [mm/h] 
 Krock =Krock(cell_class); % Hydraulic conductivity fractured rock [mm/h]

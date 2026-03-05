@@ -21,10 +21,12 @@ function mat_mod = Data_compressor_grid(mat, var, decision)
 if decision == "compress"
     
     switch var
-        case {"t2m", "d2m", "tp", "es", "ea", "RH", "N"}
+        case {"t2m",     "d2m",     "tp",     "es",    "ea",      "RH",     "N", ...
+              "mm",      "conc",   "energy",  "elev"}
             mat_mod = int16(floor(mat*100));
 
-        case {"ssrd", "strd", "ws10", "SAD1", "SAD2", "SAB1", "SAB2", "PARB", "PARD"}
+        case {"ssrd", "strd", "ws10", "SAD1", "SAD2", "SAB1", "SAB2", "PARB", "PARD", ...
+              "index"}
             mat_mod = int16(mat*10);
         case "sp"
             mat_mod = int32(mat);
@@ -35,12 +37,13 @@ if decision == "compress"
 
 elseif decision == "decompress"
 
-
     switch var
-        case {"t2m", "d2m", "tp", "es", "ea", "RH", "N"}
+        case {"t2m",     "d2m",     "tp",     "es",    "ea",    "RH",     "N", ...
+              "mm",      "conc",   "energy",  "elev" }
             mat_mod = single(mat)/100;
 
-        case {"ssrd", "strd", "ws10", "SAD1", "SAD2", "SAB1", "SAB2", "PARB", "PARD"}
+        case {"ssrd", "strd", "ws10", "SAD1", "SAD2", "SAB1", "SAB2", "PARB", "PARD", ...
+              "index"}
             mat_mod = single(mat)/10;
 
         case "sp"

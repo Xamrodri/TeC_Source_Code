@@ -15,53 +15,83 @@
 %==========================================================================
 
 %% CLEAR ALL
+%==========================================================================
 clc; clear;
-
-% clear all   % Don't clear all such that it can be run on the HPC cluster without any issues
-% delete(gcp('nocreate'))
-
-%% DIRECTORIES
-study_name = '2_Pyrenees_distributed';
 
 %% INITIAL CONDITIONS
 %==========================================================================
 
-% Names of catchment and clusters
+% Names of catchment
 %--------------------------------------------------------------------------
+%{
+Pianello_in_Chiascio: 2025925_250m 
+Velino:              20251217_250m
+%}
 IniCond.SITE = 'Pianello_in_Chiascio';
-IniCond.FORCING = "ERA5Land";
-IniCond.DeltaGMT= 1; % for Italy
+IniCond.SITE_version = '2025925_250m';
+IniCond.SubRegion = 0; % 1=subregion; 0=Original Region
+DeltaGMT= 1; % for Italy
 
-% Name of the folder to save results 
+% Name of the folder to save results
 %--------------------------------------------------------------------------
-IniCond.run_folder = 'Run_42';
+IniCond.run_folder = 'Run_48';
 
 % Restart option
 %--------------------------------------------------------------------------
 restart.id = 0; % Set to 1 to continue an un-completed T&C run
 %Define iter to restart
 restart.date = '30_Jun_2001';
-restart.run = 'Run_42'; 
+restart.run = 'Run_45'; 
 
-% Modelling period
+%% SIMULATION PERIOD
+%==========================================================================
+% Simulation period can change when the model is restarted. Initial time
+% does not change, only the final time dateRun.end
+%==========================================================================
+
+% Modelling period - dateRun.start is rewritten when restart.id = 1
+% dateRun.end is not rewritten, then the end can be extended. It must be
+% always defined.
 %--------------------------------------------------------------------------
-dateRun.start = "25-Jun-2001 00:00:00"; % Starting point of the simulation
-dateRun.end = "5-Jul-2001 23:00:00"; % Last timestep of the simulation
+dateRun.start = "1-Mar-1999 00:00:00"; % Starting point of the simulation
+dateRun.end = "2-Mar-1999 23:00:00"; % Last timestep of the simulation
 
-% Folder with forcings
+x1=datetime(dateRun.start);
+x2=datetime(dateRun.end);
+
+% Time set
+%--------------------------------------------------------------------------
+Date = x1:hours(1):x2;
+N_time_step=length(Date);
+Nd_time_step = ceil(N_time_step/24)+1;
+
+% Steps
+%--------------------------------------------------------------------------
+dt=3600; % [s]
+dth=1;   % [h]
+[YE,MO,DA,HO,~,~] = datevec(Date);
+Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
+clear YE MO DA HO
+
+%% FOLDERS
+%==========================================================================
+
+% Forcing
 %--------------------------------------------------------------------------
 %{
-20251021: Pianelo in Chiascio
+Pianelo in Chiascio: 20251021 
+Velino:              20251217_Velino
 %}
 forc_in = '20251021';
 
-% Folder with Terrain inputs
+% Terrain inputs
 %--------------------------------------------------------------------------
 %{
 1_Velino
 2_Pianello_in_Chiascio
 3_Tiber
 %}
+
 terrain_in = '2_Pianello_in_Chiascio';
 
 %% DIRECTORIES
@@ -89,8 +119,8 @@ Directories.restart = [Directories.root '1_TC/3_Model_Source/2_MegaWat/2_distrib
 % Sub-path for forcings
 %--------------------------------------------------------------------------
 Directories.forcBC = [Directories.root '2_Forcing/3_Downscalling_ERA5/4_Bias_Corrected/' forc_in '/']; 
-Directories.forcUN = [Directories.root '2_Forcing/3_Downscalling_ERA5/2_Output_Downscaling/' forc_in '/2_Units/']; 
-Directories.forcPD = [Directories.root '2_Forcing/3_Downscalling_ERA5/2_Output_Downscaling/' forc_in '/1_Pure_Downscaling/']; 
+Directories.forcUN = [Directories.root '2_Forcing/3_Downscalling_ERA5/2_Output_Downscaling/' forc_in '/2_RH/']; 
+Directories.forcPD = [Directories.root '2_Forcing/3_Downscalling_ERA5/2_Output_Downscaling/' forc_in '/1_Downscaling/']; 
 Directories.forcRP = [Directories.root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/' forc_in '/']; 
 
 % Vegetation parameters
@@ -99,8 +129,12 @@ Directories.Vegpar = [Directories.root,'1_TC/3_Model_Source/2_MegaWat/3_PointSca
 
 % Preprocessing information
 %--------------------------------------------------------------------------
-Directories.PreProc = [Directories.root,'1_TC/3_Model_Source/2_MegaWat/4_Preparation_files/3_Distributed_GeoInputs_Apennines/8_Output/Pianello_in_Chiascio/20251024_250m/'];
-dtm_file = 'dtm_Pianello_in_Chiascio_250m.mat';
+Directories.PreProc = [Directories.root,'1_TC/3_Model_Source/2_MegaWat/4_Preparation_files/3_Distributed_GeoInputs_Apennines/8_Output/' IniCond.SITE '/' IniCond.SITE_version '/'];
+dtm_file = ['dtm_' IniCond.SITE '_250m.mat'];
+
+% Subregions
+%--------------------------------------------------------------------------
+Directories.SubRegions = [Directories.root,'1_TC/3_Model_Source/2_MegaWat/4_Preparation_files/6_SubRegions_DistributedModel/2_SubRegions/' IniCond.SITE 'End_catchment_mask_250m_32633.tif'];
 
 % Dependencies
 %--------------------------------------------------------------------------
@@ -110,11 +144,26 @@ addpath(genpath([Directories.model,'3_Pyrenees_PointScale/2_Forcing'])); % Where
 addpath(genpath([Directories.model,'3_Pyrenees_PointScale/3_Inputs'])); % Add path to Ca_Data
 
 
+%% Carbon (dependant on changes on time, the location is 
+% important for restarting the model)
+%-------------------------------------------------------------------------
+load('Ca_Data.mat');
+
+d1 = find(abs(Date_CO2 - datenum(Date(1)))<1/36); 
+d2 = find(abs(Date_CO2 - datenum(Date(end)))<1/36);
+
+Ca=Ca(d1:d2);
+clear d1 d2 Date_CO2
+
+Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol]
+
+
 %% LOCATION OF OUTPUTS - CREATION OF FOLDERS
 %==========================================================================
 all_yy = [1999 2000 2001 2002 2003 2004 2005 2006 2007 2008 2009 2010 2011];
 
 if ~exist(Directories.save, 'dir') 
+    
     disp('Folders do not exist for outputs. Creating new folders')
     mkdir(Directories.save);
 
@@ -130,6 +179,15 @@ end
 folder_path = [Directories.root '1_TC/3_Model_Source/2_MegaWat']; % Put here the path of where you downloaded the repository
 
 
+%% Restaring in case of restart.id = 1;
+%==========================================================================
+% All the code below is run only if the simulation starts from scratch.
+% restart.id == 0 -> simulation from scratch
+% restart.id == 1 -> simulation restart from a point
+% If the simulation is being restarted, then the code below is skipped as 
+% all the variables are saved in the file for restarting the model.
+%==========================================================================
+if restart.id == 0
 
 %% MODEL INPUTS
 %==========================================================================
@@ -149,35 +207,12 @@ opts = setvartype(opts, 7:length(opts.VariableTypes), 'double');
 TT_par = readtable([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
 
 %% Some parameters
-SITEs = IniCond.SITE; % All of my study catchments
-FORCING = 'ERA5';
-DeltaGMTs=1;
-
-% Catchment outlet POI name
-outlet_names = "Pianello_in_Chiascio";
 
 % Parameters
 Tmods = 0; % temperature modification above clean ice [°C];
 Tmaxs = 2; % Maximum air temperature for precipitation phase scheme (2-dual thresholds)
 Tmins = 0; % Minimum air temperature for precipitation phase scheme (2-dual thresholds)
- 
 
-%% Simulation period
-x1=datetime(dateRun.start);
-x2=datetime(dateRun.end);
-
-%% OUTPUT MANAGER : decide which aggregated results to output
-% Veg: Vegetation
-% LC: Land Cover class
-
-output_manag = [1;  % Catch_av
-                0;  % Catch_std
-                1;  % Veg_avg
-                0;  % Veg_std
-                0;  % LC_avg
-                0;  % LC_std
-                1;  % Maps
-                1]; % POI
 
 %% GLACIER AND AVALANCHE PARAMETERS
 % Switch for glacier dynamics (keep to 0 for this case study)
@@ -188,17 +223,13 @@ Aval = 1;  % 1 to turn on avalanching, 0 to turn off avalanching
 a_aval = 0.1; % avalanche parameters a (Bernhart & Schulz 2010)
 C_aval = 145; % avalanche parameters C 
 
-%% SNOW INITIAL CONDITION
-% Initial snow depth
-% Set at 2000 masl initially.
-diff_IniSND = 1;
-fn_IniSnowDepth = 'Cinca_Init_Snow_Depth_virtual.mat';
-fn_IniSnowAlbedo = 'Cinca_Init_Snow_Albedo_virtual.mat';
-
 %% Precipitation phase partitioning
-
-%1 = 2-threshold, 2 = Ding 2017, 3 = single-threshold, 4 = Pomeroy 2013, 5
-%= Wang 2019, 6 = Jennings 2018
+% 1 = 2-threshold
+% 2 = Ding 2017
+% 3 = single-threshold
+% 4 = Pomeroy 2013
+% 5 = Wang 2019
+% 6 = Jennings 2018
 
 parameterize_phase.OPT_Pr_Part = 2; % Choice of the precipitation phase scheme
 parameterize_phase.Tmax = Tmaxs; % Upper air temperature for dual temperature threshold
@@ -215,15 +246,10 @@ hSTL = 0.003; %m
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 %% Prepare launcher variable based on chosen study site:
-SITE = char(SITEs);
-
-DeltaGMT= IniCond.DeltaGMT;
 
 % Solar variables 
 t_bef=1; % Integration interval for solar variables (hour)
 t_aft=0; % Integration interval for solar variables (hour)
-
-outlet_name = char(outlet_names);
 
 %% Diplay setting of the incoming T&C model runs:
 disp(['Site selected: ' IniCond.SITE])
@@ -233,25 +259,25 @@ disp(['Precipitation phase scheme: ' parameterize_phase_label{:}])
 if Idyn == 0; disp('Ice dynamics: off'); else; disp('Ice dynamics: on'); end
 if Aval == 0; disp('Avalanching: off'); else; disp('Avalanching: on'); end
 
-%% PATHS
-%==========================================================================
-% Attach folders, launch parallel pool, generate paths
-%==========================================================================
-
-outlocation = [Directories.save];
-
-% Create output directory if it doesn't exist already
-if ~exist(outlocation, 'dir')
-    mkdir(outlocation);
-    addpath(genpath(outlocation));
-end
-
 
 %% INPUTS
 %==========================================================================
 % Load geodata, time handling, carbon data
 %==========================================================================
 load([Directories.PreProc dtm_file]) %This file is in 2_nputs
+
+% This change the MASK if it is an ending area of a group of catchment
+%--------------------------------------------------------------------------
+% Mask_subRegion must be of the same size of the original mask
+%--------------------------------------------------------------------------
+if IniCond.SubRegion == 1
+Mask_subRegion = GRIDobj(Directories.SubRegions);
+MASK = Mask_subRegion.Z;
+disp(['The mask was changed to a smaller section'])
+end
+
+%figure()
+%imagesc(MASK)
 
 % Central lat and lon Lat
 %--------------------------------------------------------------------------
@@ -273,43 +299,8 @@ GLA_ID(GLH==0) = NaN;
 % Compute bedrock DEM for ice flow
 DTM_Bedrock = DTM_orig-GLH; 
 
-
 %% GENERAL PARAMETER
 %==========================================================================
-
-% Time set
-%--------------------------------------------------------------------------
-Date = x1:hours(1):x2;
-N_time_step=length(Date);
-Nd_time_step = ceil(N_time_step/24)+1;
-
-% Steps
-dt=3600; %% [s]
-dth=1; %% [h]
-[YE,MO,DA,HO,~,~] = datevec(Date);
-Datam(:,1) = YE; Datam(:,2)= MO; Datam(:,3)= DA; Datam(:,4)= HO;
-clear YE MO DA HO MI SE
-
-% Carbon
-%-------------------------------------------------------------------------
-load('Ca_Data.mat');
-
-d1 = find(abs(Date_CO2 - datenum(Date(1)))<1/36); 
-d2 = find(abs(Date_CO2 - datenum(Date(end)))<1/36);
-
-Ca=Ca(d1:d2);
-clear d1 d2 Date_CO2
-Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol] -
-
-% Solar variables
-%--------------------------------------------------------------------------
-L_day=zeros(length(Datam),1);
-for j=2:24:length(Datam)
-    [~,~,~,~,~,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
-end
-
-Lmax_day = max(L_day);
-clear('h_S','delta_S','zeta_S','T_sunrise','T_sunset','L_day')
 
 % Variables unknown for now
 %--------------------------------------------------------------------------
@@ -332,10 +323,10 @@ md_max = 10; %% % Number of debris layers
 %% Albedo vs Elevation
 % Load mean glacier albedo eleavtion profile, development stage
 
-fn_alb_elev = [SITE '_Albedo_vs_elev.mat'];
+fn_alb_elev = [IniCond.SITE '_Albedo_vs_elev.mat'];
 
 if exist(fn_alb_elev,'file')>0
-    load([SITE '_Albedo_vs_elev'])
+    load([IniCond.SITE '_Albedo_vs_elev'])
 
     Afirn = DTM.*0 + 0.28;
     dem_inc = DTM <= Alb_el_tt{1,2};
@@ -536,7 +527,6 @@ PORG=reshape(PORG/100,num_cell,1);
 
 %% INITIAL CONDITION FOR SNOW ALBEDO
 % Check if initial snow albedo is given
-
 if ~exist('SNOWALB','var')
     SNOWALB = SNOWD;
     SNOWALB(SNOWD>0) = 0.6;
@@ -544,15 +534,13 @@ end
 
 %% If I am NOT restarting. So, in the normal case.
 if restart.id == 0
-out = [Directories.save 'Store/INITIAL_CONDITIONS_' SITE '.mat'];
+out = [Directories.save 'Store/INITIAL_CONDITIONS_' IniCond.SITE '.mat'];
 INIT_COND_v6(num_cell,m_cell,n_cell,...
    cc_max,ms_max,md_max,...
    MASKn,GLH,Ca,SNOWD,SNOWALB,out, ...
    POI, TT_par, idxCode, Slo_top);
 load(out);
-    %elseif restart.id == 1  %in case of restart  
-    %disp(['Parameters restarted from file: ' restart.date '-' restart.run])    
-    %load([Directories.restart restart.run '/Store/State_Conditions_' restart.date '.mat']);
+
 end
 
 
@@ -587,8 +575,6 @@ tic;
 
 %if I am working on my personal computer define this
 %{
-
-
 if ~contains(Directories.root,"nfs") 
 
     numWorkers = 6;
@@ -607,21 +593,64 @@ end
 %}
 
 
-%% FOR COUNTING VARIABLES - REESTARTING
-%--------------------------------------------------------------------------
-%save([Directories.model '2_distributed_version/5_Variables/Before_t.mat'])
-
-% Label for the creation of outputs
+%% Label for the creation of outputs
 %--------------------------------------------------------------------------
 output_creation = 0; 
+
+end % if of the normal case
+
+
+%% VARIABLE FOR RESTARTING
+%==========================================================================
+% This section can restart the variables stored at a specific time or 
+% initiate the simulation at t=1.
+%==========================================================================
+if restart.id == 0
+% If starting from scratch, the simulation starts in t = 1 (from_t=1)
+from_t = 1; %starting point in the for loop
+else
+%{
+1) This lines restart the initial conditions and variables of the system. 
+2) It does not consider forcings and storage variables
+%}
+    % messages
+    disp(['Parameters restarted from file: ' restart.date ' - ' restart.run]) 
+
+    % Loading
+    load([Directories.restart restart.run '/Store/State_Conditions_' restart.date '.mat']);
+    
+    from_t=t+1; % Starting in t+1 after openning the saving in t
+    
+    disp(['Time is: ' char(num2str(t)) ' and final timestep is ' char(num2str(N_time_step))])
+
+end
+
+%% PARAMETERS THAT MUST BE REDEFINED AFTER RESTART == 1 
+%==========================================================================
+% This because of the date is restarted but Lon and Lat are only available
+% after passing the code above
+%==========================================================================
+
+% Solar variables
+%--------------------------------------------------------------------------
+L_day=zeros(length(Datam),1);
+for j=2:24:length(Datam)
+    [~,~,~,~,~,L_day(j)]= SetSunVariables(Datam(j,:),DeltaGMT,Lon,Lat,t_bef,t_aft);
+end
+
+Lmax_day = max(L_day);
+clear('h_S','delta_S','zeta_S','T_sunrise','T_sunset','L_day')
+
 
 %% Iterating on time
 %==========================================================================
 %fts = 2;
 %t=2
-for t=1:N_time_step
-    
-disp(['Iter: ' char(num2str(t))]);
+for t=from_t:N_time_step
+ 
+% Counter
+time_str = datestr(datetime('now'), 'HH:MM:SS');
+disp(['Iter: ' char(num2str(t)) '- Time: ' time_str]);
 
 % Year and month to load the forcing
 %--------------------------------------------------------------------------
@@ -648,133 +677,193 @@ xdim = size(MASK, 1);
 ydim = size(MASK, 2);
 zdim = length(date_forMonth);
 
-ANPP_H_spatial         = single(zeros(xdim , ydim, zdim)); % Above ground net primary production
-ANPP_L_spatial         = single(zeros(xdim , ydim, zdim));
-An_H_spatial           = single(zeros(xdim , ydim, zdim)); % Net assimilation Vegetation
-An_L_spatial           = single(zeros(xdim , ydim, zdim));
-%B_H_spatial            = single(zeros(xdim , ydim, zdim)); % Carbon pool biomass
-%B_L_spatial            = single(zeros(xdim , ydim, zdim));
-%Ca_spatial             = single(zeros(xdim , ydim, zdim)); % CO2 atmospheric concentration
-%Cicew_spatial          = single(zeros(xdim , ydim, zdim)); % Boolean operator for presence or absence of frozen water
-%Cice_spatial           = single(zeros(xdim , ydim, zdim)); % Boolean operator for presence or absence of ice water
-%Ci_shdH_spatial        = single(zeros(xdim , ydim, zdim)); % CO2 sunlit leaf internal concentration
-%Ci_shdL_spatial        = single(zeros(xdim , ydim, zdim));
-%Ci_sunH_spatial        = single(zeros(xdim , ydim, zdim));
-%Ci_sunL_spatial        = single(zeros(xdim , ydim, zdim));
-CK1_spatial            = single(zeros(xdim , ydim, zdim)); % Check on Mass Balance
-Csnow_spatial          = single(zeros(xdim , ydim, zdim)); % Boolean operator for presence or absence of snow above frozen water 
-Csno_spatial           = single(zeros(xdim , ydim, zdim)); % Boolean operator for presence or absence of snow 
-dQ_S_spatial           = single(zeros(xdim , ydim, zdim)); % Residual from energy budget
-DQ_S_spatial           = single(zeros(xdim , ydim, zdim)); % Residual of the energy budget
-Dr_H_spatial           = single(zeros(xdim , ydim, zdim)); % Total Drainage from intercepted water
-Dr_L_spatial           = single(zeros(xdim , ydim, zdim)); %
-Ds_spatial             = single(zeros(xdim , ydim, zdim)); % Vapor Pressure Deficit
-DT_S_spatial           = single(zeros(xdim , ydim, zdim)); % Residual temperature difference in the energy budget
-dw_SNO_spatial         = single(zeros(xdim , ydim, zdim)); % Fraction of leaf covered by snow
-ea_spatial             = single(zeros(xdim , ydim, zdim)); % Vapor Pressure
-EG_spatial             = single(zeros(xdim , ydim, zdim)); % Evaporation from Bare soil
-EICE_spatial           = single(zeros(xdim , ydim, zdim)); % Evaporation/sublimation from Ice
-EIn_H_spatial          = single(zeros(xdim , ydim, zdim)); % Evaporation from intercepted water
-EIn_L_spatial          = single(zeros(xdim , ydim, zdim));
-EIn_rock_spatial       = single(zeros(xdim , ydim, zdim));
-er_spatial             = single(zeros(xdim , ydim, zdim)); % Splash erosion
-ESN_spatial            = single(zeros(xdim , ydim, zdim)); % Evaporation from the snowpack at the ground
-SSN_spatial            = single(zeros(xdim , ydim, zdim));
-EWAT_spatial           = single(zeros(xdim , ydim, zdim)); % Evaporation from water and ponds
-FROCK_spatial          = single(zeros(xdim , ydim, zdim)); % Storage in fractured rocks
-f_spatial              = single(zeros(xdim , ydim, zdim)); % Infiltration
-Gfin_spatial           = single(zeros(xdim , ydim, zdim)); % Ground Heat Flux heat diffusion
-GPP_H_spatial          = single(zeros(xdim , ydim, zdim));
-GPP_L_spatial          = single(zeros(xdim , ydim, zdim));
-G_spatial              = single(zeros(xdim , ydim, zdim)); % Ground Heat Flux force restore method
-hc_H_spatial           = single(zeros(xdim , ydim, zdim)); % Vegetation Height
-hc_L_spatial           = single(zeros(xdim , ydim, zdim));
-H_spatial              = single(zeros(xdim , ydim, zdim));
-ICE_D_spatial          = single(zeros(xdim , ydim, zdim)); % Ice thickness
-ICE_spatial            = single(zeros(xdim , ydim, zdim)); % Ice water equivalent
-Imelt_spatial          = single(zeros(xdim , ydim, zdim));
-Inveg_spatial          = single(zeros(xdim , ydim, zdim));
-In_rock_spatial        = single(zeros(xdim , ydim, zdim));
-In_spatial             = single(zeros(xdim , ydim, zdim)); % Intercepted water (storage) 
-In_SWE_spatial         = single(zeros(xdim , ydim, zdim)); % Intercepted snow water equivalent (storage)
-IP_wc_spatial          = single(zeros(xdim , ydim, zdim)); % Ice pack water content
-LAIdead_H_spatial      = single(zeros(xdim , ydim, zdim)); % Dead Leaf Area Index
-LAIdead_L_spatial      = single(zeros(xdim , ydim, zdim));
-LAI_H_spatial          = single(zeros(xdim , ydim, zdim)); % Leaf Area Index
-LAI_L_spatial          = single(zeros(xdim , ydim, zdim));
-Lk_rock_spatial        = single(zeros(xdim , ydim, zdim)); % Leakage rock surface to bedrock (recharge)
-Lk_spatial             = single(zeros(xdim , ydim, zdim)); % Bottom Leakage soil to bedrock (recharge)
-Lk_wat_spatial         = single(zeros(xdim , ydim, zdim)); % Leakage water pond to bedrock (recharge)
-NICe_spatial           = single(zeros(xdim , ydim, zdim));
-NPP_H_spatial          = single(zeros(xdim , ydim, zdim)); % Net Primary Production
-NPP_L_spatial          = single(zeros(xdim , ydim, zdim));
-NDVI_spatial           = single(zeros(xdim , ydim, zdim));
-OF_spatial             = single(zeros(xdim , ydim, zdim)); % Soil Moisture First Soil Layer
-OH_spatial             = single(zeros(xdim , ydim, zdim)); % Soil Moisture available to roots
-OL_spatial             = single(zeros(xdim , ydim, zdim));
-OS_spatial             = single(zeros(xdim , ydim, zdim)); % Soil Moisture for Bare Evaporation Layers
-O_spatial              = single(zeros(xdim , ydim, zdim)); % Soil Moisture – Soil Water Content
-PAR_spatial            = single(zeros(xdim , ydim, zdim));
-%Pre_spatial            = single(zeros(xdim , ydim, zdim)); % Atmospheric Pressure
-Pr_liq_spatial         = single(zeros(xdim , ydim, zdim)); % Liquid Precipitation
-Pr_sno_spatial         = single(zeros(xdim , ydim, zdim)); % Solid (snow)
-Pr_spatial             = single(zeros(xdim , ydim, zdim)); % Precipitation
-QE_spatial             = single(zeros(xdim , ydim, zdim)); % Latent Heat
-Qfm_spatial            = single(zeros(xdim , ydim, zdim)); % Heat for freezing or melting
-Qlat_in_spatial        = single(zeros(xdim , ydim, zdim));
-Qlat_out_spatial       = single(zeros(xdim , ydim, zdim));
-Qv_spatial             = single(zeros(xdim , ydim, zdim)); % Heat advected by Precipitation
-%Q_channel_spatial      = single(zeros(xdim , ydim, zdim));
-%q_runon_spatial        = single(zeros(xdim , ydim, zdim)); % Runon
-RA_H_spatial           = single(zeros(xdim , ydim, zdim)); % Autotrophic Respiration
-RA_L_spatial           = single(zeros(xdim , ydim, zdim));
-Rdark_H_spatial        = single(zeros(xdim , ydim, zdim)); % Leaf Dark Respiration
-Rdark_L_spatial        = single(zeros(xdim , ydim, zdim));
-Rd_spatial             = single(zeros(xdim , ydim, zdim)); % Saturation excess runoff
-Rg_H_spatial           = single(zeros(xdim , ydim, zdim)); % Growth Respiration
-Rg_L_spatial           = single(zeros(xdim , ydim, zdim));
-Rh_spatial             = single(zeros(xdim , ydim, zdim)); % Infiltration excess runoff
-Rmc_H_spatial          = single(zeros(xdim , ydim, zdim)); % Maintenance Respiration Carbohydrate reserve
-Rmc_L_spatial          = single(zeros(xdim , ydim, zdim));
-Rmr_H_spatial          = single(zeros(xdim , ydim, zdim)); % Maintenance Respiration roots
-Rmr_L_spatial          = single(zeros(xdim , ydim, zdim));
-Rms_H_spatial          = single(zeros(xdim , ydim, zdim)); % Maintenance Respiration sapwood
-Rms_L_spatial          = single(zeros(xdim , ydim, zdim));
-Rn_spatial             = single(zeros(xdim , ydim, zdim)); % Net radiation
-ros_spatial            = single(zeros(xdim , ydim, zdim)); % Snow density
-Rsw_spatial            = single(zeros(xdim , ydim, zdim));
-SAI_H_spatial          = single(zeros(xdim , ydim, zdim)); % Stem Area Index
-SAI_L_spatial          = single(zeros(xdim , ydim, zdim));
-SAT_spatial            = single(zeros(xdim , ydim, zdim));
-Smelt_spatial          = single(zeros(xdim , ydim, zdim));
-SND_spatial            = single(zeros(xdim , ydim, zdim)); % Snow Depth
-snow_albedo_spatial    = single(zeros(xdim , ydim, zdim));
-SP_wc_spatial          = single(zeros(xdim , ydim, zdim)); % Snowpack water content
-SWE_avalanched_spatial = single(zeros(xdim , ydim, zdim));
-SWE_spatial            = single(zeros(xdim , ydim, zdim));
-Ta_spatial             = single(zeros(xdim , ydim, zdim));
-Tdamp_spatial          = single(zeros(xdim , ydim, zdim)); % Soil/snow Temperature at Dampening depth
-Tdew_spatial           = single(zeros(xdim , ydim, zdim));
-Tdp_spatial            = single(zeros(xdim , ydim, zdim)); % Soil Temperature of the layer
-Tice_spatial           = single(zeros(xdim , ydim, zdim));
-TsVEG_spatial          = single(zeros(xdim , ydim, zdim));
-Ts_spatial             = single(zeros(xdim , ydim, zdim)); % Soil/snow Prognostic Temperature for the energy balance
-T_H_spatial            = single(zeros(xdim , ydim, zdim)); % Transpiration
-T_L_spatial            = single(zeros(xdim , ydim, zdim));
-U_SWE_spatial          = single(zeros(xdim , ydim, zdim)); % Unloaded snow water equivalent from intercepted snow
-Vice_spatial           = single(zeros(xdim , ydim, zdim));
-V_spatial              = single(zeros(xdim , ydim, zdim)); % Volume of water stored in the soil layer
-WAT_spatial            = single(zeros(xdim , ydim, zdim)); % Volume of water in the lakes/ponds
-WIS_spatial            = single(zeros(xdim , ydim, zdim)); % Water flux incoming to the soil
-WR_IP_spatial          = single(zeros(xdim , ydim, zdim)); % Water released from the ice pack
-WR_SP_spatial          = single(zeros(xdim , ydim, zdim)); % Water released from the snow pack
-%Ws_spatial             = single(zeros(xdim , ydim, zdim)); % Wind speed
-ELitter_spatial        = single(zeros(xdim , ydim, zdim)); % ET litter
-ESN_In_spatial         = single(zeros(xdim , ydim, zdim)); % ET litter
-EIn_urb_spatial        = single(zeros(xdim , ydim, zdim)); % ET litter
+VAR_OUT = [... % Outputs for vegetation
+           %---------------------------------------------------------------
+           "ANPP_H";  % Above ground net primary production 
+           "ANPP_L";
+           "LAI_H";   % Leaf Area Index
+           "LAI_L";
+           "NDVI"; 
+           "NPP_H";   % Net Primary Production
+           "NPP_L";
+           "QE";      % Latent Heat
+           "hc_H";    % Vegetation Height
+           "hc_L"; 
+          %"An_H";    % Net assimilation Vegetation
+          %"An_L";          
+          %"B_H";     % Carbon pool biomass
+          %"B_L";     
+          %"Ca";      % CO2 atmospheric concentration
+          %"Ci_shdH"; % CO2 sunlit leaf internal concentration
+          %"Ci_shdL";      
+          %"Ci_sunH";      
+          %"Ci_sunL";     
+          %"LAIdead_H"; % Dead Leaf Area Index
+          %"LAIdead_L";  
+          %"GPP_H";      
+          %"GPP_L";        
+          %"RA_H";      % Autotrophic Respiration
+          %"RA_L";      
+          %"Rdark_H";   % Leaf Dark Respiration
+          %"Rdark_L";   
+          %"Rg_H";      % Growth Respiration
+          %"Rg_L";         
+          %"Rmc_H";     % Maintenance Respiration Carbohydrate reserve
+          %"Rmc_L";       
+          %"Rmr_H";     % Maintenance Respiration roots
+          %"Rmr_L";     
+          %"Rms_H";     % Maintenance Respiration sapwood
+          %"Rms_L";         
+          %"SAI_H";     % Stem Area Index
+          %"SAI_L";        
+          %"SAT";   
+          
+          % Outputs for ET
+          %--------------------------------------------------------------------------
+          "EG";         % Evaporation from Bare soil
+          "EICE";       % Evaporation/sublimation from Ice
+          "EIn_H";      % Evaporation from intercepted water
+          "EIn_L";        
+          "EIn_rock";   % ET from rock  
+          "EIn_urb";    % ET litter
+          "EWAT";       % Evaporation from water and ponds
+          "T_H";        % Transpiration
+          "T_L";        
+          "SSN";           
+          "ESN";        % Evaporation from the snowpack at the ground
+          "ELitter";    % ET litter
+          "ESN_In";      % ET litter
 
-% Series
-QpointC_series         = single(zeros(zdim, length(Xout))); % Autotrophic Respiration
+          % Outputs for snow
+          %--------------------------------------------------------------------------
+          "SND";             % Snow depth
+          "SWE";             % Snow water equivalent
+          "ros";             % Snow density
+          "snow_albedo";
+          "Smelt";           % Snow melt in w.e./h 
+          "Imelt";           % Ice melt in w.e./h 
+          "SP_wc";           % Snowpack water content
+          "SWE_avalanched"; 
+          "Cicew";           % Boolean operator for presence or absence of frozen water
+          "Cice";            % Boolean operator for presence or absence of ice water
+          %"IP_wc";          % Ice pack water content
+          %"NICe";           % New formed ice
+          %"ICE_D";          % Ice thickness
+          %"ICE";            % Ice water equivalent                   
+          %"U_SWE";          % Unloaded snow water equivalent from intercepted snow
+
+          % Outputs for groundwater
+        %--------------------------------------------------------------------------
+        "FROCK";          % Storage in fractured rocks
+        "Gfin";           % Ground Heat Flux heat diffusion
+        "G";              % Ground Heat Flux force restore method
+        "Lk_rock";        % Leakage rock surface to bedrock (recharge)
+        "Lk";             % Bottom Leakage soil to bedrock (recharge)
+        "Lk_wat";         % Leakage water pond to bedrock (recharge)
+
+        % Outputs for soil moisture
+        %----------------------------------------------------------------------
+        "O";        
+        "OF";           % Soil Moisture First Soil Layer
+        %"OH";          % Soil Moisture available to roots
+        %"OL";         
+        %"OS";          % Soil Moisture for Bare Evaporation Layers
+        
+        % Outputs of runoff
+        %------------------------------------------------------------------
+        "QpointC";          % Autotrophic Respiration
+        "q_runon";        % Runon
+        "Rd";             % Saturation excess runoff
+        "Rh";             % Infiltration excess runoff
+        "f";              % Infiltration
+        %"In_rock";        
+        %"In";            % Intercepted water (storage) 
+        %"In_SWE";        % Intercepted snow water equivalent (storage)
+        %"Vice";         
+        %"V";             % Volume of water stored in the soil layer
+        %"WAT";           % Volume of water in the lakes/ponds
+        %"WIS";           % Water flux incoming to the soil
+        %"WR_IP";         % Water released from the ice pack
+        %"WR_SP";         % Water released from the snow pack    
+
+        % Meteorological variables
+        %--------------------------------------------------------------------------
+        "Pr_liq";         % Liquid Precipitation
+        "Pr_sno";         % Solid (snow)
+        %"Ta"; 
+        "Ts"              % Soil/snow Prognostic Temperature for the energy balance
+
+        % Other potential variables
+        %--------------------------------------------------------------------------
+        %"CK1";            % Check on Mass Balance
+        %"Csnow";          % Boolean operator for presence or absence of snow above frozen water 
+        %"Csno";           % Boolean operator for presence or absence of snow 
+        %"dQ_S";           % Residual from energy budget
+        %"DQ_S";           % Residual of the energy budget
+        %"Dr_H";           % Total Drainage from intercepted water
+        %"Dr_L";           %
+        %"Ds";             % Vapor Pressure Deficit
+        %"DT_S";           % Residual temperature difference in the energy budget
+        %"dw_SNO";         % Fraction of leaf covered by snow
+        %"ea";             % Vapor Pressure
+        %"er";             % Splash erosion
+        %"H";              % Sensible Heat Flux
+        %"Inveg";         
+        %"PAR";            
+        %"Pre";            % Atmospheric Pressure
+        %"Qfm";            % Heat for freezing or melting
+        %"Qlat_in";        
+        %"Qlat_out";       
+        %"Qv";             % Heat advected by Precipitation
+        %"Q_channel";      
+        %"Rn";             % Net radiation
+        %"Rsw";                    
+        %"Tdamp";          % Soil/snow Temperature at Dampening depth
+        %"Tdew";           
+        %"Tdp";            % Soil Temperature of the layer
+        %"Tice";           
+        %"TsVEG";         
+        %"Ws";             % Wind speed
+          ];
+% Names of variables
+%--------------------------------------------------------------------------
+        VAR_OUT_HOUR = VAR_OUT+'_hourly'; 
+        VAR_OUT_DAY = VAR_OUT+'_daily'; 
+        
+        VAR_OUT_HOUR = [VAR_OUT_HOUR;
+           "snow_albedo1_hourly"; "snow_albedo2_hourly"; "snow_albedo3_hourly"; "snow_albedo4_hourly"; 
+           "O1_hourly"; "O2_hourly"; "O3_hourly"; "O4_hourly"; "O5_hourly";
+           "O6_hourly"; "O7_hourly"; "O8_hourly"; "O9_hourly"; "O10_hourly"];
+    
+        VAR_OUT_DAY = [VAR_OUT_DAY;
+       "snow_albedo1_daily"; "snow_albedo2_daily"; "snow_albedo3_daily"; "snow_albedo4_daily"; 
+       "O1_daily"; "O2_daily"; "O3_daily"; "O4_daily"; "O5_daily";
+       "O6_daily"; "O7_daily"; "O8_daily"; "O9_daily"; "O10_daily"];
+
+% Creation of variables to store results per hour
+%--------------------------------------------------------------------------
+for i=1:length(VAR_OUT_HOUR)     
+    if VAR_OUT_HOUR(i) == "QpointC_hourly" 
+        QpointC_hourly = single(zeros(zdim, length(Xout))); % Discharge
+    else
+        commandStr = [char(VAR_OUT_HOUR(i)) ' = single(zeros(xdim , ydim, zdim));']; %Other matrices
+        eval(commandStr);
+    end
+end
+
+% Creation of variables to store results per day
+%--------------------------------------------------------------------------
+numdays = eomday(str2num(yy), str2num(mth));
+
+for i=1:length(VAR_OUT_DAY)     
+    if VAR_OUT_DAY(i) == "QpointC_daily"
+        QpointC_daily = single(zeros(numdays, length(Xout))); % Discharge
+    else
+        commandStr = [char(VAR_OUT_DAY(i)) ' = single(zeros(xdim,ydim,numdays));']; %Other matrices
+        eval(commandStr); 
+    end
+end
+
 
 % Changing the label to not create it again at the next hour
 %--------------------------------------------------------------------------
@@ -805,7 +894,7 @@ end
     % Forcings from units
     %----------------------------------------------------------------------
     RH_file= [Directories.forcUN yy '/RH_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    strd_file= [Directories.forcUN yy '/strd_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    strd_file= [Directories.forcPD yy '/strd_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
 
     % Forcings from raw downscaling
     %----------------------------------------------------------------------
@@ -815,12 +904,12 @@ end
     % Forcings from Radiation Partition
     %----------------------------------------------------------------------
     N_file= [Directories.forcRP yy '/N_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    PARB_file= [Directories.forcRP yy '/PARB_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    PARD_file= [Directories.forcRP yy '/PARD_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    SAB1_file= [Directories.forcRP yy '/SAB1_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    SAB2_file= [Directories.forcRP yy '/SAB2_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    SAD1_file= [Directories.forcRP yy '/SAD1_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
-    SAD2_file= [Directories.forcRP yy '/SAD2_3D_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    PARB_file= [Directories.forcRP yy '/PARB_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    PARD_file= [Directories.forcRP yy '/PARD_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    SAB1_file= [Directories.forcRP yy '/SAB1_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    SAB2_file= [Directories.forcRP yy '/SAB2_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    SAD1_file= [Directories.forcRP yy '/SAD1_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
+    SAD2_file= [Directories.forcRP yy '/SAD2_' yy '_' mth '.mat']; % Put here the path of where you downloaded the repository
 
     % Opening files
     %----------------------------------------------------------------------
@@ -1009,6 +1098,10 @@ end
     ],Point)
     %}
     
+    %% FOR COUNTING VARIABLES - REESTARTING
+    %--------------------------------------------------------------------------
+    %save([Directories.model '2_distributed_version/5_Variables/Before_reini.mat'])
+
 
     %% SPATIAL INITIALIZATION VECTOR PREDEFINING
     %======================================================================
@@ -1304,14 +1397,6 @@ end
     end
   
 
-    %% BEFORE INITIALIZATION OF VARIABLES - IF RESTART - ADD STATE VARIABLES
-    % This line restarts initial conditions and variables of the system. It
-    % does not consider forcings and storage variables
-    if restart.id == 1
-            disp(['Parameters restarted from file: ' restart.date ' - ' restart.run])    
-            load([Directories.restart restart.run '/Store/State_Conditions_' restart.date '.mat']);
-    end
-
     %% LOOP
     %======================================================================
     % LOOP OVER CELLS
@@ -1319,7 +1404,7 @@ end
     %P = (Xout - 1) * 133 + Yout;
 
     %Follow=MASK; %Debugging
-    for ij= 3666 % 1:num_cell % this is a parfor
+    for ij=4666 %=1:num_cell % this is a parfor
         % Good practice to use a simple for loop for debugging/testing
         % ij is the index to go pixel by pixel through the mask
         % ij=1:num_cell
@@ -1650,7 +1735,7 @@ if (Datam_S(2)==1) & (Datam_S(3)==1) & (Datam_S(4)==1) & (Idyn > 0)
         %%%% Create or update the .nc file %%%%%%%%%%%%
 
         x(2) = x(1) + (y(2)-y(1)); % Temporary fix
-        IGM_netcdf([outlocation 'igm_inputs3.nc'],x,y,rot90(flipud(double(GLA)),3),rot90(flipud(THym1),3),rot90(flipud(DTM_Bedrock),3)...
+        IGM_netcdf([Directories.save 'igm_inputs3.nc'],x,y,rot90(flipud(double(GLA)),3),rot90(flipud(THym1),3),rot90(flipud(DTM_Bedrock),3)...
             , rot90(flipud(DTM_orig),3),rot90(flipud(SMB),3)) % Create .nc file
 
         %%%% Run IGM %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1659,15 +1744,15 @@ if (Datam_S(2)==1) & (Datam_S(3)==1) & (Datam_S(4)==1) & (Idyn > 0)
         igm_run_path =  [path_igm '/igm/igm_run.py']; % path of IGM .py script
         addpath(genpath([path_igm '/igm/']))
  
-        igm_arg = [' --lncd_input_file ' [outlocation 'igm_inputs3.nc']...
-            ' --working_dir ' outlocation...
+        igm_arg = [' --lncd_input_file ' [Directories.save 'igm_inputs3.nc']...
+            ' --working_dir ' Directories.save...
             ' --time_start ' num2str(1)...
             ' --time_end ' num2str(2) ... 
             ' --time_save ' num2str(1)];
 
         pyrunfile([igm_run_path igm_arg]) % Run IGM
 
-        thk = ncread([outlocation 'output.nc'],'thk'); % Load updated glacier thickness from IGM
+        thk = ncread([Directories.save 'output.nc'],'thk'); % Load updated glacier thickness from IGM
 
         THnew = double(rot90(thk(:,:,2))); % New thickness after IGM
 
@@ -1920,19 +2005,6 @@ end
     %
     %======================================================================
        
-    % Ccrown_OUT and EVcode are used in the OUTPUT_MANAGER_DIST_LABEL.m
-    %--------------------------------------------------------------------------
-    % This only for the OUTPUT_MANAGER_DIST_LABEL
-    %Ccrown_OUT =[ 1 ; 1; 1 ; 0.9 ; 1; 1; 0];  %% Ccrown fraction for Plant Functional Types (PFT)
-    %EVcode = [ 1 2 3 4 5 6 7 8 9 10];             %% code of each PFTs
-    %Ccrown_OUT2 = POI.Ccrowns;
-    %{
-    %Mike
-    Ccrown_OUT = [ 1   0 ; 0.5  0.5 ; 1   0 ; 1   0];  %% Ccrown fraction for PFT
-    EVcode     = [ 1      2           3       4    ];  %% Code of each PFT
-    cc_max = size(Ccrown_OUT,2);                       %% Number of vegetation types per cell (max.)
-    %}
-
     % Generating the vector for the calculation of the outputs by crowns
     %----------------------------------------------------------------------
     max_len = max(cellfun(@numel, POI.Ccrowns));
@@ -1940,89 +2012,109 @@ end
     Ccrown_OUT = cell2mat(padded_cells);
     
     Ccrown_OUTv = Ccrown_OUT(ksv, :);
-    %EVcode     = POI.Class;
   
     % Assignation to temporal matrix
     %----------------------------------------------------------------------
     t_date = datetime(Datam_S(1), Datam_S(2), Datam_S(3), Datam_S(4), 0, 0);
     t_assign =  find(t_date  ==  date_forMonth);
 
-    % Outputs for vegetation
-    ANPP_H_spatial(:,:,t_assign)   = reshape(sum(ANPP_H.*Ccrown_OUTv,2),xdim,ydim); 
-    ANPP_L_spatial(:,:,t_assign)   = reshape(sum(ANPP_L.*Ccrown_OUTv,2),xdim,ydim);
-    LAI_H_spatial(:,:,t_assign)    = reshape(sum(LAI_H.*Ccrown_OUTv,2),xdim,ydim);
-    LAI_L_spatial(:,:,t_assign)    = reshape(sum(LAI_L.*Ccrown_OUTv,2),xdim,ydim);
-    NDVI_spatial(:,:,t_assign)     = reshape(NDVI,xdim,ydim);
+    VAR_CROWNS = ["ANPP_H"; "ANPP_L"; "LAI_H"; "LAI_L"; "NPP_H"; "NPP_L"; 
+                  "hc_H";   "hc_L";   "EIn_H"; "EIn_L"; "T_H";   "T_L" ];
 
-    % Output for ET
-    EG_spatial(:,:,t_assign)       = reshape(EG,xdim,ydim);
-    EICE_spatial(:,:,t_assign)     = reshape(EICE,xdim,ydim);    
-    EIn_H_spatial(:,:,t_assign)    = reshape(sum(EIn_H.*Ccrown_OUTv,2),xdim,ydim);
-    EIn_L_spatial(:,:,t_assign)    = reshape(sum(EIn_L.*Ccrown_OUTv,2),xdim,ydim);
-    EIn_rock_spatial(:,:,t_assign) = reshape(EIn_rock,xdim,ydim); 
-    EIn_urb_spatial(:,:,t_assign)  = reshape(EIn_urb,xdim,ydim); 
-    EWAT_spatial(:,:,t_assign)     = reshape(EWAT,xdim,ydim); 
-    T_H_spatial(:,:,t_assign)      = reshape(sum(T_H.*Ccrown_OUTv,2),xdim,ydim); 
-    T_L_spatial(:,:,t_assign)      = reshape(sum(T_L.*Ccrown_OUTv,2),xdim,ydim); 
-    SSN_spatial(:,:,t_assign)      = reshape(SSN,xdim,ydim);  
-    ESN_spatial(:,:,t_assign)      = reshape(ESN,xdim,ydim);
-    ELitter_spatial(:,:,t_assign)  = reshape(ELitter,xdim,ydim);
-    ESN_In_spatial(:,:,t_assign)   = reshape(ESN_In,xdim,ydim);
+    %k=1
+    for k=1:length(VAR_OUT)
+        if VAR_OUT(k) == "QpointC" % case of discharge
+        QpointC_hourly(t_assign,:) = QpointC;                                  % runoff/discharge    
+    
+        elseif VAR_OUT(k) == "O"
+        O1_hourly(:,:,t_assign)       = reshape(O(:,1), xdim,ydim);            % Soil mositure layer 1
+        O2_hourly(:,:,t_assign)       = reshape(O(:,2), xdim,ydim);            % Soil mositure layer 2
+        O3_hourly(:,:,t_assign)       = reshape(O(:,3), xdim,ydim);            % Soil mositure layer 3
+        O4_hourly(:,:,t_assign)       = reshape(O(:,4), xdim,ydim);            % Soil mositure layer 4
+        O5_hourly(:,:,t_assign)       = reshape(O(:,5), xdim,ydim);            % Soil mositure layer 5
+        O6_hourly(:,:,t_assign)       = reshape(O(:,6), xdim,ydim);            % Soil mositure layer 6
+        O7_hourly(:,:,t_assign)       = reshape(O(:,7), xdim,ydim);            % Soil mositure layer 7
+        O8_hourly(:,:,t_assign)       = reshape(O(:,8), xdim,ydim);            % Soil mositure layer 8
+        O9_hourly(:,:,t_assign)       = reshape(O(:,9), xdim,ydim);            % Soil mositure layer 9
+        O10_hourly(:,:,t_assign)      = reshape(O(:,10), xdim,ydim);           % Soil mositure layer 10
+    
+        elseif VAR_OUT(k) == "snow_albedo"
+        snow_albedo1_hourly(:,:,t_assign)       = reshape(snow_albedo(:,1), xdim,ydim);            % Soil albedo layer 1
+        snow_albedo2_hourly(:,:,t_assign)       = reshape(snow_albedo(:,2), xdim,ydim);            % Soil albedo layer 2
+        snow_albedo3_hourly(:,:,t_assign)       = reshape(snow_albedo(:,3), xdim,ydim);            % Soil albedo layer 3
+        snow_albedo4_hourly(:,:,t_assign)       = reshape(snow_albedo(:,4), xdim,ydim);            % Soil albedo layer 4
 
-    % Outputs for snow
-    SND_spatial(:,:,t_assign)      = reshape(SND,xdim,ydim);
-    SWE_spatial(:,:,t_assign)      = reshape(SWE,xdim,ydim);    
+        elseif ismember(VAR_OUT(k), VAR_CROWNS) % Case of variables with crowns
+            commandStr = [char(VAR_OUT_HOUR(k)) '(:,:,t_assign) = reshape(sum(' char(VAR_OUT(k)) '.*Ccrown_OUTv,2),xdim,ydim)' ';']; %Other matrices
+            eval(commandStr);
+    
+        elseif size(eval(VAR_OUT(k)),2) == 1 % Case of variables of single dimension
+                commandStr = [char(VAR_OUT_HOUR(k)) '(:,:,t_assign) = reshape(' char(VAR_OUT(k)) ',xdim,ydim)' ';']; %Other matrices
+                eval(commandStr);
         
-    % Outputs for groundwater
-    FROCK_spatial(:,:,t_assign)    = reshape(FROCK,xdim,ydim); 
-    f_spatial(:,:,t_assign)        = reshape(f,xdim,ydim); 
-    Gfin_spatial(:,:,t_assign)     = reshape(Gfin,xdim,ydim); 
-    %GPP_H_spatial(:,:,t_assign) 
-    %GPP_L_spatial(:,:,t_assign) 
-    G_spatial(:,:,t_assign)        = reshape(G,xdim,ydim);
-    hc_H_spatial(:,:,t_assign)     = reshape(sum(hc_H.*Ccrown_OUTv,2),xdim,ydim);
-    hc_L_spatial(:,:,t_assign)     = reshape(sum(hc_H.*Ccrown_OUTv,2),xdim,ydim);
+        else % Other variables with different sizes
+                disp(['Variable ' char(VAR_OUT(k)) ' has a different dimension to Ccrown and other dimensions considered'])
+        end   
+    end
 
-    % Outputs runoff
-    %Q_channel_spatial(:,:,t_assign)       = reshape(Q_channel,xdim,ydim);
-    %q_runon_spatial(:,:,t_assign)         = reshape(q_runon,xdim,ydim);
-    QpointC_series(t_assign,:)     = QpointC;
-    
-    q_runon_pp   = reshape(q_runon,xdim,ydim);
-    Q_channel_pp = reshape(Q_channel,xdim,ydim);
-
-    %disp(q_runon_pp(Yout,Xout))
-    %disp(Q_channel_pp(Yout,Xout))
-    %disp(QpointC)
-
-    Rd_spatial(:,:,t_assign)       = reshape(Rd,xdim,ydim);
-
-    %Rd_spatial(Yout,Xout, 50);
-    
-
-    %% FOR COUNTING VARIABLES - REESTARTING
-    %--------------------------------------------------------------------------
-    %save([Directories.model '2_distributed_version/5_Variables/End_t_ksv10.mat'])
+ 
 
     %% SAVING
     %======================================================================
     % Only save when it is the last day of the month or the last iteration
     %======================================================================
-    if t_date  == t_store || t == N_time_step
-    
+    if t_date  == t_store | t_date == x2
+
     % Saving
     %----------------------------------------------------------------------
-    disp(['Storing results in .mat file for: ' char(string(Date_run, 'dd')) '_' char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy'))])
+    disp(['Storing results in .mat file for: ' char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy'))])
 
-    save([Directories.save yy '/3D_Outputs_'  char(string(Date_run, 'dd')) '_' char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy')) '.mat'], ...
-         'ANPP_H_spatial',   'ANPP_L_spatial',    'EG_spatial',      'EIn_H_spatial',  'EIn_L_spatial', ...
-         'EIn_rock_spatial', 'EIn_urb_spatial',   'EWAT_spatial',    'T_H_spatial',    'T_L_spatial', ...
-         'SSN_spatial',      'ESN_spatial',       'ELitter_spatial', 'ESN_In_spatial', 'FROCK_spatial', ...
-         'f_spatial',        'Gfin_spatial',      'G_spatial',       'hc_H_spatial',   'hc_L_spatial', ...
-         'EICE_spatial',     'LAI_H_spatial',     'LAI_L_spatial', ...
-         'NDVI_spatial',     'SND_spatial' ,      'SWE_spatial', ...
-         'Rd_spatial',       'QpointC_series' ...
-          );
+    % Daily calculation before saving
+    %----------------------------------------------------------------------
+    all_hours = length(date_forMonth); % all hours within the month
+    div = 1:24:(all_hours+1); %divisions for calculation
+    
+    % Variables that must be summed
+    var_summ = ["Pr_sno_hourly";   "Pr_liq_hourly";     "EG_hourly";       "EICE_hourly";    "EIn_H_hourly"; 
+                "EIn_L_hourly";    "EIn_rock_hourly";   "EIn_urb_hourly";  "EWAT_hourly";    "T_H_hourly";
+                "T_L_hourly";      "ESN_hourly";        "ELitter_hourly";  "ESN_In_hourly";  "Smelt_hourly";
+                "Imelt_hourly";    "Rd_hourly";         "Rh_hourly";       "f_hourly";       "Lk_rock_hourly";
+                "Lk_hourly";       "Lk_wat_hourly"]; % variables that must be summed
+    
+    % Daily calculation of variables
+    %k=5;
+    %y=1;
+    for k=1:length(VAR_OUT_HOUR)
+        for y = 1:(length(div)-1)
+            if VAR_OUT_HOUR(k) == "QpointC_hourly" 
+                QpointC_daily(y) = mean(QpointC_hourly(div(y):(div(y+1)-1))); % Discharge
+            else
+                if ismember(VAR_OUT_HOUR(k), var_summ)
+                commandStr = [char(VAR_OUT_DAY(k)) '(:,:,y) = sum(' char(VAR_OUT_HOUR(k)) '(:,:,div(y):(div(y+1)-1)),3)' ';']; %Other matrices
+                eval(commandStr);                
+                else
+                commandStr = [char(VAR_OUT_DAY(k)) '(:,:,y) = mean(' char(VAR_OUT_HOUR(k)) '(:,:,div(y):(div(y+1)-1)),3)' ';']; %Other matrices
+                eval(commandStr);
+                end
+            end
+        end
+    end
+
+    % Compressing daily results  
+    %----------------------------------------------------------------------   
+    %i=1; 
+    for i=1:length(VAR_OUT_DAY)     
+        if VAR_OUT_DAY(i) ~= "QpointC_daily" 
+            commandStr = [char(VAR_OUT_DAY(i)) ' = Data_compressor_grid(' char(VAR_OUT_DAY(i)) ',"mm","compress")' ';']; %Other matrices
+            eval(commandStr);
+        end
+    end           
+
+    % Saving daily results
+    %----------------------------------------------------------------------    
+    VAR_CELL = cellstr(VAR_OUT_DAY);
+    save([Directories.save yy '/3D_Outputs_'  char(string(Date_run, 'MMM')) '_' char(string(Date_run, 'yyyy')) '.mat'], ...
+            VAR_CELL{:});
 
     % Changing the label to create again the matrices for storing
     %--------------------------------------------------------------------------
@@ -2050,107 +2142,28 @@ end
     
     end
         
-    %% Saving actual conditions in the model to restart if needed
-    %======================================================================
-    % This needs to save the variables on on DD-MMM-YYYY 00:00:00.
-    %======================================================================    
-    if t_date  == t_store
-    %save([Directories.save 'Store/Initial_Conditions_' ...
-    %  char(num2str(day(t_store))) '_' char(num2str(month(t_store))) '_' char(num2str(year(t_store))) '.mat'])
-    
-    %Variables to exclude
-    load([Directories.model '2_distributed_version/5_Variables/var_state_exclude.mat'])
+%% Saving actual conditions in the model to restart if needed
+%==========================================================================
+% This is saved on DD-MMM-YYYY 23:00:00.
+%==========================================================================
+if t_date == t_store
 
-    % All variables
-    all_vars = who;
-    
-    %Remove of forcing and storing variables
-    variables_to_keep = setdiff(all_vars, variables_exclude); 
+% Variables to be excluded during the saving
+load([Directories.model '2_distributed_version/5_Variables/var_state_exclude.mat'])
 
-    save([Directories.save 'Store/State_Conditions_' ...
-      char(num2str(day(t_store))) '_' char(string(t_store, 'MMM')) '_' char(string(t_store, 'yyyy')) '.mat'], ...
-       variables_to_keep{:})
-    
-    %clearvars('-except', variables_retain{:})
-    
-    %{
+% All variables
+all_vars = who;
 
-    INIT_COND_MID(t_store, Directories, ...
-     alp_soil,      b_soil,          Bam,              Bem,            BLit, ...
-     Ccrown_t,      Cice,            Cicew,            CK1,            Csno,...
-     Csnow,         dQ_S,            DQ_S,             dQVEG,          DT_S,...
-     dw_SNO,        e_sno,           EG,               EICE,           EIn_rock,...
-     EIn_urb,       EK,              ELitter,          er,             ESN_In,...
-     SSN_In,        ESN,             SSN,              EWAT,           FROCK,...
-     f,             Gfin,            G,                H,              HV,...
-     ICE_D,         ICE,             Imelt,            In_H,           In_Litter,...
-     In_L,          In_rock,         In_SWE,           In_urb,         IP_wc,...
-     Lk_rock,       Lk_wat,          Lk,               Lpho,           NavlI,...
-     NDVI,          NIce,            NIn_SWE,          OF,             Oice,...
-     OS,            O,               POT,              Pr_liq,         Pr_sno,...
-     Q_channel,     Q_exit,          q_runon,          QE,             QEV,...
-     Qfm,           Qi_in,                             Qi_out_Rout,    Qi_out,...
-     Qsub_exit,     Qv,              r_litter,         r_soil,         ra,...
-     Rd,            Rh,              Rn,               ros,            SE_rock,...
-     SE_urb,        Slo_head,        Smelt,            SND,            snow_albedo, ...
-     soil_albedo,   SP_wc,           surface_albedo,   SWE,            SWE_avalanched, ...
-     t_sls,         tau_sno,         Tdamp,            Tdeb,           Tdp, ...
-     Tdp_snow,      Tice,            Tstm0,            Ts,             Ts_under, ...
-     TsVEG,         U_SWE,           Vice,             V,              WAT, ...
-     WIS,           WR_IP,           WR_SP,            Ws_under,       ZWT, ...
-     AgeDL_H,       AgeDL_L,         AgeL_H,           AgeL_L,         AgePl_H,...
-     AgePl_L,       An_H,            An_L,             ANPP_H,         ANPP_L,...
-     B_H,           B_L,             BA_H,             BA_L,           Bfac_dayH,...
-     Bfac_dayL,     Bfac_weekH,      Bfac_weekL,       Ci_shdH,        Ci_shdL,...
-     Ci_sunH,       Ci_sunL,         dflo_H,           dflo_L,         Dr_H,...
-     Dr_L,          e_rel_H,         e_rel_L,          e_relN_H,       e_relN_L,...
-     EIn_H,         EIn_L,           fapar_H,          fapar_L,        FNC_H,...
-     FNC_L,         gsr_H,           gsr_L,            hc_H,           hc_L,...
-     ISOIL_H,       ISOIL_L,         Jsx_H,            Jsx_L,          Jxl_H, ...
-     Jxl_L,         Kleaf_H,         Kleaf_L,          Kreserve_H,     Kreserve_L, ...
-     Kuptake_H,     Kuptake_L,       Kx_H,             Kx_L,           LAI_H,  ...
-     LAI_L,         LAIdead_H,       LAIdead_L,        ManIH,          ManIL, ...
-     NBLeaf_H,      NBLeaf_L,        NBLI_H,           NBLI_L,         NPP_H, ...
-     NPP_L,         NPPI_H,          NPPI_L,           Nreserve_H,     Nreserve_L, ...
-     NuLit_H,       NuLit_L,         NupI_H,           NupI_L,         Nuptake_H, ...
-     Nuptake_L,     OH,              OL,               PARI_H,         PARI_L, ...
-     PHE_S_H,       PHE_S_L,         Preserve_H,       Preserve_L,     Psi_l_H, ...
-     Psi_l_L,       Psi_s_H,         Psi_s_L,          Psi_x_H,        Psi_x_L, ...
-     Puptake_H,     Puptake_L,       RA_H,             RA_L,           rap_H, ...
-     rap_L,         RB_H,            rb_H,             RB_L,           rb_L, ...
-     Rdark_H,       Rdark_L,         Rexmy_H,          Rexmy_L,        Rg_H, ...
-     Rg_L,          rKc_H,           rKc_L,            Rmc_H,          Rmc_L, ...
-     Rmr_H,         Rmr_L,           Rms_H,            Rms_L,          rNc_H, ...
-     rNc_L,         rPc_H,           rPc_L,            Rrootl_H,       Rrootl_L, ...
-     rs_shdH,       rs_shdL,         rs_sunH,          rs_sunL,        SAI_H, ...
-     SAI_L,         Sfr_H,           Sfr_L,            SIF_H,          SIF_L, ...
-     Slf_H,         Slf_L,           Sll_H,            Sll_L,          Sr_H, ...
-     Sr_L,          SupK_H,          SupK_L,           SupN_H,         SupN_L, ...
-     SupP_H,        SupP_L,          Swm_H,            Swm_L,          T_H, ...
-     T_L,           TBio_H,          TBio_L,           Tden_H,         Tden_L, ...
-     Tdp_H,         Tdp_L,           TdpI_H,           TdpI_L,         TexC_H, ...
-     TexC_L,        TexK_H,          TexK_L,           TexN_H,         TexN_L, ...
-     TexP_H,        TexP_L,          TNIT_H,           TNIT_L,         TPHO_H, ...
-     TPHO_L,        TPOT_H,          TPOT_L,           Vl_H,           Vl_L, ...
-     Vx_H,          Vx_L,            An_H_t,           An_L_t,         O_t, ...
-     PAR_t,         Pr_sno_t,        Psi_l_H_t,        Psi_l_L_t,      Psi_x_H_t, ...
-     Psi_x_L_t,     Rdark_H_t,       Rdark_L_t,        Ta_t,           Tdp_H_t, ...
-     Tdp_L_t,       Tdp_t,           V_t,              Ared,           ICEym1, ...
-     SNOWALB,       SWEym1 ...         
-        );  
-    %}
-    end
-    %run(['OUTPUT_MANAGER_DIST_LABEL.m']);
+% Remove of forcing and storing variables
+variables_to_keep = setdiff(all_vars, variables_exclude); 
 
-    % Save the workspace at frequent interval. Very useful in case it crashes 
-    %if  mod(t,25)==0    
-    %    save([outlocation, Fstep], '-regexp', '^(?!(FF_BC|LWIN_BC|PARB|PARD|PP_BC|PRESS_BC|RH_BC|SAB1|SAB2|SAD1|SAD2|TA_BC|WS)$).');
-    %end   
+% Saving the variables at the end of the month
+save([Directories.save 'Store/State_Conditions_' ...
+  char(num2str(day(t_store))) '_' char(string(t_store, 'MMM')) '_' char(string(t_store, 'yyyy')) '.mat'], ...
+   variables_to_keep{:})        
 
-    %if  mod(t,8760)==0  ||  t==N_time_step
-    %    Fstep2= strcat(Fstep,'_',num2str(t));
-    %    save([outlocation, Fstep2], '-regexp', '^(?!(FF_BC|LWIN_BC|PARB|PARD|PP_BC|PRESS_BC|RH_BC|SAB1|SAB2|SAD1|SAD2|TA_BC|WS)$).');
-    %end
+end
+
 
 
 end
@@ -2160,5 +2173,5 @@ end
 Computational_Time =toc;
 disp('COMPUTATIONAL TIME [h]')
 disp(Computational_Time/3600)
-
+disp(['Run finished'])
 %Q_channel

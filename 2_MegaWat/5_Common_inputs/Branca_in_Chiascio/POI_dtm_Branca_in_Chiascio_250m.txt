@@ -1,2 +1,2 @@
 name,chx,chy,col,row,idx,lon,lat
-Branca_in_Chiascio,311614,4792631,25,25,2257,311614,4792631
+Branca_in_Chiascio,311875.07,4792640.232,26,25,2350,311875.07,4792640.232

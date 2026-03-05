@@ -39,15 +39,6 @@ function[Ts,Pr_sno,Pr_liq,Ws_under,Csno,Cice,Cfol_H,Cfol_L,CLitter,NDVI,rb_H,rb_
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% OUTPUTS
 %
-
-%% Debugging (Dec, 2024)
-%{
-disp('in1')
-%}
-%==========================================================================
-%%
-%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%% SVAT COMPUTATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -116,6 +107,16 @@ else
     Cicew = 0;
     Csnow = 0;
 end
+
+%%%%%%%%%%%%%%%%% 
+%%% To prevent numerical instability
+if  abs(Tstm0-Ta)>25
+    Tstm0 = Tstm1;
+end
+if Tstm0 > 85 || Tstm0 < -100 %  maximum initial point for surface temperature 85°C (Aminzadeh et al. 2023)
+    Tstm0 = Ta-0.1;
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [In_max_SWE,In_max_L,In_max_H]=Maximum_Interception(Ccrown,LAI_L,LAI_H,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
     Ta,Sp_SN_In,Sp_LAI_L_In,Sp_LAI_H_In);
@@ -149,31 +150,25 @@ end
     zatm,disp_h,zom,zom_under,SNDtm1,disp_h_H,zom_H,disp_h_L,zom_L);
 %%%%
 for i=1:length(Ccrown)
-
-    %% Litter resistance 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%% Litter resistance %%%%%%%
     [r_litter(i),alp_litter(i)]=Litter_Resistence(Ws,Ta,Pre,zatm,disp_h,zom,Sllit,BLit(i),In_Littertm1);
-    
-    %% Neutrel undercanopy resistence
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %%%% Neutrel undercanopy resistence
     %[rap_H(i),rap_L(i),rb_H(i),rb_L(i)]=Undercanopy_Leaf_Resistence(Ws,Ta,Ta,hc_H(i),hc_L(i),...
     %    (LAI_H(i)+SAI_H(i)+LAIdead_H(i)),(LAI_L(i)+SAI_L(i)+LAIdead_L(i)),d_leaf_H(i),d_leaf_L(i),...
     %    zatm,disp_h,zom,zom_under,SNDtm1,disp_h_H(i),zom_H(i),disp_h_L(i),zom_L(i));
-   
-    %% Stomatal resistance
+    %%%%%%% Stomatal resistance
     if ((LAI_H(i) > 0) && (OPT_VegSnow==0)) || ((LAI_H(i)>0) && (OPT_VegSnow==1) && (dw_SNO <= 0.5))
-
+        %%%
         ran = (1/((0.4^2)*Ws))*(log((zatm-disp_h)/zom))^2; %%% Neutral aerodynamic resistance  %%[s/m]
-        
-        % Canopy_Resistence_An_Evolution
-        %------------------------------------------------------------------
-        [rs_sunH(i),rs_shdH(i),Ci_sunH(i),Ci_shdH(i),An_H(i),Rdark_H(i),Lpho_H(i),SIF_H(i)]= ...
-                            Canopy_Resistence_An_Evolution(...
-            PAR_sun_H(i),    PAR_shd_H(i),   LAI_H(i),          Kopt_H(i),       KnitH(i), ...
-            FsunH(i),        FshdH(i),       Citm1_sunH(i),     Citm1_shdH(i),   Ca, ...
-            ran,             rb_H(i),        Ta,                Ta,              Pre, ...
-            Ds,              Psi_ltm1_H(i),  Psi_sto_50_H(i),   Psi_sto_00_H(i), CT_H(i), ...
-            Vmax_H(i),       DSE_H(i),       Ha_H(i),           FI_H(i),         Oa, ...
-            Do_H(i),         a1_H(i),        go_H(i),           e_rel_H(i),      e_relN_H(i), ...
-            gmes_H(i),       rjv_H(i),       mSl_H(i),          Sl_H(i),         Opt_CR);
+        %%%
+        [rs_sunH(i),rs_shdH(i),Ci_sunH(i),Ci_shdH(i),An_H(i),Rdark_H(i),Lpho_H(i),SIF_H(i)]=Canopy_Resistence_An_Evolution(PAR_sun_H(i),PAR_shd_H(i),LAI_H(i),...
+            Kopt_H(i),KnitH(i),FsunH(i),FshdH(i),Citm1_sunH(i),Citm1_shdH(i),...
+            Ca,ran,rb_H(i),Ta,Ta,Pre,Ds,...
+            Psi_ltm1_H(i),Psi_sto_50_H(i),Psi_sto_00_H(i),...
+            CT_H(i),Vmax_H(i),DSE_H(i),Ha_H(i),FI_H(i),Oa,Do_H(i),a1_H(i),go_H(i),e_rel_H(i),e_relN_H(i),gmes_H(i),rjv_H(i),mSl_H(i),Sl_H(i),Opt_CR);
     else
         rs_sunH(i) = Inf; rs_shdH(i) = Inf; An_H(i) = 0; Rdark_H(i)=0;  Ci_sunH(i)=0;  Ci_shdH(i)=0; Lpho_H(i)=0; SIF_H(i) =0 ;
     end
@@ -218,15 +213,7 @@ Vavail_plant_H= Vavail_plant_H';
 Vavail_plant_L= Vavail_plant_L';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Debugging (Dec, 2024)
-%{
-disp('in2')
-disp(['Csno ',num2str(Csno)])
-%}
-%==========================================================================
-
-
-%% ENERGY SOLUTION
+%%%%%%%%%%%% ENERGY SOLUTION
 if Csno == 1
     %lan_sno = lan_air + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(lan_ice-lan_air); %%  [W/m K ] Thermal conductivity snow
     lan_sno =  0.023 + (7.75*1e-5*rostm1 + 1.105*1e-6*rostm1.^2).*(2.29-0.023); %%  [W/m K ] Thermal conductivity snow
@@ -245,8 +232,7 @@ if Csno == 1
                 Gsno= sign(Gsno)*min([abs(Gsno),abs(Gsno_max)]);
             end
 
-            % Snow over debris covered ice
-            %--------------------------------------------------------------
+            %%% Snow over debris covered ice
             %%% Debris Heat Flux
             ms_deb = length(Tdebtm1);
             lan_deb =  Deb_Par.lan*ones(1,ms_deb) ;%%% [W/m K ] Thermal conductivity debris
@@ -316,9 +302,6 @@ if Csno == 1
         end
     end
     Gfin=G;
-
-
-    
     %%%% underneath surface cannot cool the snow
     %if G>0
     %    G=0;
@@ -338,10 +321,8 @@ if Csno == 1
         TsV = 0;
     end
     %%%%%
-
-
-
-    [Ts]=fzero(@Surface_Temperature_Snow,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
+    for rr=1:2
+      [Ts,~,exitflag]=fzero(@Surface_Temperature_Snow,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
         Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,Cfol_H,...
         hc_H,hc_L,SNDtm1,ydepth,ICE_Dtm1,Cdeb,LAI_H,LAI_L,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
         RabsbSun_vegH,RabsbShd_vegH,Rabsb_soiH,...
@@ -354,16 +335,25 @@ if Csno == 1
         Tstm1,G,Tdpsnowtm1,lan_sno,...
         zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,Pr_sno_day,Th_Pr_sno,ros_max1,ros_max2,...
         Tdew,t_slstm1,SWEtm1,SNDtm1,rostm1,SP_wctm1,In_SWEtm1,fpr,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_VegSnow,min_SPD,TsV,hSTL);
+
+       if exitflag>0
+          break
+       else
+          if rr==1
+              Tstm0=Ta-0.1;
+          end
+       end
+    end 
     %%%% %%%%%%%%%%%%%%%%%%%
     T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
 else
-
-    %% Ice without the snow
+    %%%% Ice without the snow
     if Cice > 0
         if Cdeb == 1
             %%% debris covered glacier
             ms_deb = length(Tdebtm1);
-            [Ts]=fzero(@Surface_Temperature_Debris,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
+            for rr=1:2
+              [Ts,~,exitflag]=fzero(@Surface_Temperature_Debris,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
                 Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...
                 hc_H,hc_L,SNDtm1,ydepth,ICE_Dtm1,Cdeb,Zs_deb,LAI_H,LAI_L,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
                 RabsbSun_vegH,RabsbShd_vegH,Rabsb_soiH,...
@@ -376,7 +366,18 @@ else
                 Tdebtm1,Ticetm1,Deb_Par,ms_deb,...
                 zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,...
                 Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1);
-        else
+             
+                     if exitflag>0
+                         break
+                     else
+
+                     if rr==1
+                       Tstm0=Ta-0.1;
+                     end
+             end
+           
+            end 
+        else            
             Gice =  2.29*(Tstm1-Tdptm1(1))/(ICE_Dtm1+0.001); %%% [W m-2]
             Gice_max =2093*(ICEtm1)*(Tstm1-Tdptm1(1))/dt; %%  Maximum Flux [W /m^2 ]
             Gice= sign(Gice)*min([abs(Gice),abs(Gice_max)]);
@@ -429,107 +430,33 @@ else
         %%%% %%%%%%%%%%%%%%%%%%%
         T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
     else
-    %% Debugging (Dec, 2024)
-    %{
-    disp('in3')
-    disp(['Cbare ', num2str(Cbare)])
-    disp(['Cwat ', num2str(Cwat)])
-    disp(['Crock ', num2str(Crock)])
-    disp(['Curb ', num2str(Curb)])
-    disp(['Tstm1_under ', num2str(Tstm1_under)])
-    
-    %disp(@Surface_Temperature)
-    
-    fieldNames ={'Surface_Temperature','Tstm0','Opt_ST','dt','Ta','ea','Latm','SvF','Pre',...
-                'Csno','Crock','Curb','Cbare','Ccrown','Cwat','Cice',...
-                'hc_H','hc_L','SNDtm1','ydepth','ICE_Dtm1','Cdeb','LAI_H','LAI_L','SAI_H_LAIdead_H','SAI_L_LAIdead_L',...
-                'RabsbSun_vegH','RabsbShd_vegH','Rabsb_soiH',...
-                'RabsbSun_vegL','RabsbShd_vegL','Rabsb_soiL','FsunH','FshdH',...
-                'FsunL','FshdL','Rabsb_sno','Rabsb_bare','Rabsb_urb','Rabsb_wat','Rabsb_rock','Rabsb_ice','Rabsb_deb',...
-                'e_snotm1','e_gr','e_sur','Cicew','Csnow','CLitter',...
-                'dw_L','dw_H','dw_SNO',...
-                'In_Htm1','In_Ltm1','In_urbtm1','In_rocktm1','SWEtm1','In_SWEtm1',...
-                'Pr_liq','Pr_sno','rs_sunH','rs_sunL','rs_shdH','rs_shdL','d_leaf_H','d_leaf_L','r_litter','r_soil','b_soil','alp_soil',...
-                'ms','dz','Zs','rsd','lan_dry','lan_s','cv_s','SPAR','L','Pe','O33','alpVG','nVG','Phy','s_SVG','bVG','Osat','Ohy',...
-                'Oicetm1','Otm1',...
-                'Tstm1','Tdamptm1','Tdptm1','CTt','CTt_oth','OPT_FR_SOIL','OPT_STh',...
-                'zatm','disp_h','zom','zoh','zom_under','disp_h_H','zom_H','disp_h_L','zom_L','Ws','In_Littertm1','alp_litter',...
-                'Lpho','Vavail','Vavail_plant_H','Vavail_plant_L','WATtm1','ICEtm1','OPT_SoilTemp'}
-    
-    fieldValues = {@Surface_Temperature,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
-                Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...
-                hc_H,hc_L,SNDtm1,ydepth,ICE_Dtm1,Cdeb,LAI_H,LAI_L,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
-                RabsbSun_vegH,RabsbShd_vegH,Rabsb_soiH,...
-                RabsbSun_vegL,RabsbShd_vegL,Rabsb_soiL,FsunH,FshdH,...
-                FsunL,FshdL,Rabsb_sno,Rabsb_bare,Rabsb_urb,Rabsb_wat,Rabsb_rock,Rabsb_ice,Rabsb_deb,...
-                e_snotm1,e_gr,e_sur,Cicew,Csnow,CLitter,...
-                dw_L,dw_H,dw_SNO,...
-                In_Htm1,In_Ltm1,In_urbtm1,In_rocktm1,SWEtm1,In_SWEtm1,...
-                Pr_liq,Pr_sno,rs_sunH,rs_sunL,rs_shdH,rs_shdL,d_leaf_H,d_leaf_L,r_litter,r_soil,b_soil,alp_soil,...
-                ms,dz,Zs,rsd,lan_dry,lan_s,cv_s,SPAR,L,Pe,O33,alpVG,nVG,Phy,s_SVG,bVG,Osat,Ohy,...
-                Oicetm1,Otm1,...
-                Tstm1,Tdamptm1,Tdptm1,CTt,CTt_oth,OPT_FR_SOIL,OPT_STh,...
-                zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,...
-                Lpho,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_SoilTemp}
-
-    % Create the structure
-    set1 = cell2struct(fieldValues, fieldNames, 2); % 2 indicates dimension 2 (columns)
-
-    disp(set1)
-%}
- 
-    %==========================================================================
-
         if  (Cbare == 1) || (Cwat == 1) || (Crock==1) || (Curb == 1) || isnan(Tstm1_under)
-
-            %% Debugging
-            %{
-            parss = {Tstm0;Opt_ST;dt;Ta;ea;Latm;SvF;Pre; ... 
-                Csno;Crock;Curb;Cbare;Ccrown;Cwat;Cice;...
-                hc_H;hc_L;SNDtm1;ydepth;ICE_Dtm1;Cdeb;LAI_H;LAI_L;(SAI_H+LAIdead_H);(SAI_L+LAIdead_L);...
-                RabsbSun_vegH;RabsbShd_vegH;Rabsb_soiH;...
-                RabsbSun_vegL;RabsbShd_vegL;Rabsb_soiL;FsunH;FshdH;...
-                FsunL;FshdL;Rabsb_sno;Rabsb_bare;Rabsb_urb;Rabsb_wat;Rabsb_rock;Rabsb_ice;Rabsb_deb;...
-                e_snotm1;e_gr;e_sur;Cicew;Csnow;CLitter;...
-                dw_L;dw_H;dw_SNO;...
-                In_Htm1;In_Ltm1;In_urbtm1;In_rocktm1;SWEtm1;In_SWEtm1;...
-                Pr_liq;Pr_sno;rs_sunH;rs_sunL;rs_shdH;rs_shdL;d_leaf_H;d_leaf_L;r_litter;r_soil;b_soil;alp_soil;...
-                ms;dz;Zs;rsd;lan_dry;lan_s;cv_s;SPAR;L;Pe;O33;alpVG;nVG;Phy;s_SVG;bVG;Osat;Ohy;...
-                Oicetm1;Otm1;...
-                Tstm1;Tdamptm1;Tdptm1;CTt;CTt_oth;OPT_FR_SOIL;OPT_STh;...
-                zatm;disp_h;zom;zoh;zom_under;disp_h_H;zom_H;disp_h_L;zom_L;Ws;In_Littertm1;alp_litter;...
-                Lpho;Vavail;Vavail_plant_H;Vavail_plant_L;WATtm1;ICEtm1;OPT_SoilTemp
-                }
-            %}
-            %% DEBUGGER
-            %--------------------------------------------------------------
-            %fileloc = 'C:/Users/mrodrigu/Desktop/19_ISTA/1_Science_MegaWat/1_TC/6_Debugging/';
-            %save([fileloc 'From_Point.mat']);
-            %--------------------------------------------------------------
-
-            [Ts]=fzero(@Surface_Temperature,Tstm0,Opt_ST,dt,Ta,ea,Latm,SvF,Pre,...
-                Csno,Crock,Curb,Cbare,Ccrown,Cwat,Cice,...
-                hc_H,hc_L,SNDtm1,ydepth,ICE_Dtm1,Cdeb,LAI_H,LAI_L,(SAI_H+LAIdead_H),(SAI_L+LAIdead_L),...
-                RabsbSun_vegH,RabsbShd_vegH,Rabsb_soiH,...
-                RabsbSun_vegL,RabsbShd_vegL,Rabsb_soiL,FsunH,FshdH,...
-                FsunL,FshdL,Rabsb_sno,Rabsb_bare,Rabsb_urb,Rabsb_wat,Rabsb_rock,Rabsb_ice,Rabsb_deb,...
-                e_snotm1,e_gr,e_sur,Cicew,Csnow,CLitter,...
-                dw_L,dw_H,dw_SNO,...
-                In_Htm1,In_Ltm1,In_urbtm1,In_rocktm1,SWEtm1,In_SWEtm1,...
-                Pr_liq,Pr_sno,rs_sunH,rs_sunL,rs_shdH,rs_shdL,d_leaf_H,d_leaf_L,r_litter,r_soil,b_soil,alp_soil,...
-                ms,dz,Zs,rsd,lan_dry,lan_s,cv_s,SPAR,L,Pe,O33,alpVG,nVG,Phy,s_SVG,bVG,Osat,Ohy,...
-                Oicetm1,Otm1,...
-                Tstm1,Tdamptm1,Tdptm1,CTt,CTt_oth,OPT_FR_SOIL,OPT_STh,...
-                zatm,disp_h,zom,zoh,zom_under,disp_h_H,zom_H,disp_h_L,zom_L,Ws,In_Littertm1,alp_litter,...
-                Lpho,Vavail,Vavail_plant_H,Vavail_plant_L,WATtm1,ICEtm1,OPT_SoilTemp);
+            [Ts]=fzero(@Surface_Temperature, ...
+                Tstm0,          Opt_ST,         dt,            Ta,                 ea, ...
+                Latm,           SvF,            Pre,           Csno,               Crock, ...
+                Curb,           Cbare,          Ccrown,        Cwat,               Cice,...
+                hc_H,           hc_L,           SNDtm1,        ydepth,             ICE_Dtm1, ...
+                Cdeb,           LAI_H,          LAI_L,         (SAI_H+LAIdead_H),  (SAI_L+LAIdead_L),...
+                RabsbSun_vegH,  RabsbShd_vegH,  Rabsb_soiH,    RabsbSun_vegL,      RabsbShd_vegL, ...
+                Rabsb_soiL,     FsunH,          FshdH,         FsunL,              FshdL, ...
+                Rabsb_sno,      Rabsb_bare,     Rabsb_urb,     Rabsb_wat,          Rabsb_rock, ...
+                Rabsb_ice,      Rabsb_deb,      e_snotm1,      e_gr,               e_sur, ...
+                Cicew,          Csnow,          CLitter,       dw_L,               dw_H, ...
+                dw_SNO,         In_Htm1,        In_Ltm1,       In_urbtm1,          In_rocktm1, ...
+                SWEtm1,         In_SWEtm1,      Pr_liq,        Pr_sno,             rs_sunH, ...
+                rs_sunL,        rs_shdH,        rs_shdL,       d_leaf_H,           d_leaf_L, ...
+                r_litter,       r_soil,         b_soil,        alp_soil,           ms, ...
+                dz,             Zs,             rsd,           lan_dry,            lan_s, ...
+                cv_s,           SPAR,           L,             Pe,                 O33, ...
+                alpVG,          nVG,            Phy,           s_SVG,              bVG, ...
+                Osat,           Ohy,            Oicetm1,       Otm1,               Tstm1, ...
+                Tdamptm1,       Tdptm1,         CTt,           CTt_oth,            OPT_FR_SOIL, ...
+                OPT_STh,        zatm,           disp_h,        zom,                zoh, ...
+                zom_under,      disp_h_H,       zom_H,         disp_h_L,           zom_L, ...
+                Ws,             In_Littertm1,   alp_litter,    Lpho,               Vavail, ...
+                Vavail_plant_H, Vavail_plant_L, WATtm1,ICEtm1, OPT_SoilTemp);
             %%%% %%%%%%%%%%%%%%%%%%%
-            %% Debugging (Dec, 2024)
-            %{
-          disp(['Ts ', num2str(Ts)])
-            %}
-
-            %% Case without 2 temperatures
-            T2_flag=0; Ts_under=Tstm1_under;
+            T2_flag=0; Ts_under=Tstm1_under; %% Case without 2 temperatures
         else
             Tinit=[Ta+0.1,Tstm1_under];
             for rr=1:3
@@ -568,30 +495,22 @@ else
     end
 end
 
-%% Messages of error or instability
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if not(isreal(Ts)) ||  isnan(Ts)
     disp('Error Computation Ts')
     return
 end
-
 if abs(Ts) >= 120
     disp('Numerical instability on Ts')
     return
 end
 if abs(Ts) <= eps
-    % To prevent numerical instabilities
+    %%%% To prevent numerical instabilities
     Ts=0.0;
 end
-
-%% POST COMPUTATION
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%                  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%% POST COMPUTATION %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% Debugging (Dec, 2024)
-% disp([Ta,Ts,Pre,zatm,disp_h,zom,zoh,Ws,ea])
-%==========================================================================
-
 %%% Aerodynamic resistence
 [ra]=Aerodynamic_Resistence(Ta,Ts,Pre,zatm,disp_h,zom,zoh,Ws,ea);
 %%%%%%%%%% Undercanopy and Leaf resitence
@@ -797,8 +716,7 @@ if Csno == 1
         Tdeb=0;
     end
 else
-    % Ice without the snow
-    %----------------------------------------------------------------------
+    %%% Ice without the snow
     if Cice == 1
         if Cdeb == 1
             %%% Debris Heat Flux
@@ -861,7 +779,7 @@ else
         %%%%%%%%%%
         %%% --> Variables Snowpack Icepack Debris and snow free vegetation also when there aren't
         %%%  TsF,SWE,D,ros,In_SWE,SP_wc,WR_SP,U_SWE,dQ,Qf,t_sls
-        %------------------------------------------------------------------
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         TsF=0;
         SWE=0;
         WR_SP= Pr_sno*(1-Cwat)+ dw_SNO*sum(Ccrown)*Pr_liq + SP_wctm1 + SWEtm1 + In_SWEtm1 ; %% All the terms should be equal to zero
@@ -884,8 +802,8 @@ else
         Smelt = 0;
         Tdpsnow=Tdpsnowtm1*0; 
         Tice = 0;
-        Tdeb = zeros(1,length(Tdebtm1)); % Change by Max - Oct 26, 2025
-     end
+        Tdeb = 0;
+    end
 end
 %%%%%
 %%%%%%%%%%%%%%%%%%
@@ -1046,9 +964,10 @@ for rj=1:length(Ccrown)
         J_Ldis(rj,:) = Jsx_L(rj)./sum(J_Ldis(rj,:)).*J_Ldis(rj,:);% [mm/h]
     end
 end
-
-%% INTERCEPTION and WATER TO THE SOIL
-%==========================================================================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% INTERCEPTION and WATER TO THE SOIL
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 [In_H,In_L,In_Litter,Dr_H,Dr_L,WIS]=Interceptions_Veg(dt,...
     Ccrown,Cfol_H,Cfol_L,CLitter,Cbare,Csno,Cice,Crock,Curb,Cwat,dw_SNO,In_Ltm1,In_Htm1,In_Littertm1,...
     In_max_H,In_max_L,BLit,...
@@ -1069,7 +988,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Updated Snow Albedo
 if Csno > 0
-    [snow_alb,tau_sno,e_sno] = Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method);
+    [snow_alb,tau_sno,e_sno]=Albedo_Snow_Properties(dt,SWE,h_S,Ts,Ta,SWEtm1,tau_snotm1,snow_albtm1,Th_Pr_sno,Pr_sno_day,Aice,Deb_Par,Cdeb,Cice,Ta_day,Pr_sno,Pr_liq,ros,N,Albsno_method);
 else
     snow_alb.dir_vis = ALB;
     snow_alb.dir_nir = ALB;

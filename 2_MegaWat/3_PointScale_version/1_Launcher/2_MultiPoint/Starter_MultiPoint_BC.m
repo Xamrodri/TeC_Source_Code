@@ -28,10 +28,10 @@ IniCond.SITE = 'Tiber';
 IniCond.Clusters = '501points';
 IniCond.FORCING = "ERA5Land";
 IniCond.DeltaGMT= 1; % for Italy
-
+IniCond.versionDEM= '202595_250m';
 % Name of the folder to save results
 %--------------------------------------------------------------------------
-IniCond.run_folder = 'Run_35';
+IniCond.run_folder = 'Run_36';
 
 % Modelling period
 %--------------------------------------------------------------------------
@@ -87,6 +87,10 @@ Directories.save = [Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale
 %--------------------------------------------------------------------------
 Directories.forc = [Directories.root '2_Forcing/3_Downscalling_ERA5/5_Radiation_Partition/1_Bias_corrected/' forc_in '/']; 
 
+% Sub-path for inputs - DEM with version
+%--------------------------------------------------------------------------
+Directories.DEMinputs = [Directories.root '1_TC/3_Model_Source/2_MegaWat/4_Preparation_files/3_Distributed_GeoInputs_Apennines/8_Output/' IniCond.SITE '/' IniCond.versionDEM '/']; 
+
 % Sub-path for terrain
 %--------------------------------------------------------------------------
 Directories.terrain = [Directories.model,'4_Preparation_files/4_GeoTerrain_MultiPoint/2_Results/' terrain_in '/1_ByCluster/' IniCond.Clusters '/']; 
@@ -136,10 +140,10 @@ Use opts to force all the columns with values to be numeric.
 %}
 %--------------------------------------------------------------------------
 
-opts = detectImportOptions([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx']);
+opts = detectImportOptions([Directories.root '1_TC/3_Model_Source/2_MegaWat/5_Common_inputs/Parameters_TC.xlsx']);
 opts = setvartype(opts, [7:length(opts.VariableTypes)], 'double');
 
-TT_par = readtable([Directories.root '1_TC/3_Model_Source/2_MegaWat/3_PointScale_version/3_Inputs/2_Apennine/Parameters_TC.xlsx'], opts);
+TT_par = readtable([Directories.root '1_TC/3_Model_Source/2_MegaWat/5_Common_inputs/Parameters_TC.xlsx'], opts);
 
 %% DEM AND EXTRACTION OF MATRICES
 %==========================================================================
@@ -156,20 +160,20 @@ run_Point_Pro.m
 % Load preprocessed data
 %--------------------------------------------------------------------------
 dtm_file = ['dtm_' IniCond.SITE '_250m.mat'];
-mm = load([Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+MAIN_MATs = load([Directories.DEMinputs dtm_file]); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
 
 % Extraction of DEM and features
 %--------------------------------------------------------------------------
-DTM = mm.DTM_orig; % Use the full DEM in case running POI outside of mask
+DTM = MAIN_MATs.DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) = 0; %%??
 
 [m_cell,n_cell]=size(DTM);
 num_cell=numel(DTM);
 
-xllcorner = mm.xllcorner; %bottom corner
-yllcorner = mm.yllcorner; %bottom corner
-cellsize = mm.cellsize;
-VEG_CODE = mm.VEG_CODE; 
+xllcorner = MAIN_MATs.xllcorner; %bottom corner
+yllcorner = MAIN_MATs.yllcorner; %bottom corner
+cellsize = MAIN_MATs.cellsize;
+VEG_CODE = MAIN_MATs.VEG_CODE; 
 
 %figure()
 %imagesc(mm.DTM)
@@ -178,7 +182,7 @@ VEG_CODE = mm.VEG_CODE;
 %==========================================================================
 % Construction of POI matrix with details of points.
 %==========================================================================
-% k = 10;
+k = 14;
 for k = 1:height(POI)
 id_location = char(string(POI.Name(k))); %id
 
@@ -199,6 +203,16 @@ POI.j(k) = j;
 POI.Zbas(k) = DTM(j,i); % Altitude
 end
 
+%Check
+%Mask = mm.MASK;
+%DTMp = DTM;
+%DTMp(Mask == 0) = 0;
+%figure()
+%imagesc(DTMp)
+%[r, c] = ind2sub(size(DTM), ij);
+%hold on; % This keeps the image on the screen while you add the point
+%plot(c, r, 'r*', 'MarkerSize', 10, 'LineWidth', 2);
+
 %% LAND COVER PARTITION
 %==========================================================================
 % Here the model decides what means each land cover category.
@@ -215,463 +229,91 @@ ksv=reshape(VEG_CODE,num_cell,1);
 zatm_surface = TT_par(strcmp(TT_par.Parameters,'zatm_surface'),7:size(TT_par,2));
 zatm_hourly_on = 0;
 
-%% Loop for vegetation classification
-%k=1
+%% Representation and definition of each vegetation class
+%--------------------------------------------------------------------------
+POIveg = table('Size', [10, 7], ...
+          'VariableTypes', {'double', 'string', 'double', 'double', 'double', 'double', 'double'}, ...
+          'VariableNames', {'Class', 'Veg_type', 'Ccrowns','Cwat','Curb','Crock','Cbare'});
+
+POIveg.Class = (1:10)';
+
+POIveg.Veg_type = {["BLdec_lowElev_ro2" "grass_Bondone"];                                      % Class 1:  Decidious Broad-leaved forest
+                   ["grass_Bondone"];                                                          % Class 2:  Grassland/pasture
+                   ["Crops_WW"  "Crops_WB"  "Crops_S"  "Crops_R" "grass_Bondone"];             % Class 3:  Crops
+                   ["EvGreen_NeedLeaves_LeBray" "BLdec_highElev_Collelongo"];                  % Class 4:  Evergreen needleaves at high elevation (>700m)
+                   ["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"];  % Class 5:  Mediterranean shrublands
+                   ["crops_Negrisia" "grass_Bondone"];                                         % Class 6:  Olives
+                   ["NoVeg"];                                                                  % Class 7:  Urban
+                   ["NoVeg"];                                                                  % Class 8:  Rock
+                   ["NoVeg"];                                                                  % Class 9:  Water
+                   ["grass_Alinya"]                                                            % Class 10: Bare soils
+                  };
+
+POIveg.Ccrowns =  {[0.8 0.2];
+                   [0.9];
+                   [0.1 0.1 0.2 0.1 0.3];
+                   [0.5 0.2];
+                   [0.6 0.05 0.2];
+                   [0.4 0.2];
+                   [0.0];
+                   [0.0];
+                   [0.0];
+                   [0.1]};
+
+% From class 1 to 10
+%                 1     2     3     4     5      6     7     8     9     10
+POIveg.Cwat  = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  0.0,  0.0,  1.0,  0.0})';
+POIveg.Curb  = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  1.0,  0.0,  0.0,  0.0})';
+POIveg.Crock = ({ 0.0, 0.0,  0.0,   0.0,  0.0,   0.0,  0.0,  1.0,  0.0,  0.0})';
+POIveg.Cbare = ({ 0.0, 0.1,  0.2,   0.3,  0.15,  0.4,  0.0,  0.0,  0.0,  0.9})';
+
+
+% Assigning vegetation classification in POI table
+%--------------------------------------------------------------------------
+k=1
 for k = 1:height(POI)
 %disp(k)
     if ~strcmp(POI.Feature{k}, 'Snow_station') %If the POI is a snow depth station, then it is just bare soil
 
-    switch ksv(POI.ij(k))
+    vegCode = ksv(POI.ij(k));
 
-    case 1 % Decidious Broad-leaved forest %
-        % CORINE INFORMATION FOR TIBER BASIN 
-        %------------------------------------------------------------------
-        %   1) Broad-leaved forest (32.5%)
-        %   2) Mixed forest (1.2%)
-        %
-        %   From CORINE website:
-        %       1) deciduous and evergreen broad-leaved tree species listed under 
-        %          the “applicable for” section with >75% cover
-        %       2) sporadically occurring <25 ha patches of
-        %          shrubs and dwarf shrubs;
-        %          herbaceous vegetation (grasses and herbs);
-        %          mosses and lichens;
-        %          denuded spots.
-        %       3) optionally sporadically occurring patches of coniferous trees
-        %          not exceeding 25 % share of the tree covered area;
-        %       4) palm trees;
-        %
-        %   From Simone:
-        %       1) Broad-leaved forest assumed to be mostly decidious. Evergreen 
-        %          broad-leaved are not very common and in the Appennine
-        % EXAMPLES OF SHRUBS
-        %------------------------------------------------------------------
-        %   1) Pixel 2, 3
-        %
-        % OPTIONS FOR CALIBRATION
-        %------------------------------------------------------------------
-        %   1) Collelongo         
-        %      Original: 
-        %           ["BLdec_highElev_Collelongo"]
-        %           Ccrown = [1.0];
-        %      Used: 
-        %           ["BLdec_highElev_Collelongo" "grass_Bondone"]
-        %           Ccrown = [0.8 0.2];         
-        %      Comment for pixel 2:  LAI continues strongly into the winter. 
-        %      Start ok.
-        %
-        %   2) Rocca Respampani        
-        %      Original: 
-        %           ["BLdec_lowElev_ro2"]
-        %           Ccrown = [1.0];
-        %      Used: 
-        %           ["BLdec_lowElev_ro2"]
-        %           Ccrown = [1.0];
-        %      Comment for pixel 2: Sharp shape. LAI continues strongly into the winter.
-        %      Start ok.
-        %
-        %   3) NGreece
-        %      Original: 
-        %          ["BLdec_lowElev_NGreece" "BLdec_lowElev_grass_NGreece"]
-        %           Ccrown = [0.95 0.05];  
-        %      Used:
-        %          ["BLdec_lowElev_NGreece" "BLdec_lowElev_grass_NGreece"]
-        %          Ccrown = [0.9 0.1];
-        %      Comment for pixel 2: Mostly ok, but LAI continues well
-        %      advanced the winter. Start ok.
-        %% CODE
-        POI.VEG_CLASS(k) = 1;
+    POI.VEG_CLASS(k) = vegCode;
 
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
+    POI.Cwat(k) = POIveg.Cwat{vegCode};
+    POI.Curb(k) = POIveg.Curb{vegCode};
+    POI.Crock(k) = POIveg.Crock{vegCode};
+    POI.Cbare(k) = POIveg.Cbare{vegCode};
 
-        POI.II(k) =  {["BLdec_lowElev_ro2" "grass_Bondone"]};   
-        POI.Ccrown(k) = {[0.8 0.2]};
+    POI.II(k) =  {POIveg.Veg_type{vegCode}};   
+    POI.Ccrown(k) = {POIveg.Ccrowns{vegCode}};
 
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
-
- 
-    case 2 % Grassland/pasture %
-        % CORINE INFORMATION FOR TIBER BASIN 
-        %------------------------------------------------------------------
-        %    1) Natural grasslands (5.0%)
-        %    2) Pastures (1.3%)       
-        %    3) Green urban areas (0.1%)
-        %    4) Inland marshes (>0.05%)
-        %
-        %    It also includes, but not in Tiber basin:
-        %    1) Peat bogs
-        %    2) Salt marshes
-        %    3) Salines
-        %    4) Intertaidal flats
-
-        % EXAMPLES OF SHRUBS
-        %------------------------------------------------------------------
-        %     1) Pixel 45
-
-        % OPTIONS FOR CALIBRATION
-        %------------------------------------------------------------------
-        %   1) Vall d'Alinyà
-        %     
-        %      Original: 
-        %           ["grass_Alinya"]
-        %           Ccrown = [0.85];
-        %           Cbare = 0.15;
-        %      Used: 
-        %           ["grass_Alinya"]
-        %           Ccrown = [0.85]; 
-        %           Cbare = 0.15;
-        %      Comment for pixel 45: LAI keeps growing at first. Unknown reason. 
-        %
-        %   2) Monte Bondone
-        %    
-        %      Original:
-        %           ["grass_Bondone"]
-        %           Ccrown = [1.0];
-        %      Used: 
-        %           ["grass_Bondone"]
-        %           Ccrown = [0.9]; 
-        %           Cbare = 0.1;
-        %      Comment for pixel 45: Ok, but LAI continues well advanced
-        %      the winter.
-        %
-        %   3) Las Majadas del Tietar
-        %      Original:
-        %           ["grass_Tietar_A" "grass_Tietar_B"]
-        %           Ccrown = [0.2 0.8];
-        %      Used: 
-        %           ["grass_Tietar_A" "grass_Tietar_B"]
-        %           Ccrown = [0.2 0.8];
-        %      Comment for pixel 45: Unrecognize variable phi1 from module
-        %      Canopy_Radiative_Transfer. Parameter seems not to get
-        %      defined when the set of parameters is used.
-        %
-        %% CODE
-        POI.VEG_CLASS(k) = 2; 
-
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.1;
-                
-        POI.II(k) =  {["grass_Bondone"]};
-        POI.Ccrown(k) = {[0.9]};  
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-
-
-    case 3 % Crops %
-        % CORINE INFORMATION FOR TIBER BASIN 
-        %------------------------------------------------------------------
-        %       1)  Non-irrigated arable land (25.4%)
-        %       2)  Land principally occupied by agriculture with significant
-        %           areas of natural vegetation. (8.8%)
-        %       3)  Complex cultivation patterns (7%)
-        %       4)  Fruit trees and berry plantations (1.2%)
-        %       5)  Permanently irrigated land (0.8%)
-        %       6)  Vineyards (0.5%) 
-        %       7)  Annual crops associated with permanent crops (0.1%)
-        %       8)  Rice fields
-        %       9)  Agro-forestry areas (0%)
-        %
-        %       From Simone: 
-        %       1)  Crops (Choose one crop, wheat and sunflowers 
-        %           are good choices for the region)
-        % 
-        % EXAMPLES OF SHRUBS
-        %------------------------------------------------------------------
-        %     1) Pixel 55
-        %
-        % OPTIONS FOR CALIBRATION
-        %------------------------------------------------------------------
-        %   1) Aurade
-        %      Original:
-        %         ["Crops_WW" "Crops_WB" "Crops_S" "Crops_R"]
-        %         Original: Ccrown = [0.0 0.0 0.0 0.0]; (Probably not well set)
-        %         Cbare = 1.0;
-        %      Used:
-        %         ["Crops_WW" "Crops_WB" "Crops_S" "Crops_R" "grass_Bondone"]
-        %         Used: Ccrown = [0.1 0.1 0.2 0.1 0.3]; 
-        %         Cbare = 0.2; 
-        %      Comment for pixel 55: 
-        %
-        %% CODE
-        POI.VEG_CLASS(k) = 3;
-        
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.2;
-                
-        POI.II(k) =  {["Crops_WW"  "Crops_WB"  "Crops_S"  "Crops_R" "grass_Bondone"]};
-        POI.Ccrown(k) = {[0.1 0.1 0.2 0.1 0.3]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-    
-
-    case 4 % Evergreen needleaves at high elevation (>700m) %   
-        % CORINE INFORMATION FOR TIBER BASIN 
-        %------------------------------------------------------------------
-        %     1) Coniferous forest (1%)
-        %
-        % EXAMPLES OF EVERGREEN NEEDLEAVES
-        %------------------------------------------------------------------
-        %     1) Pixel 72
-        %
-        % OPTIONS FOR CALIBRATION
-        %------------------------------------------------------------------
-        %     1) Renon
-        %        Original: 
-        %           ["EvGreen_NeedLeaves_Renon"]
-        %           Ccrown = [1.0];
-        %        Used:
-        %           ["EvGreen_NeedLeaves_Renon" "BLdec_highElev_Collelongo"] 
-        %           Ccrown = [0.5 0.2];
-        %           Cbare = 0.3;
-        %        Comment for pixel 72: MODIS data seems to not behave like
-        %        a evergreen forest. Check!
-        %
-        %     2) Le Bray
-        %        Original: 
-        %           ["EvGreen_NeedLeaves_LeBray"]
-        %           Ccrown = [1.0];
-        %        Used:
-        %           ["EvGreen_NeedLeaves_LeBray" "BLdec_highElev_Collelongo"]
-        %           Ccrown = [0.5 0.2];
-        %           Cbare = 0.3;
-        %        Comment for pixel 72: MODIS data seems to not behave like
-        %        a evergreen forest. Check!
-        %% CODE
-        POI.VEG_CLASS(k) = 4;
-        
-        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.3;
-                 
-        POI.II(k) =  {["EvGreen_NeedLeaves_LeBray" "BLdec_highElev_Collelongo"]};  
-        POI.Ccrown(k) = {[0.5 0.2]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
-    
-    case 5 % Mediterranean shrublands %        
-    % CORINE INFORMATION FOR TIBER BASIN  
-    %----------------------------------------------------------------------
-    %   1)  Transitional woodland-shrub (5%)    
-    %   2)  Sclerophyllous vegetation (0.4%)
-    %   3)  Moors and heathland (>0.05%)
-    %
-    % EXAMPLES OF SHRUBS
-    %----------------------------------------------------------------------
-    %   1) Pixel 89
-    %
-    % OPTIONS FOR CALIBRATION 
-    %----------------------------------------------------------------------
-    %   1) Garraf 
-    %      Original:
-    %           ["shrub_Garraf_A" "shrub_Garraf_B"]
-    %           Ccrown = [0.01 0.70]; 
-    %           Cbare = 0.29;
-    %      Comment for pixel 89: Vegetation do not grow
-    %
-    %   2) Noe 
-    %      Original: 
-    %           ["shrub_Noe_A" "shrub_Noe_B"]
-    %           Ccrown = [0.56 0.24];
-    %           Cbare = 0.20;
-    %      Comment for pixel 89: Not good. Constant increase
-    %
-    %   3) Balsablanca 
-    %      (shrub_Balsablanca_A, shrub_Balsablanca_B)
-    %      Original:
-    %           ["shrub_Balsablanca_A" "shrub_Balsablanca_B"]
-    %           Ccrown = [0.58 0.05]; 
-    %           Cbare = 0.37; 
-    %      Used:  
-    %           ["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"]
-    %           Ccrown = [0.6 0.05 0.2]; 
-    %           Cbare = 0.15;
-    %      Comment for pixel 89: Relatevely ok. Peak displaced to the summer.
-    %
-    %   4) Achille
-    %      Original: 
-    %           ["shrub_Achille"]
-    %           Ccrown = [0.8]; 
-    %           Cbare = 0.2; 
-    %      Comment for pixel 89: For mountains.  Relatevely ok. Peak displaced to the summer.
-    %
-    %% CODE
-        POI.VEG_CLASS(k) = 5;
-
-        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.15; %0.15
-                
-        POI.II(k) =  {["shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"]}; %"shrub_Balsablanca_A" "shrub_Balsablanca_B" "BLdec_highElev_Collelongo"
-        POI.Ccrown(k) = {[0.6 0.05 0.2]};  %[0.6 0.05 0.2]
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k))); 
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
-
-    case 6 % Olives %
-    % CORINE INFORMATION FOR TIBER BASIN   
-    %----------------------------------------------------------------------
-    %    1) Olive groves (4%)
-    % EXAMPLES OF OLIVES
-    %----------------------------------------------------------------------
-    %    1) Pixel 94
-    %
-    % OPTIONS FOR CALIBRATION 
-    %----------------------------------------------------------------------
-    %    1) Negrisia 
-    %       Original: 
-    %           ["crops_Negrisia"]
-    %           Ccrown = [0.75];
-    %           Cbare = 0.25;
-    %       Used:          
-    %           ["crops_Negrisia" "grass_Bondone"]
-    %           Ccrown = [0.6 0.2]; 
-    %           Cbare = 0.25;
-    %       Comment for pixel 94: Vegetation do not grow
-    %
-    %    2) Aurade
-    %     (Crops_WW, Crops_WB, Crops_S, Crops_R)
-    %      Original: 
-    %           ["Crops_WW", "Crops_WB", "Crops_S", "Crops_R"]
-    %           Ccrown = [0.0 0.0 0.0 0.0]; (Probably not well set)
-    %           Cbare =  1.0; 
-    %      Used: 
-    %           Ccrown = [];
-    %      Comment for pixel 94: 
-    %% CODE
-        POI.VEG_CLASS(k) = 6;
-
-        POI.Cwat(k) = 0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.4;
-                
-        POI.II(k) =  {["crops_Negrisia" "grass_Bondone"]};
-        POI.Ccrown(k) = {[0.4 0.2]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));                  
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-
-    case 7 % Urban %
-    % CORINE INFORMATION FOR TIBER BASIN    
-    %----------------------------------------------------------------------
-    %         1) Discontinuous urban fabric (3%)
-    %         2) Industrial or commercial units (0.7%)
-    %         3) Continuous urban fabric (0.6%)
-    %         4) Sport and leisure facilities (0.1%)
-    %         5) Road and rail networks and associated land (0.1%)
-    %         6) Construction sites (0.1%)
-    %         7) Port areas (>0.05%)   
-    %         8) Airports (0.1%)
-    %% CODE
-
-        POI.VEG_CLASS(k) = 7;
-
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 1.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-        
-        POI.II(k) =  {["NoVeg"]};
-        POI.Ccrown(k) = {[0.0]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-
-    
-    %% CHECK THE NEED OF SETTING II AS 1 WHEN CCROCK = 1 
-    %======================================================================
-    %{
-    Problem is with these parameters defined in the MAIN_FRAME_Pro
-    % Vegetation Optical Parameter
-    [PFT_opt_H(i)]=Veg_Optical_Parameter(OPT_PROP_H(i));
-    [PFT_opt_L(i)]=Veg_Optical_Parameter(OPT_PROP_L(i));
-
-    [Stoich_H(i)]=Veg_Stoichiometric_Parameter(Nl_H(i));
-    [ParEx_H(i)]=Exudation_Parameter(0);
-    [Mpar_H(i)]=Vegetation_Management_Parameter;
-
-    [Stoich_L(i)]=Veg_Stoichiometric_Parameter(Nl_L(i));
-    [ParEx_L(i)]=Exudation_Parameter(0);
-    [Mpar_L(i)]=Vegetation_Management_Parameter;
-
-    %}
-    %======================================================================
-
-
-    case 8 % Rock %
-    % CORINE INFORMATION FOR TIBER BASIN   
-    %----------------------------------------------------------------------
-    %        1) Bare rocks (0.2%)
-    %        2) Glaciers and perpetual snow (0%)
-    %% CODE
-        POI.VEG_CLASS(k) = 8;
-
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 1.0; POI.Cbare(k) = 0.0;
-        
-        POI.II(k) =  {["NoVeg"]}; 
-        POI.Ccrown(k) = {[0.0]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));         
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
-
-    case 9 % Water %
-    % CORINE INFORMATION FOR TIBER BASIN
-    %----------------------------------------------------------------------
-    %        1) Water bodies (0.3%)
-    %        2) Water courses (0.2%)
-
-    %     It also includes, but not in Tiber basin:
-    %       1) Coastal lagoons
-    %       2) Estuaries
-    %       3) Sea and Ocean
-    %% CODE
-
-        POI.VEG_CLASS(k) = 9;
-
-        POI.Cwat(k) = 1.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.0;
-                 
-        POI.II(k) =  {["NoVeg"]};
-        POI.Ccrown(k) = {[0.0]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));  
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k))); 
-
-    case 10 % Bare soils %
-    % CORINE INFORMATION FOR TIBER BASIN   
-    %----------------------------------------------------------------------
-    %        1) Mineral extraction sites (0.2%)
-    %        2) Burnt areas (0.1%)
-    %        3) Beaches - dunes - sands (>0.05%)
-    %        4) Sparsely vegetated areas (0.7%)
-    %% CODE
-        POI.VEG_CLASS(k) = 10;
-
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 0.9;
-               
-        POI.II(k) =  {["grass_Alinya"]}; 
-        POI.Ccrown(k) = {[0.1]};
-
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));              
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
-
-        otherwise
-        disp('INDEX FOR VEGETATION PARAMETER INCONSISTENT')
-        %return
-        end
+    POI.NCrown(k) = length(POIveg.Ccrowns{vegCode});
+    POI.cc_max(k) = length(POIveg.Ccrowns{vegCode}); 
         
     else % if I have an station, this is in bare soil.    
       
-        POI.VEG_CLASS(k) = 10;
+    POI.VEG_CLASS(k) = 10;
 
-        POI.Cwat(k) = 0.0; POI.Curb(k) = 0.0 ; POI.Crock(k) = 0.0; POI.Cbare(k) = 1.0;
-                 
-        POI.II(k) =  {["grass_Alinya"]};  
-        POI.Ccrown(k) = {[0.0]};
+    POI.Cwat(k) = 0.0;
+    POI.Curb(k) = 0.0;
+    POI.Crock(k) = 0.0;
+    POI.Cbare(k) = 1.0;
+             
+    POI.II(k) =  {["grass_Alinya"]};  
+    POI.Ccrown(k) = {[0.0]};
 
-        POI.NCrown(k) = length(cell2mat(POI.Ccrown(k)));      
-        POI.cc_max(k) = length(cell2mat(POI.Ccrown(k)));
+    POI.NCrown(k) = 1;      
+    POI.cc_max(k) = 1;
 
     end
 
 
-% Defining zatm in each point
-if ~isempty(zatm_surface(:,POI.II{k}))
-POI.zatm(k) = {table2array(zatm_surface(:,POI.II{k}))}; %choose correct atmospheric reference height
-else
-POI.zatm(k) = {2};
-end
+    % Defining zatm in each point
+    if ~isempty(zatm_surface(:,POI.II{k}))
+    POI.zatm(k) = {table2array(zatm_surface(:,POI.II{k}))}; %choose correct atmospheric reference height
+    else
+    POI.zatm(k) = {2};
+    end
 
 end
 
@@ -691,7 +333,7 @@ tic;
 
 %Main function
 %--------------------------------------------------------------------------
-run_Point_Pro_BC(Directories, IniCond, selected_point, POI, ksv, dateRun, TT_par, zatm_surface, dtm_file);
+run_Point_Pro_BC(Directories, IniCond, selected_point, POI, ksv, dateRun, TT_par, zatm_surface, MAIN_MATs);
 
 % Computational time
 %--------------------------------------------------------------------------
@@ -761,7 +403,7 @@ selected_names = names(specific_indices);
 %--------------------------------------------------------------------------
 parfor k = 1:length(selected_names) %length(names)  % 3    
     try
-        run_Point_Pro_BC(Directories, IniCond, selected_names(k), POI, ksv, dateRun, TT_par, zatm_surface, dtm_file);
+        run_Point_Pro_BC(Directories, IniCond, selected_names(k), POI, ksv, dateRun, TT_par, zatm_surface, MAIN_MATs);
     catch ME
         warning('Error occurred on worker %d: %s', k, ME.message);       
     end

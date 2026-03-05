@@ -38,18 +38,57 @@ pow_dis = NaN;
 %==========================================================================
 %
 %==========================================================================
-%         Depth1 Depth2 Depth3  Depth4 Depth5 Depth6 Depth7 Depth8 Depth9  Depth10
-Kbot  =  [0.0    0.0    0.0     0.0    0.0    0.0    5      0.0    0.0     0.0    ]; % Conductivity at the bedrock layer [mm/h] 
-Krock =  [NaN    NaN    NaN     NaN    NaN    NaN    0.15   NaN    NaN     NaN    ]; % Conductivity of Fractured Rock [mm/h] 
+
+% Conductivity at the bedrock layer by each veg class [mm/h] 
+%--------------------------------------------------------------------------         
+Kbot  =  [5.0 ... Veg_Type1
+          5.0 ... Veg_Type2
+          5.0 ... Veg_Type3
+          5.0 ... Veg_Type4
+          5.0 ... Veg_Type5
+          5.0 ... Veg_Type6
+          5.0 ... Veg_Type7
+          5.0 ... Veg_Type8
+          5.0 ... Veg_Type9
+          5.0 ... Veg_Type10
+          ];  
+
+% Conductivity of Fractured Rock by each veg class  [mm/h] 
+%--------------------------------------------------------------------------
+Krock =  [0.15  ... Veg_Type1
+          0.15  ... Veg_Type2
+          0.15  ... Veg_Type3
+          0.15  ... Veg_Type4
+          0.15  ... Veg_Type5
+          0.15  ... Veg_Type6
+          0.15  ... Veg_Type7
+          0.15  ... Veg_Type8
+          0.15  ... Veg_Type9
+          0.15  ... Veg_Type10
+          ]; 
 
 Kbot = Kbot(ksv(ij)); % Conductivity of the bedrock [mm/h] 
 Krock =Krock(ksv(ij)); % Hydraulic conductivity fractured rock [mm/h]
 
 % Soil layers
-%           Depth1 Depth2 Depth3  Depth4 Depth5 Depth6 Depth7 Depth8 Depth9  Depth10
-Zs= [0      10     20      50     100    150    200    300    1000     1500    2500]; % Depth of top of the soil layer [mm],  ms+1
-Zdes = 10; % Depth of evaporation layer [mm]
-Zinf=  10; % Depth of infiltration layer (=first layer) [mm]
+% Depth of top of the soil layer [mm],  ms+1
+%--------------------------------------------------------------------------
+     
+Zs= [0    ... % 
+     10   ... % Depth1
+     20   ... % Depth2
+     50   ... % Depth3 
+     100  ... % Depth4
+     150  ... % Depth5
+     200  ... % Depth6
+     300  ... % Depth7
+     1000 ... % Depth8
+     1500 ... % Depth9
+     2500 ... % Depth10
+     ]; 
+
+Zdes = 10;  % Depth of evaporation layer [mm]
+Zinf=  10;  % Depth of infiltration layer (=first layer) [mm]
 Zbio = 250; % Depth of the active Biogeochemistry zone [mm]
 
 if  not(length(Zs)==ms+1)

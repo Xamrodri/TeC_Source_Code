@@ -23,5 +23,5 @@ function saveVarToFile(filename, variableValue)
 
     % Save the file using the extracted name string. 
     % Note: The variableNameStr must exist in the workspace when this command is run.
-    save(filename, variableNameStr);
+    save(filename, variableNameStr, '-v7.3');
 end

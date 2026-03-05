@@ -21,18 +21,14 @@ Code explanation:
 %% Debugger
 %Point = "VelinoCluster95";
 
-
 %% As a Function 
-function result=run_Point_Pro(Directories, IniCond, Point, POI, ksv, dateRun, TT_par, zatm_surface, dtm_file)
+function result=run_Point_Pro(Directories, IniCond, Point, POI, ksv, dateRun, TT_par, zatm_surface, MAIN_MAT)
 
 % DeltaGMT must be defined for MAIN_FRAME_Pro
 DeltaGMT = IniCond.DeltaGMT;
 
 %% MODEL PARAMETERS
 %==========================================================================
-%
-%==========================================================================
-
 % Time step for the model
 dt=3600; % [s]
 dth=1; % [h]
@@ -41,7 +37,6 @@ dth=1; % [h]
 % Hours or fraction before and after. Values obtained from the
 % Automatic_Radiation_Partition_I
 t_bef = 1.5; t_aft = -0.5;
-
 
 %% Pixel selection
 %==========================================================================
@@ -59,7 +54,6 @@ LOC = point_id;
 % Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
 %==========================================================================
 output_daily = 1; 
-
 
 %% Precipitation phase parametrization
 % 1 = 2-threshold, 
@@ -90,12 +84,16 @@ out = strcat(Directories.save, '4_INIT_COND/INIT_COND_', IniCond.SITE ,'_MultiPo
 % "dtm_Tiber_250m.mat"
 % "dtm_Cinca_Mid_250m.mat"
 %==========================================================================
+
+% Main pre processed matrices
+%--------------------------------------------------------------------------
 res = 250; % simulation resolution [m]
 disp(strcat('Model resolution: ',num2str(res)));
-dtm_file_op = strcat(Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file);
+%dtm_file_op = strcat(Directories.model,'5_Common_inputs/',IniCond.SITE,'/',dtm_file);
 
-load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
-DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
+%load(dtm_file_op); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
+%MAIN_MAT
+DTM = MAIN_MAT.DTM_orig; % Use the full DEM in case running POI outside of mask
 DTM(isnan(DTM)) == 0; %%??
 
 [m_cell,n_cell]=size(DTM);
@@ -105,16 +103,14 @@ DTM(isnan(DTM)) == 0; %%??
 % rate = Pmod/(Z_max-Z_min);
 % Pmod_S(DTM>Z_min) = 1+rate.*(DTM(DTM>Z_min)-Z_min);
 
-%% Load CO2 data
+% Load CO2 data
+%--------------------------------------------------------------------------
 load('Ca_Data.mat');
 Ca_all = Ca;
 topo = 1;
 
-%% FAKE SNOW (TRIAL)
-%load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/4_Snow_Depth/Apennine_Init_Snow_Depth_virtual.mat'));
-%load(strcat(folder_path,'4_Preparation_files/Apennine_preparation_Achille_Method_Distributed/','7_SnowCover/5_Snow_Albedo/Apennine_Init_Snow_Albedo_virtual.mat'));
-
 %% Impose measured albedo on glacier areas
+%==========================================================================
 fn_alb_elev = strcat(IniCond.SITE, '_Albedo_vs_elev.mat');
 
 if exist(fn_alb_elev,'file')>0
@@ -140,14 +136,15 @@ else
 end
 
 
-
 %% FOR LOOP for locations
+%==========================================================================
 %Loc=1
 Names = string(POI.Name);
 loc = find(Point == Names);  
 
-%% Definitions of site
-%% Crowns
+% Definitions of site
+%--------------------------------------------------------------------------
+% Crowns
 cc = POI.NCrown(loc); 
 II = POI.II{loc};
 Cwat = POI.Cwat(loc); 
@@ -159,12 +156,11 @@ zatm = max(POI.zatm{loc});
 id_location = string(POI.Name(loc));
 cc_max = POI.cc_max(loc);
 
-%% Locations
+% Locations
 Zbas = POI.Zbas(loc);
 Lat = POI.LAT(loc);
 Lon = POI.LON(loc);
 ij = POI.ij(loc);
-
 
 %% FORCING
 %==========================================================================
@@ -375,7 +371,7 @@ ea_Ding_d = nanmean(ea(1:24));
 num_cell=numel(DTM);
 
 %MASK = MASK.*0+1;
-MASKn=reshape(MASK,num_cell,1);
+MASKn=reshape(MAIN_MAT.MASK,num_cell,1);
 
 if topo == 1
     %load topography data and narrow down to period
@@ -451,8 +447,20 @@ clear Par_time_table Par_time_period Temporal_ShF Par_points
 % Vector is divided by 100 to put the numbers within 0-1
 % Original PSAN, PCLA and PORG come with values between 0-100, g/100g
 %==========================================================================
-%imagesc(PSAN)
+%[r, c] = ind2sub(size(DTM), ij);
+
+%figure()
+%imagesc(MAIN_MAT.PSAN)
+%hold on; % This keeps the image on the screen while you add the point
+%plot(c, r, 'r*', 'MarkerSize', 10, 'LineWidth', 2);
+
+%figure()
+%imagesc(MAIN_MAT.MASK)
 %imagesc(PCLA)
+
+PSAN = MAIN_MAT.PSAN;
+PCLA = MAIN_MAT.PCLA;
+PORG = MAIN_MAT.PORG;
 
 PSAN=reshape(PSAN,num_cell,1)/100; Psan = PSAN(ij); % Soil sand content at pixel ij
 PCLA=reshape(PCLA,num_cell,1)/100; Pcla = PCLA(ij); % Soil clay content at pixel ij
@@ -462,19 +470,23 @@ PORG=reshape(PORG,num_cell,1)/100; Porg = PORG(ij); % Soil organic content at pi
 %Pcla = 0.334
 %Porg = 0.0608
 
-ms=10 ; %% 11 ; 
+
+SOIL_TH = MAIN_MAT.SOIL_TH;
 SOIL_TH=reshape(SOIL_TH,num_cell,1);
+ms=10 ; %% 11 ; 
 ms_max = 10; %% Number of soil layers
 
 %% GLACIERS
 %%% DEBRIS
 % INIT_COND_v2 has md_max parameter
 % Do not delete this code
+DEB_MAP = MAIN_MAT.DEB_MAP;
 DEB_MAP=reshape(DEB_MAP,num_cell,1);
 md_max = 10; %% % Number of debris layers
 
 %% SNOW
 %%% Initial snow depth
+SNOWD = MAIN_MAT.SNOWD;
 SNOWD=reshape(SNOWD,num_cell,1);
 
 % Initial snow albedo
@@ -485,7 +497,6 @@ else
     SNOWALB=reshape(SNOWALB,num_cell,1);
 end 
 
-
 %% SAVING INITIAL CONDITIONS AND PARAMETERS 
 %==========================================================================
 % In MultiPoint analysis INIT_COND_Tiber_MultiPoint.mat is created.
@@ -495,7 +506,7 @@ end
 %if exist(out, 'file') == 2
 %load(out);
 %else
-
+GLH = MAIN_MAT.GLH;
 
 if topo == 1
 INIT_COND_v4(num_cell,m_cell,n_cell,...
@@ -528,6 +539,7 @@ PARAM_IC = strcat(Directories.model,'3_PointScale_version/3_Inputs/MOD_PARAM_Mul
 %clear An_H_t An_L_t O_t Tdp_t V_t Psi_I_H_t Psi_l_L_t Psi_l_H_t ...
 %    Psi_x_H_t Psi_x_L_t Rdark_H_t Rdark_L_t Tdp_H_t Tdp_L_t
 %------------------------------------------------------------------
+cellsize = MAIN_MAT.cellsize;
 
 MAIN_FRAME_Pro; % Launch the main frame of T&C. Most of the things happen in this line of code
 
@@ -545,8 +557,6 @@ end
 % Display variables size
 %--------------------------------------------------------------------------
 disp(['Memory used by variables at the end of MAIN_FRAME: ', num2str(totalSize/1e6), ' MB']);
-
-
 
 %% REMOVAL OF PARAMETERS TO FREE SPACE -SIZE OF ELEMENT ARE IMPORTANT
 % clear variables not needed any more
@@ -646,8 +656,6 @@ Outputs_d.ETen = Outputs_ds.ETen;
 Outputs_d.T_H = Outputs_ds.T_H;
 Outputs_d.T_L = Outputs_ds.T_L;
 
-
-
 % Average of NDVI must be calculated without zeros during the night
 %--------------------------------------------------------------------------
 % 1. Create a logical index for rows where Rsw is positive and not NaN
@@ -685,7 +693,6 @@ Outputs_t = timetable2table(Outputs_d);
 writetable(Outputs_t, strcat(Directories.save, '2_Daily/',id_location,'_daily_results.txt'))
 
 end 
-
 
 %% Save of the environment
 % Here only for one point - For the snow station. More points can be

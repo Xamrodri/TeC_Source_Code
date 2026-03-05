@@ -788,6 +788,7 @@ flowDirection_ud(flipud(MASK) == 0) = NaN;
 T = flow_matrix(flipud(DEMmat),flowDirection_ud);
 
 
+
 %==========================================================================
 % PREPARE MAP-COORDINATES
 %==========================================================================
@@ -851,7 +852,7 @@ text(x_v(X_POI), y_v(Y_POI),string(poi_deg.Name))
 colorbar('off')
 title('Drainage basin')
 %==========================================================================
-% FILL ALL VARIABLES FOR T&C INPUT
+% FILL ALL VARIABLES FOR T&C INPUTs
 %==========================================================================
 % (MASK: defined earlier already)
 Aacc = upslopeArea; %Upstream area

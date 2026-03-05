@@ -44,13 +44,13 @@ function[q_runon,        q_channel_out,  Qi_in,    Slo_pot,    Q_exit,  ...
 
 %% OPT_HEAD options
 [m_cell,n_cell]=size(DTM);
-Qsur=Rh+Rd; % [mm] %% Hillslope surface water
-Qsur(Qsur<0)=0; % Numerical Instability Issue
+Qsur=Rh+Rd;           % Hillslope surface water [mm]
+Qsur(Qsur<0)=0;       % Numerical Instability Issue
 Qi_out = Qi_out*dth;  % Subsurface flow [mm]
 
 % Initialization
-Q_exit = 0; %% Surface Flow exits the domain
-Qsub_exit = 0; % Subsurface Flow exits the domain
+Q_exit = 0;           % Surface Flow exits the domain
+Qsub_exit = 0;        % Subsurface Flow exits the domain
 npoint = length(Xout);
 QpointH = zeros(npoint,1);
 QpointC = zeros(npoint,1);
@@ -163,13 +163,13 @@ if sum(sum(q_channel))>0
         kdt(kdt>1)=1; 
         kdt(kdt<0)=1; % For numerical instabilities 
         kdt(isnan(kdt))=0;
-
+        
         % Surface Routing
         %------------------------------------------------------------------
         [QchM]=Flow_Routing_Step2(DTM,T_flow,kdt.*q_channel); % [mm]
         QchR = QchM + (q_channel - kdt.*q_channel) ; % [mm]
         %%%%%%%%%%%%%%
-        Q_exit= Q_exit + (sum(sum(q_channel))- sum(sum(QchR))); % [mm]
+        Q_exit= Q_exit + (sum(sum(q_channel)) - sum(sum(QchR))); % [mm]
         for ipo=1:npoint
             QpointC(ipo)= QpointC(ipo) + kdt(Yout(ipo),Xout(ipo))*q_channel(Yout(ipo),Xout(ipo)); % [mm]
         end
@@ -231,6 +231,7 @@ else
         Slo_pot(:,:,jk)=Slo_top;  %%%
     end
 end
+
 return
 
 
